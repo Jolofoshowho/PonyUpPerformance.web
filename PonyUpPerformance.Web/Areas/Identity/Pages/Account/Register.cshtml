@@ -1,0 +1,98 @@
+﻿@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Create Account";
+}
+
+<section class="account-page">
+    <div class="container">
+        <div class="account-grid">
+
+            <div class="account-card">
+                <img src="/images/ponyup-logo.jpg" alt="PonyUp Performance" class="account-logo" />
+
+                <h1>Create Account</h1>
+                <p class="account-subtitle">
+                    Get your first full decision analysis free.
+                </p>
+
+                <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.Email"
+                               class="form-control"
+                               autocomplete="username"
+                               aria-required="true"
+                               placeholder="name@example.com" />
+                        <label asp-for="Input.Email">Email</label>
+                        <span asp-validation-for="Input.Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.Password"
+                               class="form-control"
+                               autocomplete="new-password"
+                               aria-required="true"
+                               placeholder="password" />
+                        <label asp-for="Input.Password">Password</label>
+                        <span asp-validation-for="Input.Password" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.ConfirmPassword"
+                               class="form-control"
+                               autocomplete="new-password"
+                               aria-required="true"
+                               placeholder="password" />
+                        <label asp-for="Input.ConfirmPassword">Confirm Password</label>
+                        <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                    </div>
+
+                    <button id="registerSubmit" type="submit" class="w-100 btn btn-danger btn-lg">
+                        Create PonyUp Account
+                    </button>
+                </form>
+            </div>
+
+            <div class="account-benefits">
+                <h2>Why Create an Account?</h2>
+
+                <div class="benefit-item">
+                    <h3>Free Full Analysis</h3>
+                    <p>
+                        Your first analysis gives you the full PonyUp result:
+                        recommendation, confidence score, reasoning, risk level,
+                        financial impact, and next action.
+                    </p>
+                </div>
+
+                <div class="benefit-item">
+                    <h3>Decision History</h3>
+                    <p>
+                        Save repair, buy, sell, trade, and upgrade decisions so you can compare vehicles and spending choices over time.
+                    </p>
+                </div>
+
+                <div class="benefit-item">
+                    <h3>Subscription Ready</h3>
+                    <p>
+                        Your account will track Free, Quick Pack, Pro, and Unlimited access once payments are connected.
+                    </p>
+                </div>
+
+                <div class="benefit-item">
+                    <h3>Built for Real Vehicle Decisions</h3>
+                    <p>
+                        PonyUp is focused on one question: should this money be spent on this vehicle?
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

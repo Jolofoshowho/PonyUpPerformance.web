@@ -1,0 +1,16 @@
+﻿@page
+@model PonyUpPerformance.Web.Pages.CheckoutSuccessModel
+@{
+    ViewData["Title"] = "Checkout Success";
+}
+
+<section class="account-page">
+    <div class="container">
+        <div class="account-card">
+            <h1>Checkout Complete</h1>
+            <p>@Model.Message</p>
+            <a class="btn btn-danger" href="/RepairAnalyzer">Go To Repair Analyzer</a>
+            <a class="btn btn-outline-light ms-2" href="/MyGarage">Go To Garage</a>
+        </div>
+    </div>
+</section>  

@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewData["Title"] - PonyUp Performance</title>
+
+    <link rel="icon" type="image/jpeg" href="~/images/ponyup-logo.jpg" />
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/PonyUpPerformance.Web.styles.css" asp-append-version="true" />
+</head>
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg ponyup-navbar">
+            <div class="container-fluid px-4">
+
+                <a class="navbar-brand ponyup-brand" asp-area="" asp-page="/Index">
+                    <img src="~/images/ponyup-logo.jpg" alt="PonyUp Performance" class="ponyup-nav-logo" />
+                </a>
+
+                <button class="navbar-toggler ponyup-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ponyupNavbar"
+                        aria-controls="ponyupNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div id="ponyupNavbar" class="collapse navbar-collapse">
+                    <ul class="navbar-nav ms-auto align-items-lg-center">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-page="/Index">Home</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#decision-center">Decision Center</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-page="/RepairAnalyzer">Repair</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Buy/Sell</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Upgrade</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Resources</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link ponyup-pricing-link" href="#pricing">Pricing</a>
+                        </li>
+                        <li class="nav-item">
+    <a class="nav-link" asp-area="" asp-page="/MyGarage">Garage</a>
+</li>  
+                    </ul>
+
+                    <div class="ponyup-login-area">
+                        <partial name="_LoginPartial" />
+                    </div>
+                </div>
+
+            </div>
+        </nav>
+    </header>
+
+    <main role="main">
+        @RenderBody()
+    </main>
+
+    <footer class="ponyup-footer">
+        <div class="container text-center">
+            <img src="~/images/ponyup-logo.jpg" alt="PonyUp Performance" class="ponyup-footer-logo" />
+            <div class="mt-2">
+                &copy; 2026 PonyUp Performance. Vehicle decisions made smarter.
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

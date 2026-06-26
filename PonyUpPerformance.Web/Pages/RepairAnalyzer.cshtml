@@ -1,0 +1,220 @@
+﻿@page
+@model PonyUpPerformance.Web.Pages.RepairAnalyzerModel
+@{
+    ViewData["Title"] = "Repair Analyzer";
+}
+
+<section class="account-page">
+    <div class="container">
+
+        <h1 class="section-title">Repair Analyzer</h1>
+        <p class="section-subtitle">
+            Estimate the repair cost, compare it against vehicle value, and decide if the money makes sense.
+        </p>
+
+        <div class="account-card mt-4">
+            <h2>Account Status</h2>
+
+            @if (Model.CreditStatus.IsLoggedIn)
+            {
+                <p><strong>Current Plan:</strong> @Model.CreditStatus.CurrentPlan</p>
+
+                @if (Model.CreditStatus.CurrentPlan == "Owner")
+                {
+                    <p><strong>Credits Remaining:</strong> <span style="font-size: 1.8rem;">👑 ☁️</span></p>
+                }
+                else
+                {
+                    <p><strong>Credits Remaining:</strong> @Model.CreditStatus.RemainingCredits</p>
+                }
+            }
+            else
+            {
+                <p>Create a free account to unlock your first full analysis.</p>
+                <a class="btn btn-danger" asp-area="Identity" asp-page="/Account/Register">Create Free Account</a>
+                <a class="btn btn-outline-light ms-2" asp-area="Identity" asp-page="/Account/Login">Login</a>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.CreditMessage))
+            {
+                <hr />
+                <p class="text-danger"><strong>@Model.CreditMessage</strong></p>
+                <a class="btn btn-danger" asp-page="/Pricing">View Pricing</a>
+            }
+        </div>
+
+        <form method="post" class="account-card mt-4">
+
+            <h2>Vehicle</h2>
+
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label>Year</label>
+                    <input asp-for="Input.VehicleYear" class="form-control" />
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label>Make</label>
+                    <input asp-for="Input.VehicleMake" class="form-control" />
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label>Model</label>
+                    <input asp-for="Input.VehicleModel" class="form-control" />
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label>Mileage</label>
+                    <input asp-for="Input.Mileage" class="form-control" />
+                </div>
+            </div>
+
+            <hr />
+
+            <h2>Location-Based Estimate</h2>
+
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label>City</label>
+                    <input asp-for="EstimateInput.City" class="form-control" />
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label>State</label>
+                    <input asp-for="EstimateInput.State" class="form-control" placeholder="AR" />
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label>ZIP Code</label>
+                    <input asp-for="EstimateInput.ZipCode" class="form-control" />
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label>Repair Type</label>
+                    <select asp-for="EstimateInput.RepairType" class="form-control">
+                        @foreach (var repairType in Model.RepairTypes)
+                        {
+                            <option value="@repairType">@repairType</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label>
+                        <input asp-for="EstimateInput.IncludeDiagnosticFee" />
+                        Include Diagnostic Fee
+                    </label>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label>
+                        <input asp-for="EstimateInput.IncludeTowFee" />
+                        Include Tow Fee
+                    </label>
+                </div>
+            </div>
+
+            <hr />
+
+            <h2>Decision Inputs</h2>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label>Estimated Vehicle Value</label>
+                    <input asp-for="Input.VehicleValue" class="form-control" />
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Vehicle Condition</label>
+                    <select asp-for="Input.Condition" class="form-control">
+                        <option value="Poor">Poor</option>
+                        <option value="Fair">Fair</option>
+                        <option value="Good">Good</option>
+                        <option value="Excellent">Excellent</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Planned Ownership Years</label>
+                    <input asp-for="Input.OwnershipYears" class="form-control" />
+                </div>
+            </div>
+
+            @if (Model.CreditStatus.IsLoggedIn && Model.CreditStatus.CanRunAnalysis)
+            {
+                <button type="submit" class="btn btn-danger btn-lg">
+                    Estimate + Analyze Repair
+                </button>
+            }
+            else if (Model.CreditStatus.IsLoggedIn && !Model.CreditStatus.CanRunAnalysis)
+            {
+                <a class="btn btn-danger btn-lg" asp-page="/Pricing">
+                    Upgrade To Continue
+                </a>
+            }
+            else
+            {
+                <a class="btn btn-danger btn-lg" asp-area="Identity" asp-page="/Account/Register">
+                    Create Free Account
+                </a>
+            }
+
+        </form>
+
+        @if (Model.EstimateResult != null)
+        {
+            <div class="account-card mt-4">
+                <h2>Repair Cost Estimate</h2>
+
+                <p><strong>Repair Type:</strong> @Model.EstimateResult.RepairType</p>
+                <p><strong>Location Used:</strong> @Model.EstimateResult.LocationUsed</p>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <h3>Low</h3>
+                        <p>$@Model.EstimateResult.LowEstimate</p>
+                    </div>
+
+                    <div class="col-md-4">
+                        <h3>Expected</h3>
+                        <p>$@Model.EstimateResult.ExpectedEstimate</p>
+                    </div>
+
+                    <div class="col-md-4">
+                        <h3>High</h3>
+                        <p>$@Model.EstimateResult.HighEstimate</p>
+                    </div>
+                </div>
+
+                <p>@Model.EstimateResult.EstimateNote</p>
+            </div>
+        }
+
+        @if (Model.Result != null)
+        {
+            <div class="account-card mt-4">
+                <h2>Decision Result</h2>
+
+                <p><strong>Recommendation:</strong> @Model.Result.Recommendation</p>
+                <p><strong>Confidence Score:</strong> @Model.Result.ConfidenceScore%</p>
+                <p><strong>Risk Level:</strong> @Model.Result.RiskLevel</p>
+                <p><strong>Financial Impact:</strong> @Model.Result.FinancialImpact</p>
+                <p><strong>Reasoning:</strong> @Model.Result.Reasoning</p>
+
+                @if (Model.Result.NextSteps.Any())
+                {
+                    <h3>Next Steps</h3>
+                    <ul>
+                        @foreach (var step in Model.Result.NextSteps)
+                        {
+                            <li>@step</li>
+                        }
+                    </ul>
+                }
+            </div>
+        }
+
+    </div>
+</section>
