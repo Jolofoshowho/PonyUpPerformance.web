@@ -1,0 +1,21 @@
+@page
+@model PonyUpPerformance.Web.Pages.OwnerLoginModel
+@{
+    ViewData["Title"] = "Owner Login";
+}
+
+<h1>Owner Login</h1>
+
+<form method="post">
+    @Html.AntiForgeryToken()
+
+    <input asp-for="Input.Email" placeholder="Email" class="form-control mb-3" />
+    <input asp-for="Input.OwnerToken" placeholder="Owner Token" class="form-control mb-3" />
+
+    <button type="submit" class="btn btn-danger">Log In</button>
+</form>
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <p class="text-danger mt-3">@Model.ErrorMessage</p>
+}
