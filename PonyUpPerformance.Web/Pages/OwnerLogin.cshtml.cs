@@ -1,23 +1,17 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using PonyUpPerformance.Web.Models;
+using System.Security.Claims;
 
 namespace PonyUpPerformance.Web.Pages
 {
     public class OwnerLoginModel : PageModel
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IConfiguration _config;
 
-        public OwnerLoginModel(
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager,
-            IConfiguration config)
+        public OwnerLoginModel(IConfiguration config)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
             _config = config;
         }
 
@@ -53,30 +47,20 @@ namespace PonyUpPerformance.Web.Pages
                 return Page();
             }
 
-            ApplicationUser? user = await _userManager.FindByEmailAsync(ownerEmail);
-
-            if (user == null)
+            var claims = new List<Claim>
             {
-                user = new ApplicationUser
-                {
-                    UserName = ownerEmail,
-                    Email = ownerEmail,
-                    EmailConfirmed = true
-                };
+                new Claim(ClaimTypes.Name, "Owner"),
+                new Claim(ClaimTypes.Email, ownerEmail),
+                new Claim(ClaimTypes.NameIdentifier, ownerEmail)
+            };
 
-                IdentityResult result = await _userManager.CreateAsync(user);
+            var identity = new ClaimsIdentity(
+                claims,
+                IdentityConstants.ApplicationScheme);
 
-                if (!result.Succeeded)
-                {
-                    ErrorMessage = "Could not create owner account.";
-                    return Page();
-                }
-            }
-
-            user.EmailConfirmed = true;
-            await _userManager.UpdateAsync(user);
-
-            await _signInManager.SignInAsync(user, isPersistent: true);
+            await HttpContext.SignInAsync(
+                IdentityConstants.ApplicationScheme,
+                new ClaimsPrincipal(identity));
 
             return Redirect("/");
         }
