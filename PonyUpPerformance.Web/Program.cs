@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PonyUpPerformance.Web.Data;
 using PonyUpPerformance.Web.Models;
+using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
