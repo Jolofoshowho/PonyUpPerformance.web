@@ -287,14 +287,14 @@ a {
 
 .decision-card {
     grid-column: span 2;
-    min-height: 280px;
-    padding: 32px 28px;
+    min-height: 300px;
+    padding: 34px 28px;
     display: block;
     text-align: center;
     color: #ffffff;
     text-decoration: none;
     background: linear-gradient(180deg, rgba(24,24,24,.88), rgba(7,7,7,.96));
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255,255,255,.38);
     border-radius: 8px;
     box-shadow:
         inset 0 0 45px rgba(255,255,255,.035),
@@ -307,6 +307,14 @@ a {
 
 .upgrade-card {
     grid-column: 4 / span 2;
+}
+
+.decision-card:hover {
+    color: #ffffff;
+    border-color: #ff3131;
+    box-shadow:
+        0 0 28px rgba(255,49,49,.45),
+        inset 0 0 45px rgba(255,255,255,.035);
 }
 
 .decision-card h3 {
@@ -328,19 +336,54 @@ a {
     margin: 0;
 }
 
+/* ICONS */
+
+.icon-holder {
+    width: 86px;
+    height: 86px;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,.28);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #1c1c1c, #070707);
+    box-shadow:
+        inset 0 2px 0 rgba(255,255,255,.14),
+        0 7px 0 #030303,
+        0 0 18px rgba(255,49,49,.4);
+    transition: .12s;
+}
+
+.decision-card:hover .icon-holder {
+    transform: translateY(5px);
+    box-shadow:
+        inset 0 2px 0 rgba(255,255,255,.1),
+        0 2px 0 #030303,
+        0 0 24px rgba(255,49,49,.7);
+}
+
+.red-svg {
+    width: 52px;
+    height: 52px;
+    color: #ff3131;
+    filter: drop-shadow(0 0 8px rgba(255,49,49,.75));
+}
+
 /* RESOURCES */
 
 .resource-grid {
     max-width: 1280px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 26px;
+    align-items: stretch;
 }
 
 .resource-card {
-    min-height: 335px;
-    padding: 28px 28px;
+    min-height: 345px;
+    padding: 28px;
     background: linear-gradient(180deg, rgba(24,24,24,.88), rgba(7,7,7,.96));
     border: 1px solid rgba(255,255,255,.3);
     border-radius: 8px;
@@ -349,8 +392,17 @@ a {
         0 14px 28px rgba(0,0,0,.65);
 }
 
+.resource-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .resource-card h3 {
-    color: var(--red);
+    color: #ff3131;
     text-align: center;
     font-size: 1.55rem;
     font-weight: 1000;
@@ -368,7 +420,7 @@ a {
 }
 
 .resource-card li {
-    color: var(--red);
+    color: #ff3131;
     margin-bottom: 9px;
 }
 
@@ -386,6 +438,19 @@ a {
     font-size: .9rem;
     margin: 28px auto 0;
     max-width: 1100px;
+}
+
+@media (max-width: 1200px) {
+    .decision-grid,
+    .resource-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .decision-card,
+    .trade-card,
+    .upgrade-card {
+        grid-column: auto;
+    }
 }
 
 /* PRICING */
