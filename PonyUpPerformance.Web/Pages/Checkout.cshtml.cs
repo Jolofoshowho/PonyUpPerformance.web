@@ -1,37 +1,54 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using PonyUpPerformance.Web.Models;
-using PonyUpPerformance.Web.Services;
+using Stripe.Checkout;
 
 namespace PonyUpPerformance.Web.Pages
 {
     public class CheckoutModel : PageModel
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly StripeCheckoutService _stripeCheckoutService;
+        private readonly IConfiguration _configuration;
 
-        public CheckoutModel(
-            UserManager<ApplicationUser> userManager,
-            StripeCheckoutService stripeCheckoutService)
+        public CheckoutModel(IConfiguration configuration)
         {
-            _userManager = userManager;
-            _stripeCheckoutService = stripeCheckoutService;
+            _configuration = configuration;
         }
 
-        public async Task<IActionResult> OnGetAsync(string plan)
+        public IActionResult OnGet(string plan)
         {
-            ApplicationUser? user = await _userManager.GetUserAsync(User);
-
-            if (user == null)
+            var priceId = plan?.ToLower() switch
             {
-                return RedirectToPage("/Account/Login", new { area = "Identity" });
+                "quickpack" => _configuration["Stripe:QuickPackPriceId"],
+                "pro" => _configuration["Stripe:ProPriceId"],
+                "unlimited" => _configuration["Stripe:UnlimitedPriceId"],
+                _ => null
+            };
+
+            if (string.IsNullOrWhiteSpace(priceId))
+            {
+                return RedirectToPage("/Pricing");
             }
 
-            string baseUrl = $"{Request.Scheme}://{Request.Host}";
-            string checkoutUrl = await _stripeCheckoutService.CreateCheckoutUrlAsync(user, plan, baseUrl);
+            var domain = $"{Request.Scheme}://{Request.Host}";
 
-            return Redirect(checkoutUrl);
+            var options = new SessionCreateOptions
+            {
+                Mode = plan?.ToLower() == "quickpack" ? "payment" : "subscription",
+                SuccessUrl = $"{domain}/CheckoutSuccess",
+                CancelUrl = $"{domain}/Pricing",
+                LineItems = new List<SessionLineItemOptions>
+                {
+                    new SessionLineItemOptions
+                    {
+                        Price = priceId,
+                        Quantity = 1
+                    }
+                }
+            };
+
+            var service = new SessionService();
+            var session = service.Create(options);
+
+            return Redirect(session.Url);
         }
     }
 }
