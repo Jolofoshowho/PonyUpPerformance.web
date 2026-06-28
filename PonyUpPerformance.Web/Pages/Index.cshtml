@@ -1,224 +1,155 @@
 @page
 @model IndexModel
-
 @{
     ViewData["Title"] = "Home";
 }
 
 <section class="ponyup-hero">
-    <div class="hero-overlay">
-        <div class="hero-content">
+    <div class="hero-copy">
+        <img src="~/images/ponyup-wordlogo.png" alt="PonyUp Performance" class="hero-wordmark" />
 
-            <img src="~/images/ponyup-wordlogo.png"
-                 alt="PonyUp Performance"
-                 class="hero-word-logo" />
+        <h2 class="hero-slogan">
+            ALL CARS. ALL BUILDS.<br />
+            ALL BUSINESS.
+        </h2>
 
-            <h1 class="hero-main-slogan">
-                ALL CARS. ALL BUILDS. ALL BUSINESS.
-            </h1>
+        <h1>KNOW BEFORE YOU SPEND.</h1>
 
-            <h2 class="hero-sub-slogan">
-                Know Before You Spend.
-            </h2>
+        <p>
+            Repair it. Buy it. Sell it. Trade it. Upgrade it. PonyUp helps you decide
+            if the money makes sense before you commit.
+        </p>
 
-            <p class="hero-support-text">
-                Repair it. Buy it. Sell it. Trade it. Upgrade it.
-                PonyUp helps you decide if the money makes sense before you spend it.
-            </p>
-
-            <div class="hero-buttons">
-                <a class="btn btn-danger btn-lg" href="/Repair">Start Free Analysis</a>
-                <a class="btn btn-outline-light btn-lg" href="#pricing">See Pricing</a>
-                <a class="btn btn-outline-light btn-lg" href="#resources">Explore Resources</a>
-            </div>
-
+        <div class="hero-buttons">
+            <a asp-page="/RepairAnalyzer" class="btn-red">Start Free Analysis</a>
+            <a asp-page="/Pricing" class="btn-dark">View Pricing</a>
         </div>
     </div>
 </section>
 
-<section class="decision-section py-5">
-    <div class="container text-center">
+<section class="page-section decision-section">
+    <h2 class="section-title">Decision Center</h2>
+    <p class="section-subtitle">What are you deciding?</p>
 
-        <h2 class="section-title">What Are You Trying To Decide?</h2>
-        <p class="section-subtitle">
-            Choose the money decision in front of you.
-        </p>
+    <div class="decision-grid">
+        <a class="decision-card" asp-page="/RepairAnalyzer">
+            <div class="press-icon">🔧</div>
+            <h3>Repair</h3>
+            <p>Should you repair it, get a second opinion, sell it, or walk away?</p>
+        </a>
 
-        <div class="row g-4 mt-4">
+        <a class="decision-card" asp-page="/Buy">
+            <div class="press-icon">🛒</div>
+            <h3>Buy</h3>
+            <p>Is the vehicle worth the asking price?</p>
+        </a>
 
-            <div class="col-md">
-                <a class="decision-card" href="/Repair">
-                    <h3>Repair</h3>
-                    <p>Should you fix it or walk away?</p>
-                </a>
-            </div>
+        <a class="decision-card" asp-page="/Sell">
+            <div class="press-icon">🏷️</div>
+            <h3>Sell</h3>
+            <p>Should you sell now, repair first, or hold onto it?</p>
+        </a>
 
-            <div class="col-md">
-                <a class="decision-card" href="/Buy">
-                    <h3>Buy</h3>
-                    <p>Is the vehicle worth the asking price?</p>
-                </a>
-            </div>
+        <a class="decision-card trade-card" asp-page="/Trade">
+            <div class="press-icon">↔️</div>
+            <h3>Trade</h3>
+            <p>Trade it, sell private, repair first, or negotiate harder?</p>
+        </a>
 
-            <div class="col-md">
-                <a class="decision-card" href="/Sell">
-                    <h3>Sell</h3>
-                    <p>Should you sell now or hold it?</p>
-                </a>
-            </div>
-
-            <div class="col-md">
-                <a class="decision-card" href="/Trade">
-                    <h3>Trade</h3>
-                    <p>Does the trade make financial sense?</p>
-                </a>
-            </div>
-
-            <div class="col-md">
-                <a class="decision-card" href="/Upgrade">
-                    <h3>Upgrade</h3>
-                    <p>Is the upgrade worth the money?</p>
-                </a>
-            </div>
-
-        </div>
+        <a class="decision-card upgrade-card" asp-page="/Upgrade">
+            <div class="press-icon">📈</div>
+            <h3>Upgrade</h3>
+            <p>Is the upgrade worth the money, or are you just lighting cash on fire?</p>
+        </a>
     </div>
 </section>
 
-<section id="pricing" class="ponyup-pricing-preview py-5">
-    <div class="container">
+<section class="page-section resources-section">
+    <h2 class="section-title">Next Step Resources</h2>
+    <p class="section-subtitle">For users who already know what they want or need.</p>
 
-        <div class="text-center mb-5">
-            <h2 class="section-title">Pricing</h2>
-            <p class="section-subtitle">
-                Start free. Upgrade only when PonyUp proves useful.
-            </p>
+    <div class="resource-grid">
+        <div class="resource-card">
+            <div class="press-icon small">⚙️</div>
+            <h3>Parts</h3>
+            <ul>
+                <li><a href="https://www.rockauto.com/" target="_blank">RockAuto</a></li>
+                <li><a href="https://www.partsgeek.com/" target="_blank">Parts Geek</a></li>
+                <li><a href="https://www.napaonline.com/" target="_blank">NAPA</a></li>
+                <li><a href="https://shop.advanceautoparts.com/" target="_blank">Advance Auto Parts</a></li>
+                <li><a href="https://www.autozone.com/" target="_blank">AutoZone</a></li>
+                <li><a href="https://www.oreillyauto.com/" target="_blank">O'Reilly Auto Parts</a></li>
+            </ul>
         </div>
 
-        <div class="row g-4">
+        <div class="resource-card">
+            <div class="press-icon small">💲</div>
+            <h3>Vehicle Value</h3>
+            <ul>
+                <li><a href="https://www.kbb.com/" target="_blank">Kelley Blue Book</a></li>
+                <li><a href="https://www.edmunds.com/" target="_blank">Edmunds</a></li>
+                <li><a href="https://www.jdpower.com/cars" target="_blank">J.D. Power</a></li>
+                <li><a href="https://www.nada.org/" target="_blank">NADA</a></li>
+            </ul>
+        </div>
 
-            <div class="col-md-3">
-                <a href="/Repair"
-                   class="pricing-card pricing-home-card text-decoration-none">
-                    <h4>FREE</h4>
-                    <p>1 Full Analysis</p>
-                    <strong>$0</strong>
-                    <span class="btn btn-outline-light mt-3">Start Free</span>
-                </a>
-            </div>
+        <div class="resource-card">
+            <div class="press-icon small">🏁</div>
+            <h3>Performance</h3>
+            <ul>
+                <li><a href="https://www.summitracing.com/" target="_blank">Summit Racing</a></li>
+                <li><a href="https://www.jegs.com/" target="_blank">JEGS</a></li>
+                <li><a href="https://zzperformance.com/" target="_blank">ZZPerformance</a></li>
+                <li><a href="https://www.holley.com/" target="_blank">Holley</a></li>
+                <li><a href="https://www.roughcountry.com/" target="_blank">Rough Country</a></li>
+                <li><a href="https://www.lsxceleration.com/" target="_blank">LSXceleration</a></li>
+            </ul>
+        </div>
 
-            <div class="col-md-3">
-                <form method="post" action="/Checkout" class="h-100">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="plan" value="quick" />
-
-                    <button type="submit"
-                            class="pricing-card pricing-home-card pricing-button-card featured">
-                        <h4>QUICK PACK</h4>
-                        <p>5 Analyses</p>
-                        <strong>$5.99</strong>
-                        <span class="btn btn-danger mt-3">Buy Quick Pack</span>
-                    </button>
-                </form>
-            </div>
-
-            <div class="col-md-3">
-                <form method="post" action="/Checkout" class="h-100">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="plan" value="pro" />
-
-                    <button type="submit"
-                            class="pricing-card pricing-home-card pricing-button-card">
-                        <h4>PRO</h4>
-                        <p>10 Analyses / Month</p>
-                        <strong>$9.99/mo</strong>
-                        <span class="btn btn-outline-light mt-3">Subscribe</span>
-                    </button>
-                </form>
-            </div>
-
-            <div class="col-md-3">
-                <form method="post" action="/Checkout" class="h-100">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="plan" value="unlimited" />
-
-                    <button type="submit"
-                            class="pricing-card pricing-home-card pricing-button-card">
-                        <h4>UNLIMITED</h4>
-                        <p>Unlimited Analyses</p>
-                        <strong>$19.99/mo</strong>
-                        <span class="btn btn-outline-light mt-3">Go Unlimited</span>
-                    </button>
-                </form>
-            </div>
-
+        <div class="resource-card">
+            <div class="press-icon small">🏪</div>
+            <h3>Repair Shops</h3>
+            <ul>
+                <li><a href="https://www.google.com/maps/search/auto+repair+near+me" target="_blank">Google Maps</a></li>
+                <li><a href="https://repairpal.com/" target="_blank">RepairPal</a></li>
+                <li><a href="https://www.carfax.com/Service/" target="_blank">CARFAX Service Network</a></li>
+                <li><a href="https://www.aaa.com/autorepair/" target="_blank">AAA Approved Repair</a></li>
+            </ul>
         </div>
     </div>
+
+    <p class="resource-disclaimer">
+        Resource links are provided for convenience. PonyUp Performance is not affiliated with these companies unless specifically stated.
+    </p>
 </section>
 
-<section id="resources" class="resources-section py-5">
-    <div class="container text-center">
+<section class="page-section pricing-section">
+    <h2 class="section-title">Pricing</h2>
+    <p class="section-subtitle">Start free. Upgrade only when PonyUp proves useful.</p>
 
-        <h2 class="section-title">Resources</h2>
-        <p class="section-subtitle">
-            Useful links for parts, valuation, performance upgrades, and shop searches.
-        </p>
-
-        <div class="row g-4 mt-4">
-
-            <div class="col-md-3">
-                <a class="resource-card" href="https://www.rockauto.com/" target="_blank">
-                    RockAuto
-                </a>
-            </div>
-
-            <div class="col-md-3">
-                <a class="resource-card" href="https://www.autozone.com/" target="_blank">
-                    AutoZone
-                </a>
-            </div>
-
-            <div class="col-md-3">
-                <a class="resource-card" href="https://www.oreillyauto.com/" target="_blank">
-                    O'Reilly
-                </a>
-            </div>
-
-            <div class="col-md-3">
-                <a class="resource-card" href="https://www.napaonline.com/" target="_blank">
-                    NAPA
-                </a>
-            </div>
-
-            <div class="col-md-3">
-                <a class="resource-card" href="https://shop.advanceautoparts.com/" target="_blank">
-                    Advance Auto
-                </a>
-            </div>
-
-            <div class="col-md-3">
-                <a class="resource-card" href="https://www.roughcountry.com/" target="_blank">
-                    Rough Country
-                </a>
-            </div>
-
-            <div class="col-md-3">
-                <a class="resource-card" href="https://zzperformance.com/" target="_blank">
-                    ZZPerformance
-                </a>
-            </div>
-
-            <div class="col-md-3">
-                <a class="resource-card" href="https://www.kbb.com/" target="_blank">
-                    Kelley Blue Book
-                </a>
-            </div>
-
+    <div class="pricing-grid">
+        <div class="price-card">
+            <h3>Free</h3>
+            <p>1 Full Analysis</p>
+            <strong>$0</strong>
         </div>
 
-        <p class="resource-disclaimer mt-4">
-            Resource links are provided for convenience. PonyUp Performance is not affiliated with these companies unless specifically stated.
-        </p>
+        <div class="price-card featured">
+            <h3>Quick Pack</h3>
+            <p>5 Analyses</p>
+            <strong>$5.99</strong>
+        </div>
 
+        <div class="price-card">
+            <h3>Pro</h3>
+            <p>10 Analyses / Month</p>
+            <strong>$9.99<span>/mo</span></strong>
+        </div>
+
+        <div class="price-card">
+            <h3>Unlimited</h3>
+            <p>Unlimited Analyses</p>
+            <strong>$19.99<span>/mo</span></strong>
+        </div>
     </div>
 </section>
