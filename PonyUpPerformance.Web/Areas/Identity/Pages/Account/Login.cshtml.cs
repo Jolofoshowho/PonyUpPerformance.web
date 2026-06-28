@@ -10,15 +10,20 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account
     public class LoginModel : PageModel
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly ILogger<LoginModel> _logger;
-
+private readonly UserManager<ApplicationUser> _userManager;
+private readonly IConfiguration _configuration;
+private readonly ILogger<LoginModel> _logger;
         public LoginModel(
-            SignInManager<ApplicationUser> signInManager,
-            ILogger<LoginModel> logger)
-        {
-            _signInManager = signInManager;
-            _logger = logger;
-        }
+    SignInManager<ApplicationUser> signInManager,
+    UserManager<ApplicationUser> userManager,
+    IConfiguration configuration,
+    ILogger<LoginModel> logger)
+{
+    _signInManager = signInManager;
+    _userManager = userManager;
+    _configuration = configuration;
+    _logger = logger;
+}
 
         [BindProperty]
         public InputModel Input { get; set; } = new();
