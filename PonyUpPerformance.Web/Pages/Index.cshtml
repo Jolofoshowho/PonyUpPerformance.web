@@ -27,40 +27,122 @@
     </div>
 </section>
 
-<section class="page-section decision-section">
-    <h2 class="section-title">Decision Center</h2>
+<section class="decision-section">
+
+    <h2 class="section-title">DECISION CENTER</h2>
     <p class="section-subtitle">What are you deciding?</p>
 
     <div class="decision-grid">
-        <a class="decision-card" asp-page="/RepairAnalyzer">
-            <div class="press-icon repair-icon""</div>
-            <h3>Repair</h3>
+
+        <a asp-page="/Repair" class="decision-card">
+            <div class="icon-holder">
+                <svg viewBox="0 0 24 24" class="red-svg">
+                    <path d="M22 19l-6.3-6.3a5 5 0 01-6.4-6.4L12 9l3-3-2-2-3 3-2.7-2.7a5 5 0 006.4 6.4L19 22z"
+                          fill="none" stroke="currentColor" stroke-width="2"/>
+                </svg>
+            </div>
+            <h3>REPAIR</h3>
             <p>Should you repair it, get a second opinion, sell it, or walk away?</p>
         </a>
 
-        <a class="decision-card" asp-page="/Buy">
-            <div class="press-icon buy-icon""</div>
-            <h3>Buy</h3>
+        <a asp-page="/Buy" class="decision-card">
+            <div class="icon-holder">
+                <svg viewBox="0 0 24 24" class="red-svg">
+                    <circle cx="9" cy="20" r="1.5" fill="currentColor"/>
+                    <circle cx="18" cy="20" r="1.5" fill="currentColor"/>
+                    <path d="M2 3h3l2 11h11l2-8H6"
+                          fill="none" stroke="currentColor" stroke-width="2"/>
+                </svg>
+            </div>
+            <h3>BUY</h3>
             <p>Is the vehicle worth the asking price?</p>
         </a>
 
-        <a class="decision-card" asp-page="/Sell">
-            <div class="press-icon sell-icon""</div>
-            <h3>Sell</h3>
+        <a asp-page="/Sell" class="decision-card">
+            <div class="icon-holder">
+                <svg viewBox="0 0 24 24" class="red-svg">
+                    <path d="M20 10L11 1 2 10l9 9z"
+                          fill="none" stroke="currentColor" stroke-width="2"/>
+                    <circle cx="8" cy="8" r="1.2" fill="currentColor"/>
+                </svg>
+            </div>
+            <h3>SELL</h3>
             <p>Should you sell now, repair first, or hold onto it?</p>
         </a>
 
-        <a class="decision-card trade-card" asp-page="/Trade">
-            <div class="press-icon trade-icon""</div>
-            <h3>Trade</h3>
+        <a asp-page="/Trade" class="decision-card">
+            <div class="icon-holder">
+                <svg viewBox="0 0 24 24" class="red-svg">
+                    <path d="M3 7h14M13 3l4 4-4 4"
+                          fill="none" stroke="currentColor" stroke-width="2"/>
+                    <path d="M21 17H7M11 13l-4 4 4 4"
+                          fill="none" stroke="currentColor" stroke-width="2"/>
+                </svg>
+            </div>
+            <h3>TRADE</h3>
             <p>Trade it, sell private, repair first, or negotiate harder?</p>
         </a>
 
-        <a class="decision-card upgrade-card" asp-page="/Upgrade">
-            <div class="press-icon upgrade-icon""</div>
-            <h3>Upgrade</h3>
+        <a asp-page="/Upgrade" class="decision-card">
+            <div class="icon-holder">
+                <svg viewBox="0 0 24 24" class="red-svg">
+                    <path d="M4 20V10M10 20V6M16 20V12M22 20V2"
+                          fill="none" stroke="currentColor" stroke-width="2"/>
+                </svg>
+            </div>
+            <h3>UPGRADE</h3>
             <p>Is the upgrade worth the money, or are you just lighting cash on fire?</p>
         </a>
+
+    </div>
+</section>
+
+<section class="resources-section">
+
+    <h2 class="section-title">NEXT STEP RESOURCES</h2>
+    <p class="section-subtitle">For users who already know what they want or need.</p>
+
+    <div class="resources-grid">
+
+        <div class="resource-card">
+            <svg viewBox="0 0 24 24" class="resource-svg">
+                <circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 2v4M12 18v4M2 12h4M18 12h4"
+                      stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <h3>PARTS</h3>
+        </div>
+
+        <div class="resource-card">
+            <svg viewBox="0 0 24 24" class="resource-svg">
+                <circle cx="12" cy="12" r="9"
+                        fill="none" stroke="currentColor" stroke-width="2"/>
+                <text x="12" y="16"
+                      text-anchor="middle"
+                      font-size="10"
+                      fill="currentColor">$</text>
+            </svg>
+            <h3>VEHICLE VALUE</h3>
+        </div>
+
+        <div class="resource-card">
+            <svg viewBox="0 0 24 24" class="resource-svg">
+                <circle cx="12" cy="12" r="9"
+                        fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 12l5-3"
+                      stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <h3>PERFORMANCE</h3>
+        </div>
+
+        <div class="resource-card">
+            <svg viewBox="0 0 24 24" class="resource-svg">
+                <path d="M3 10l9-7 9 7v10H3z"
+                      fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <h3>REPAIR SHOPS</h3>
+        </div>
+
     </div>
 </section>
 
