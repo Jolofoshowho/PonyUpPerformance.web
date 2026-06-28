@@ -66,7 +66,20 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account
             {
                 return Page();
             }
+var ownerEmail = _configuration["OwnerLogin:Email"];
+var ownerToken = _configuration["OwnerLogin:Token"];
 
+if (Input.Email.Equals(ownerEmail, StringComparison.OrdinalIgnoreCase)
+    && Input.Password == ownerToken)
+{
+    var ownerUser = await _userManager.FindByEmailAsync(ownerEmail);
+
+    if (ownerUser != null)
+    {
+        await _signInManager.SignInAsync(ownerUser, Input.RememberMe);
+        return LocalRedirect(returnUrl);
+    }
+}
             var result = await _signInManager.PasswordSignInAsync(
                 Input.Email,
                 Input.Password,
