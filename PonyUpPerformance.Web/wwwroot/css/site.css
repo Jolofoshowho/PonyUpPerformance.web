@@ -557,256 +557,33 @@ hr {
         letter-spacing: .1rem;
     }
 }
-/* RED LINE ICONS - NO EMOJIS */
-
-.press-icon,
-.resource-icon {
-    position: relative;
-    color: var(--red);
-    background: transparent;
-    border: none;
-    box-shadow: none;
+.icon-holder{
+    width:80px;
+    height:80px;
+    margin:0 auto 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid rgba(255,255,255,.2);
+    border-radius:12px;
+    background:#111;
+    box-shadow:0 5px 0 #050505;
+    transition:.15s;
 }
 
-.press-icon::before,
-.press-icon::after,
-.resource-icon::before,
-.resource-icon::after {
-    content: "";
-    position: absolute;
-    box-sizing: border-box;
+.decision-card:hover .icon-holder{
+    transform:translateY(4px);
+    box-shadow:0 1px 0 #050505;
 }
 
-/* decision icons stay depressible/buttons */
-.press-icon {
-    width: 92px;
-    height: 92px;
-    margin: 0 auto 18px;
-    border-radius: 16px;
-    background: linear-gradient(180deg, #171717, #070707);
-    border: 1px solid rgba(255,49,49,.75);
-    box-shadow:
-        inset 0 2px 0 rgba(255,255,255,.12),
-        0 7px 0 #050505,
-        0 0 18px rgba(255,49,49,.45);
+.red-svg,
+.resource-svg{
+    width:48px;
+    height:48px;
+    color:#ff3131;
+    filter:drop-shadow(0 0 8px rgba(255,49,49,.7));
 }
 
-.decision-card:hover .press-icon {
-    transform: translateY(5px);
-    box-shadow:
-        inset 0 2px 0 rgba(255,255,255,.1),
-        0 2px 0 #050505,
-        0 0 24px rgba(255,49,49,.7);
-}
-
-/* resource icons are NOT buttons */
-.resource-icon {
-    width: 70px;
-    height: 70px;
-    margin: 0 auto 14px;
-}
-
-/* REPAIR - wrench */
-.repair-icon::before {
-    width: 56px;
-    height: 14px;
-    border: 4px solid var(--red);
-    border-left: none;
-    border-radius: 0 12px 12px 0;
-    transform: rotate(-45deg);
-    top: 40px;
-    left: 18px;
-    box-shadow: 0 0 8px rgba(255,49,49,.75);
-}
-
-.repair-icon::after {
-    width: 24px;
-    height: 24px;
-    border: 5px solid var(--red);
-    border-right-color: transparent;
-    border-radius: 50%;
-    transform: rotate(-45deg);
-    top: 18px;
-    left: 42px;
-    box-shadow: 0 0 8px rgba(255,49,49,.75);
-}
-
-/* BUY - cart */
-.buy-icon::before {
-    width: 46px;
-    height: 32px;
-    border: 4px solid var(--red);
-    border-top: none;
-    transform: skewX(-10deg);
-    top: 28px;
-    left: 22px;
-    box-shadow: 0 0 8px rgba(255,49,49,.75);
-}
-
-.buy-icon::after {
-    width: 56px;
-    height: 42px;
-    border-bottom: 4px solid var(--red);
-    border-left: 4px solid var(--red);
-    top: 18px;
-    left: 16px;
-    box-shadow:
-        10px 47px 0 -5px var(--red),
-        35px 47px 0 -5px var(--red),
-        0 0 8px rgba(255,49,49,.75);
-}
-
-/* SELL - tag */
-.sell-icon::before {
-    width: 48px;
-    height: 34px;
-    border: 4px solid var(--red);
-    transform: rotate(-35deg);
-    top: 28px;
-    left: 22px;
-    border-radius: 4px 4px 4px 12px;
-    box-shadow: 0 0 8px rgba(255,49,49,.75);
-}
-
-.sell-icon::after {
-    width: 8px;
-    height: 8px;
-    border: 3px solid var(--red);
-    border-radius: 50%;
-    top: 31px;
-    left: 55px;
-}
-
-/* TRADE - arrows */
-.trade-icon::before {
-    width: 54px;
-    height: 18px;
-    border-top: 4px solid var(--red);
-    border-right: 4px solid var(--red);
-    transform: skewX(-25deg);
-    top: 28px;
-    left: 20px;
-    box-shadow: 0 0 8px rgba(255,49,49,.75);
-}
-
-.trade-icon::after {
-    width: 54px;
-    height: 18px;
-    border-bottom: 4px solid var(--red);
-    border-left: 4px solid var(--red);
-    transform: skewX(-25deg);
-    top: 48px;
-    left: 20px;
-    box-shadow: 0 0 8px rgba(255,49,49,.75);
-}
-
-/* UPGRADE - chart */
-.upgrade-icon::before {
-    width: 50px;
-    height: 42px;
-    border-left: 4px solid var(--red);
-    border-bottom: 4px solid var(--red);
-    top: 28px;
-    left: 22px;
-    box-shadow:
-        12px -2px 0 -3px var(--red),
-        25px -13px 0 -3px var(--red),
-        38px -25px 0 -3px var(--red),
-        0 0 8px rgba(255,49,49,.75);
-}
-
-.upgrade-icon::after {
-    width: 34px;
-    height: 34px;
-    border-top: 4px solid var(--red);
-    border-right: 4px solid var(--red);
-    transform: rotate(-38deg);
-    top: 19px;
-    left: 45px;
-}
-
-/* RESOURCE: PARTS - gear */
-.parts-icon::before {
-    width: 44px;
-    height: 44px;
-    border: 5px solid var(--red);
-    border-radius: 50%;
-    top: 13px;
-    left: 13px;
-    box-shadow: 0 0 8px rgba(255,49,49,.75);
-}
-
-.parts-icon::after {
-    width: 16px;
-    height: 16px;
-    border: 4px solid var(--red);
-    border-radius: 50%;
-    top: 27px;
-    left: 27px;
-}
-
-/* RESOURCE: VALUE - dollar circle */
-.value-icon::before {
-    width: 50px;
-    height: 50px;
-    border: 5px solid var(--red);
-    border-radius: 50%;
-    top: 10px;
-    left: 10px;
-    box-shadow: 0 0 8px rgba(255,49,49,.75);
-}
-
-.value-icon::after {
-    content: "$";
-    color: var(--red);
-    font-size: 34px;
-    font-weight: 1000;
-    line-height: 70px;
-    text-align: center;
-    width: 70px;
-    height: 70px;
-    top: 0;
-    left: 0;
-    text-shadow: 0 0 8px rgba(255,49,49,.75);
-}
-
-/* RESOURCE: PERFORMANCE - turbo */
-.performance-icon::before {
-    width: 52px;
-    height: 52px;
-    border: 5px solid var(--red);
-    border-radius: 50%;
-    top: 9px;
-    left: 9px;
-    box-shadow: 0 0 8px rgba(255,49,49,.75);
-}
-
-.performance-icon::after {
-    width: 28px;
-    height: 4px;
-    background: var(--red);
-    top: 35px;
-    left: 34px;
-    transform: rotate(-35deg);
-    box-shadow: 0 0 8px rgba(255,49,49,.75);
-}
-
-/* RESOURCE: SHOPS - building */
-.shops-icon::before {
-    width: 50px;
-    height: 36px;
-    border: 5px solid var(--red);
-    top: 26px;
-    left: 10px;
-    box-shadow: 0 0 8px rgba(255,49,49,.75);
-}
-
-.shops-icon::after {
-    width: 58px;
-    height: 20px;
-    border: 5px solid var(--red);
-    border-bottom: none;
-    top: 10px;
-    left: 6px;
-    transform: skewX(-15deg);
+.resource-card .resource-svg{
+    margin-bottom:15px;
 }
