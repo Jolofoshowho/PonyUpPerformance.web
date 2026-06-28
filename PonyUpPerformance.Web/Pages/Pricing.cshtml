@@ -5,9 +5,37 @@
     ViewData["Title"] = "Pricing";
 }
 
-<h1>Pricing Test</h1>
+<section class="page-section pricing-section">
+    <h2 class="section-title">PRICING</h2>
+    <p class="section-subtitle">Start free. Upgrade only when PonyUp proves useful.</p>
 
-<form method="post" action="/Checkout">
-    <input type="hidden" name="plan" value="quick" />
-    <button type="submit">BUY QUICK PACK</button>
-</form>
+    <div class="pricing-grid">
+        <div class="price-card">
+            <h3>FREE</h3>
+            <p>1 Full Analysis</p>
+            <strong>$0</strong>
+            <a class="btn-dark" asp-page="/RepairAnalyzer">Start Free</a>
+        </div>
+
+        <div class="price-card featured">
+            <h3>QUICK PACK</h3>
+            <p>5 Analyses</p>
+            <strong>$5.99</strong>
+            <a class="btn-red" asp-page="/Checkout" asp-route-plan="quickpack">Buy Quick Pack</a>
+        </div>
+
+        <div class="price-card">
+            <h3>PRO</h3>
+            <p>10 Analyses / Month</p>
+            <strong>$9.99<span>/mo</span></strong>
+            <a class="btn-dark" asp-page="/Checkout" asp-route-plan="pro">Subscribe</a>
+        </div>
+
+        <div class="price-card">
+            <h3>UNLIMITED</h3>
+            <p>Unlimited Analyses</p>
+            <strong>$19.99<span>/mo</span></strong>
+            <a class="btn-dark" asp-page="/Checkout" asp-route-plan="unlimited">Go Unlimited</a>
+        </div>
+    </div>
+</section>
