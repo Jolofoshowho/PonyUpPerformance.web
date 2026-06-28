@@ -1,54 +1,43 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Stripe.Checkout;
+using PonyUpPerformance.Web.Models;
+using PonyUpPerformance.Web.Services;
 
 namespace PonyUpPerformance.Web.Pages
 {
     public class CheckoutModel : PageModel
     {
-        private readonly IConfiguration _configuration;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly StripeCheckoutService _stripeCheckoutService;
 
-        public CheckoutModel(IConfiguration configuration)
+        public CheckoutModel(
+            UserManager<ApplicationUser> userManager,
+            StripeCheckoutService stripeCheckoutService)
         {
-            _configuration = configuration;
+            _userManager = userManager;
+            _stripeCheckoutService = stripeCheckoutService;
         }
 
-        public IActionResult OnGet(string plan)
+        public async Task<IActionResult> OnGetAsync(string plan)
         {
-            var priceId = plan?.ToLower() switch
-            {
-                "quickpack" => _configuration["Stripe:QuickPackPriceId"],
-                "pro" => _configuration["Stripe:ProPriceId"],
-                "unlimited" => _configuration["Stripe:UnlimitedPriceId"],
-                _ => null
-            };
-
-            if (string.IsNullOrWhiteSpace(priceId))
+            if (string.IsNullOrWhiteSpace(plan))
             {
                 return RedirectToPage("/Pricing");
             }
 
-            var domain = $"{Request.Scheme}://{Request.Host}";
+            var user = await _userManager.GetUserAsync(User);
 
-            var options = new SessionCreateOptions
+            if (user == null)
             {
-                Mode = plan?.ToLower() == "quickpack" ? "payment" : "subscription",
-                SuccessUrl = $"{domain}/CheckoutSuccess",
-                CancelUrl = $"{domain}/Pricing",
-                LineItems = new List<SessionLineItemOptions>
-                {
-                    new SessionLineItemOptions
-                    {
-                        Price = priceId,
-                        Quantity = 1
-                    }
-                }
-            };
+                return RedirectToPage("/Account/Login", new { area = "Identity" });
+            }
 
-            var service = new SessionService();
-            var session = service.Create(options);
+            string baseUrl = $"{Request.Scheme}://{Request.Host}";
 
-            return Redirect(session.Url);
+            string checkoutUrl = await _stripeCheckoutService.CreateCheckoutUrlAsync(user, plan, baseUrl);
+
+            return Redirect(checkoutUrl);
         }
     }
 }
