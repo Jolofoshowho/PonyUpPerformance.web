@@ -1,20 +1,155 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-
-namespace PonyUpPerformance.Web.Pages
-{
-    public class IndexModel : PageModel
-    {
-        private readonly ILogger<IndexModel> _logger;
-
-        public IndexModel(ILogger<IndexModel> logger)
-        {
-            _logger = logger;
-        }
-
-        public void OnGet()
-        {
-
-        }
-    }
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home";
 }
+
+<section class="ponyup-hero">
+    <div class="hero-copy">
+        <img src="~/images/ponyup-wordlogo.png" alt="PonyUp Performance" class="hero-wordmark" />
+
+        <h2 class="hero-slogan">
+            ALL CARS. ALL BUILDS.<br />
+            ALL BUSINESS.
+        </h2>
+
+        <h1>KNOW BEFORE YOU SPEND.</h1>
+
+        <p>
+            Repair it. Buy it. Sell it. Trade it. Upgrade it. PonyUp helps you decide
+            if the money makes sense before you commit.
+        </p>
+
+        <div class="hero-buttons">
+            <a asp-page="/RepairAnalyzer" class="btn-red">Start Free Analysis</a>
+            <a asp-page="/Pricing" class="btn-dark">View Pricing</a>
+        </div>
+    </div>
+</section>
+
+<section class="page-section decision-section">
+    <h2 class="section-title">Decision Center</h2>
+    <p class="section-subtitle">What are you deciding?</p>
+
+    <div class="decision-grid">
+        <a class="decision-card" asp-page="/RepairAnalyzer">
+            <div class="press-icon repair-icon""</div>
+            <h3>Repair</h3>
+            <p>Should you repair it, get a second opinion, sell it, or walk away?</p>
+        </a>
+
+        <a class="decision-card" asp-page="/Buy">
+            <div class="press-icon buy-icon""</div>
+            <h3>Buy</h3>
+            <p>Is the vehicle worth the asking price?</p>
+        </a>
+
+        <a class="decision-card" asp-page="/Sell">
+            <div class="press-icon sell-icon""</div>
+            <h3>Sell</h3>
+            <p>Should you sell now, repair first, or hold onto it?</p>
+        </a>
+
+        <a class="decision-card trade-card" asp-page="/Trade">
+            <div class="press-icon trade-icon""</div>
+            <h3>Trade</h3>
+            <p>Trade it, sell private, repair first, or negotiate harder?</p>
+        </a>
+
+        <a class="decision-card upgrade-card" asp-page="/Upgrade">
+            <div class="press-icon upgrade-icon""</div>
+            <h3>Upgrade</h3>
+            <p>Is the upgrade worth the money, or are you just lighting cash on fire?</p>
+        </a>
+    </div>
+</section>
+
+<section class="page-section resources-section">
+    <h2 class="section-title">Next Step Resources</h2>
+    <p class="section-subtitle">For users who already know what they want or need.</p>
+
+    <div class="resource-grid">
+        <div class="resource-card">
+            <div class="resource-icon parts-icon""</div>
+            <h3>Parts</h3>
+            <ul>
+                <li><a href="https://www.rockauto.com/" target="_blank">RockAuto</a></li>
+                <li><a href="https://www.partsgeek.com/" target="_blank">Parts Geek</a></li>
+                <li><a href="https://www.napaonline.com/" target="_blank">NAPA</a></li>
+                <li><a href="https://shop.advanceautoparts.com/" target="_blank">Advance Auto Parts</a></li>
+                <li><a href="https://www.autozone.com/" target="_blank">AutoZone</a></li>
+                <li><a href="https://www.oreillyauto.com/" target="_blank">O'Reilly Auto Parts</a></li>
+            </ul>
+        </div>
+
+        <div class="resource-card">
+            <div class="resource-icon value-icon""</div>
+            <h3>Vehicle Value</h3>
+            <ul>
+                <li><a href="https://www.kbb.com/" target="_blank">Kelley Blue Book</a></li>
+                <li><a href="https://www.edmunds.com/" target="_blank">Edmunds</a></li>
+                <li><a href="https://www.jdpower.com/cars" target="_blank">J.D. Power</a></li>
+                <li><a href="https://www.nada.org/" target="_blank">NADA</a></li>
+            </ul>
+        </div>
+
+        <div class="resource-card">
+            <div class="resource-icon performance-icon""</div>
+            <h3>Performance</h3>
+            <ul>
+                <li><a href="https://www.summitracing.com/" target="_blank">Summit Racing</a></li>
+                <li><a href="https://www.jegs.com/" target="_blank">JEGS</a></li>
+                <li><a href="https://zzperformance.com/" target="_blank">ZZPerformance</a></li>
+                <li><a href="https://www.holley.com/" target="_blank">Holley</a></li>
+                <li><a href="https://www.roughcountry.com/" target="_blank">Rough Country</a></li>
+                <li><a href="https://www.lsxceleration.com/" target="_blank">LSXceleration</a></li>
+            </ul>
+        </div>
+
+        <div class="resource-card">
+            <div class="resource-icon shops-icon""</div>
+            <h3>Repair Shops</h3>
+            <ul>
+                <li><a href="https://www.google.com/maps/search/auto+repair+near+me" target="_blank">Google Maps</a></li>
+                <li><a href="https://repairpal.com/" target="_blank">RepairPal</a></li>
+                <li><a href="https://www.carfax.com/Service/" target="_blank">CARFAX Service Network</a></li>
+                <li><a href="https://www.aaa.com/autorepair/" target="_blank">AAA Approved Repair</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <p class="resource-disclaimer">
+        Resource links are provided for convenience. PonyUp Performance is not affiliated with these companies unless specifically stated.
+    </p>
+</section>
+
+<section class="page-section pricing-section">
+    <h2 class="section-title">Pricing</h2>
+    <p class="section-subtitle">Start free. Upgrade only when PonyUp proves useful.</p>
+
+    <div class="pricing-grid">
+        <div class="price-card">
+            <h3>Free</h3>
+            <p>1 Full Analysis</p>
+            <strong>$0</strong>
+        </div>
+
+        <div class="price-card featured">
+            <h3>Quick Pack</h3>
+            <p>5 Analyses</p>
+            <strong>$5.99</strong>
+        </div>
+
+        <div class="price-card">
+            <h3>Pro</h3>
+            <p>10 Analyses / Month</p>
+            <strong>$9.99<span>/mo</span></strong>
+        </div>
+
+        <div class="price-card">
+            <h3>Unlimited</h3>
+            <p>Unlimited Analyses</p>
+            <strong>$19.99<span>/mo</span></strong>
+        </div>
+    </div>
+</section>
