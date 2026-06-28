@@ -3,7 +3,6 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <title>@ViewData["Title"] - PonyUp Performance</title>
 
     <link rel="icon" type="image/jpeg" href="~/images/ponyup-logo.jpg" />
@@ -14,73 +13,36 @@
 </head>
 
 <body>
-    <header>
-        <nav class="navbar navbar-expand-lg ponyup-navbar">
-            <div class="container-fluid px-4">
+    <header class="ponyup-header">
+        <nav class="ponyup-navbar">
+            <a class="ponyup-brand" asp-page="/Index">
+                <img src="~/images/ponyup-logo.jpg" alt="PonyUp Performance" />
+            </a>
 
-                <a class="navbar-brand ponyup-brand" asp-area="" asp-page="/Index">
-                    <img src="~/images/ponyup-logo.jpg" alt="PonyUp Performance" class="ponyup-nav-logo" />
-                </a>
-
-                <button class="navbar-toggler ponyup-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ponyupNavbar"
-                        aria-controls="ponyupNavbar" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-
-                <div id="ponyupNavbar" class="collapse navbar-collapse">
-                    <ul class="navbar-nav ms-auto align-items-lg-center">
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-page="/Index">Home</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" href="#decision-center">Decision Center</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-page="/RepairAnalyzer">Repair</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Buy/Sell</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Upgrade</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Resources</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link ponyup-pricing-link" href="#pricing">Pricing</a>
-                        </li>
-                        <li class="nav-item">
-    <a class="nav-link" asp-area="" asp-page="/MyGarage">Garage</a>
-</li>  
-                    </ul>
-
-                    <div class="ponyup-login-area">
-                        <partial name="_LoginPartial" />
-                    </div>
-                </div>
-
+            <div class="ponyup-nav-links">
+                <a asp-page="/Index">Home</a>
+                <a asp-page="/DecisionCenter">Decision Center</a>
+                <a asp-page="/RepairAnalyzer">Repair</a>
+                <a asp-page="/Buy">Buy</a>
+                <a asp-page="/Sell">Sell</a>
+                <a asp-page="/Trade">Trade</a>
+                <a asp-page="/Upgrade">Upgrade</a>
+                <a asp-page="/Resources">Resources</a>
+                <a class="pricing-nav" asp-page="/Pricing">Pricing</a>
+                <a asp-page="/MyGarage">Garage</a>
+                <a asp-area="Identity" asp-page="/Account/Register">Register</a>
+                <a asp-area="Identity" asp-page="/Account/Login">Login</a>
             </div>
         </nav>
     </header>
 
-    <main role="main">
+    <main>
         @RenderBody()
     </main>
 
     <footer class="ponyup-footer">
-        <div class="container text-center">
-            <img src="~/images/ponyup-logo.jpg" alt="PonyUp Performance" class="ponyup-footer-logo" />
-            <div class="mt-2">
-                &copy; 2026 PonyUp Performance. Vehicle decisions made smarter.
-            </div>
-        </div>
+        <img src="~/images/ponyup-logo.jpg" alt="PonyUp Performance" />
+        <p>© 2026 PonyUp Performance. Vehicle decisions made smarter.</p>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
