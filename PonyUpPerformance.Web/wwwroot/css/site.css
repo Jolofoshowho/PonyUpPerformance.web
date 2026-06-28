@@ -881,3 +881,341 @@ hr {
         height: 280px;
     }
 }
+/* ==========================================
+   PONYUP HOMEPAGE
+   ========================================== */
+
+.ponyup-hero {
+    position: relative;
+    min-height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-size: cover;
+    background-position: center;
+    text-align: center;
+    padding: 4rem 0;
+}
+
+.hero-content {
+    width: 100%;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.hero-word-logo {
+    display: block;
+    width: 100%;
+    max-width: 650px;
+    height: auto;
+    margin: 0 auto 1.5rem auto;
+}
+
+.hero-title {
+    font-size: 3rem;
+    font-weight: 900;
+    color: white;
+    text-transform: uppercase;
+    margin-bottom: .5rem;
+}
+
+.hero-subtitle {
+    font-size: 1.5rem;
+    color: #ff3131;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.hero-description {
+    color: #ddd;
+    max-width: 800px;
+    margin: auto;
+    margin-bottom: 2rem;
+}
+
+.hero-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 3rem;
+}
+
+    .hero-buttons .btn {
+        min-width: 180px;
+        font-weight: 700;
+    }
+
+/* ==========================================
+   DECISION CARDS
+   ========================================== */
+
+.decision-section {
+    padding: 4rem 0;
+}
+
+.decision-card {
+    display: block;
+    background: rgba(20,20,20,.9);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 12px;
+    padding: 2rem 1rem;
+    text-align: center;
+    text-decoration: none;
+    transition: all .2s ease;
+    min-height: 180px;
+}
+
+    .decision-card:hover {
+        transform: translateY(-5px);
+        border-color: #ff3131;
+        box-shadow: 0 0 20px rgba(255,49,49,.45);
+        text-decoration: none;
+    }
+
+    .decision-card h3 {
+        color: #ff3131;
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+    }
+
+    .decision-card p {
+        color: white;
+        font-size: 1rem;
+        margin: 0;
+    }
+
+/* ==========================================
+   RESOURCES
+   ========================================== */
+
+.resource-card {
+    background: rgba(20,20,20,.9);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 12px;
+    padding: 1.5rem;
+    height: 100%;
+}
+
+    .resource-card h4 {
+        color: white;
+        margin-bottom: 1rem;
+    }
+
+.resource-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+    .resource-list li {
+        margin-bottom: .5rem;
+    }
+
+    .resource-list a {
+        color: #ff3131;
+        text-decoration: none;
+    }
+
+        .resource-list a:hover {
+            color: white;
+        }
+
+/* ==========================================
+   PRICING
+   ========================================== */
+
+.ponyup-pricing-preview {
+    padding: 5rem 0;
+    text-align: center;
+}
+
+.section-title {
+    color: white;
+    font-size: 3rem;
+    font-weight: 900;
+    margin-bottom: .5rem;
+}
+
+.section-subtitle {
+    color: #ddd;
+    margin-bottom: 3rem;
+}
+
+.pricing-card,
+.pricing-card-featured {
+    background: rgba(20,20,20,.95);
+    border: 2px solid rgba(255,255,255,.2);
+    border-radius: 12px;
+    padding: 2rem;
+    height: 100%;
+    text-align: center;
+    transition: all .2s ease;
+}
+
+.pricing-card-featured {
+    border-color: #ff3131;
+    box-shadow: 0 0 20px rgba(255,49,49,.25);
+}
+
+    .pricing-card:hover,
+    .pricing-card-featured:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0 25px rgba(255,49,49,.35);
+    }
+
+    .pricing-card h4,
+    .pricing-card-featured h4 {
+        color: white;
+        font-size: 2rem;
+        font-weight: 900;
+    }
+
+    .pricing-card-featured h4 {
+        color: #ff3131;
+    }
+
+    .pricing-card strong,
+    .pricing-card-featured strong {
+        display: block;
+        color: white;
+        font-size: 2.5rem;
+        margin: 1rem 0;
+    }
+
+    .pricing-card-featured strong {
+        color: #ff3131;
+    }
+
+    .pricing-card button,
+    .pricing-card-featured button {
+        margin-top: 1rem;
+        font-weight: 700;
+    }
+
+/* ==========================================
+   FOOTER
+   ========================================== */
+
+footer {
+    padding: 3rem 0;
+    text-align: center;
+    color: #aaa;
+}
+
+.ponyup-hero {
+    position: relative;
+    min-height: 90vh;
+    background: linear-gradient( 90deg, rgba(0,0,0,.90) 0%, rgba(0,0,0,.80) 35%, rgba(0,0,0,.45) 55%, rgba(0,0,0,.15) 100% ), url('/images/ponyup-nightmare.png');
+    background-repeat: no-repeat;
+    background-position: right center;
+    background-size: 50%;
+}
+ponyup-nightmare
+
+.hero-overlay {
+    width: 100%;
+}
+
+.hero-buttons a,
+.hero-buttons .btn {
+    position: relative;
+    z-index: 50;
+    pointer-events: auto;
+}
+
+.ponyup-hero::before,
+.ponyup-hero::after {
+    pointer-events: none;
+}
+
+/* HERO RESTORE / LOCKED */
+.ponyup-hero {
+    min-height: 88vh !important;
+    background-position: right center !important;
+    background-size: cover !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.hero-overlay {
+    width: 100% !important;
+    min-height: 88vh !important;
+    display: flex !important;
+    align-items: center !important;
+    background: linear-gradient( 90deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.78) 38%, rgba(0,0,0,0.28) 72%, rgba(0,0,0,0.05) 100% ) !important;
+}
+
+.hero-content {
+    text-align: left !important;
+    margin-left: 5vw !important;
+    margin-right: auto !important;
+    max-width: 620px !important;
+    padding: 4rem 1rem !important;
+}
+
+.hero-word-logo {
+    width: 50% !important;
+    max-width: 330px !important;
+    min-width: 230px !important;
+    height: auto !important;
+    margin: 0 0 1.25rem 0 !important;
+    display: block !important;
+}
+
+.hero-main-slogan {
+    color: #ff3131 !important;
+    -webkit-text-stroke: 1px #ffffff !important;
+    text-shadow: 2px 2px 0 #ffffff, 0 0 14px rgba(255,49,49,0.65) !important;
+    font-size: clamp(1.25rem, 2.1vw, 2rem) !important;
+    font-weight: 900 !important;
+    line-height: 1.15 !important;
+    text-transform: uppercase !important;
+    margin-bottom: 0.85rem !important;
+}
+
+.hero-sub-slogan {
+    color: #ffffff !important;
+    font-size: clamp(1.15rem, 1.9vw, 1.75rem) !important;
+    font-weight: 900 !important;
+    line-height: 1.2 !important;
+    margin-bottom: 1rem !important;
+}
+
+.hero-support-text {
+    color: #ffffff !important;
+    font-size: clamp(0.95rem, 1.25vw, 1.2rem) !important;
+    line-height: 1.45 !important;
+    max-width: 560px !important;
+    margin-bottom: 1.75rem !important;
+}
+
+.hero-buttons {
+    justify-content: flex-start !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+}
+
+    .hero-buttons .btn {
+        font-size: 0.95rem !important;
+        font-weight: 900 !important;
+        padding: 0.75rem 1.1rem !important;
+    }
+
+/* FINAL HERO BACKGROUND FIX */
+.ponyup-hero {
+    background-image: linear-gradient( 90deg, rgba(0,0,0,.95) 0%, rgba(0,0,0,.85) 38%, rgba(0,0,0,.35) 68%, rgba(0,0,0,.05) 100% ), url('/images/ponyup-nightmare.png') !important;
+    background-repeat: no-repeat, no-repeat !important;
+    background-size: 100% 100%, 100% auto !important;
+    background-position: left top, 112% center !important;
+    background-color: #050505 !important;
+}
+/* HERO IMAGE OVERRIDE */
+.ponyup-hero {
+    background: linear-gradient( 90deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.25) 35%, rgba(0,0,0,.05) 60%, rgba(0,0,0,0) 100% ), url('/images/ponyup-nightmare.png') !important;
+    background-repeat: no-repeat !important;
+    background-position: left top, 135% center !important;
+    background-size: 100% 100%, 90% auto !important;
+}
