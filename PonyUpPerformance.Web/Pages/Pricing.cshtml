@@ -1,0 +1,13 @@
+@page
+@model PonyUpPerformance.Web.Pages.PricingPageModel
+
+@{
+    ViewData["Title"] = "Pricing";
+}
+
+<h1>Pricing Test</h1>
+
+<form method="post" action="/Checkout">
+    <input type="hidden" name="plan" value="quick" />
+    <button type="submit">BUY QUICK PACK</button>
+</form>
