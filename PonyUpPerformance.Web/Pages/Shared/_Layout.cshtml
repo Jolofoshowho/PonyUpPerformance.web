@@ -15,28 +15,60 @@
 <body>
     <header class="ponyup-header">
         <nav class="ponyup-navbar">
+
             <a class="ponyup-brand" asp-page="/Index">
                 <img src="~/images/ponyup-logo.jpg" alt="PonyUp Performance" />
             </a>
 
             <div class="ponyup-nav-links">
-                <a asp-page="/Index">Home</a>
-                <a asp-page="/DecisionCenter">Decision Center</a>
-                <a asp-page="/RepairAnalyzer">Repair</a>
-                <a asp-page="/Buy">Buy</a>
-                <a asp-page="/Sell">Sell</a>
-                <a asp-page="/Trade">Trade</a>
-                <a asp-page="/Upgrade">Upgrade</a>
-                <a asp-page="/Resources">Resources</a>
-                <a class="pricing-nav" asp-page="/Pricing">Pricing</a>
-                <a asp-page="/MyGarage">Garage</a>
-                <a asp-area="Identity" asp-page="/Account/Register">Register</a>
-                <a asp-area="Identity" asp-page="/Account/Login">Login</a>
+                <a asp-page="/Index">HOME</a>
+                <a asp-page="/DecisionCenter">DECISION CENTER</a>
+                <a asp-page="/RepairAnalyzer">REPAIR</a>
+                <a asp-page="/Buy">BUY</a>
+                <a asp-page="/Sell">SELL</a>
+                <a asp-page="/Trade">TRADE</a>
+                <a asp-page="/Upgrade">UPGRADE</a>
+                <a asp-page="/Resources">RESOURCES</a>
+                <a class="pricing-nav" asp-page="/Pricing">PRICING</a>
+                <a asp-page="/MyGarage">GARAGE</a>
+
+                @if (User.Identity?.IsAuthenticated ?? false)
+                {
+                    <form asp-area="Identity"
+                          asp-page="/Account/Logout"
+                          asp-route-returnUrl="@Url.Page("/Index")"
+                          method="post"
+                          style="display:inline;">
+                        <button type="submit"
+                                style="background:#ff3131;
+                                       color:white;
+                                       border:none;
+                                       padding:10px 18px;
+                                       border-radius:6px;
+                                       font-weight:bold;
+                                       cursor:pointer;">
+                            LOGOUT
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <a asp-area="Identity"
+                       asp-page="/Account/Register">
+                        REGISTER
+                    </a>
+
+                    <a asp-area="Identity"
+                       asp-page="/Account/Login"
+                       class="pricing-nav">
+                        LOGIN
+                    </a>
+                }
             </div>
         </nav>
     </header>
 
-    <main>
+    <main role="main">
         @RenderBody()
     </main>
 
