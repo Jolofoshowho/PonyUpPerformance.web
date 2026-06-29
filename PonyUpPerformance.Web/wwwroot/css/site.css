@@ -69,10 +69,12 @@ a {
     align-items: center;
     justify-content: flex-end;
     gap: 24px;
+    flex-wrap: wrap;
 }
 
-.ponyup-nav-links a {
-    color: #ffffff;
+.ponyup-nav-links a,
+.ponyup-nav-links button {
+    color: #ffffff !important;
     text-decoration: none;
     text-transform: uppercase;
     font-weight: 1000;
@@ -80,24 +82,30 @@ a {
     letter-spacing: .065rem;
     white-space: nowrap;
     text-shadow: 0 0 10px rgba(255,255,255,.6);
+    background: transparent;
+    border: none;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 .ponyup-nav-links a:hover,
+.ponyup-nav-links button:hover,
 .ponyup-nav-links .pricing-nav {
-    color: var(--red);
+    color: var(--red) !important;
 }
 
-.ponyup-nav-links a:nth-last-child(2) {
-    border: 1px solid rgba(255,255,255,.8);
+.ponyup-auth-link {
+    border: 1px solid rgba(255,255,255,.8) !important;
     border-radius: 4px;
     padding: 11px 18px;
 }
 
-.ponyup-nav-links a:last-child {
-    background: linear-gradient(180deg, #ff3131, #b91218);
+.ponyup-auth-button {
+    background: linear-gradient(180deg, #ff3131, #b91218) !important;
+    color: #ffffff !important;
     border-radius: 4px;
     padding: 12px 20px;
     box-shadow: 0 0 16px rgba(255,49,49,.45);
+    cursor: pointer;
 }
 
 /* HERO */
