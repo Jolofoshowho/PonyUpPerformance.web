@@ -1,0 +1,53 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using PonyUpPerformance.Web.Models;
+
+namespace PonyUpPerformance.Web.Pages
+{
+    public class SellAnalyzerModel : PageModel
+    {
+        [BindProperty]
+        public SellDecisionInput Input { get; set; } = new();
+
+        public BuyDecisionResult? Result { get; set; }
+
+        public void OnGet()
+        {
+        }
+
+        public void OnPost()
+        {
+            int score = 100;
+
+            decimal netAfterRepair = Input.ExpectedSalePrice - Input.EstimatedRepairCost;
+
+            if (Input.Mileage > 180000) score -= 15;
+            else if (Input.Mileage > 120000) score -= 8;
+
+            if (Input.EstimatedRepairCost > 2500) score -= 25;
+            else if (Input.EstimatedRepairCost > 1000) score -= 12;
+
+            if (Input.MarketValue > 0 && netAfterRepair < Input.MarketValue * 0.75m)
+                score -= 20;
+
+            string decision =
+                score >= 75 ? "SELL NOW" :
+                score >= 50 ? "REPAIR / NEGOTIATE" :
+                "HOLD OR REWORK";
+
+            string summary =
+                score >= 75
+                    ? "The numbers support selling now. Avoid over-investing before the sale."
+                    : score >= 50
+                        ? "Selling may make sense, but repairs, pricing, or timing need to be tightened up."
+                        : "The current sale path leaves too much money on the table. Rework the plan before selling.";
+
+            Result = new BuyDecisionResult
+            {
+                Score = score,
+                Decision = decision,
+                Summary = summary
+            };
+        }
+    }
+}
