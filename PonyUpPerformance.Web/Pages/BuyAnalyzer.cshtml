@@ -1,0 +1,49 @@
+@page
+@model PonyUpPerformance.Web.Pages.BuyAnalyzerModel
+
+@{
+    ViewData["Title"] = "Buy Analyzer";
+}
+
+<section class="page-section">
+    <h1 class="section-title">BUY ANALYZER</h1>
+    <p class="section-subtitle">Should you buy this vehicle, negotiate harder, or walk away?</p>
+
+    <div class="price-card" style="max-width:900px;margin:0 auto;">
+        <form method="post">
+            <label>Year</label>
+            <input asp-for="Input.Year" />
+
+            <label>Make</label>
+            <input asp-for="Input.Make" />
+
+            <label>Model</label>
+            <input asp-for="Input.Model" />
+
+            <label>Mileage</label>
+            <input asp-for="Input.Mileage" />
+
+            <label>Asking Price</label>
+            <input asp-for="Input.AskingPrice" />
+
+            <label>Estimated Repair Cost</label>
+            <input asp-for="Input.EstimatedRepairCost" />
+
+            <label>Market Value</label>
+            <input asp-for="Input.MarketValue" />
+
+            <button class="btn-red" type="submit" style="margin-top:20px;">
+                ANALYZE BUY
+            </button>
+        </form>
+    </div>
+
+    @if (Model.Result != null)
+    {
+        <div class="price-card featured" style="max-width:900px;margin:30px auto 0;">
+            <h2>@Model.Result.Decision</h2>
+            <strong>@Model.Result.Score / 100</strong>
+            <p>@Model.Result.Summary</p>
+        </div>
+    }
+</section>
