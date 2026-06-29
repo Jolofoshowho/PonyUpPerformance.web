@@ -45,10 +45,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-    db.Database.ExecuteSqlRaw("""
-        DROP TABLE IF EXISTS "DataProtectionKeys";
-    """);
-
+    db.Database.EnsureDeleted();
     db.Database.EnsureCreated();
 }
 
