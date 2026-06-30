@@ -31,13 +31,14 @@ builder.Services.AddDataProtection()
 
 builder.Services.AddRazorPages();
 
-builder.Services.AddScoped<RepairScoringService>();
+builder.Services.AddScoped<IRepairScoringService, RepairScoringService>();
 builder.Services.AddScoped<AnalysisHistoryService>();
 builder.Services.AddScoped<RepairCostEstimatorService>();
 builder.Services.AddScoped<VehiclePaintPaletteService>();
 builder.Services.AddScoped<VehicleRenderService>();
 builder.Services.AddHttpClient<NhtsaVehicleService>();
 builder.Services.AddScoped<StripeCheckoutService>();
+builder.Services.AddScoped<UsageCreditService>();
 
 var app = builder.Build();
 
