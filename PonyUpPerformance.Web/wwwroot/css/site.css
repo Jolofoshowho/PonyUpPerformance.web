@@ -660,3 +660,47 @@ hr {
 .resource-card .resource-svg{
     margin-bottom:15px;
 }
+
+/* ANALYZER BACKGROUNDS */
+
+.analyzer-page {
+    min-height: calc(100vh - 86px);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    padding: 76px 4.5vw;
+    position: relative;
+}
+
+.analyzer-page::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, .78);
+    z-index: 0;
+}
+
+.analyzer-page > * {
+    position: relative;
+    z-index: 1;
+}
+
+.repair-bg {
+    background-image: url('/images/ponyup-nightmare.png');
+}
+
+.buy-bg {
+    background-image: url('/images/ponyup-firesteed.png');
+}
+
+.sell-bg {
+    background-image: url('/images/ponyup-mechanical.png');
+}
+
+.trade-bg {
+    background-image: url('/images/ponyup-nightmare1.png');
+}
+
+.upgrade-bg {
+    background-image: url('/images/ponyup-lavamare.png');
+}
