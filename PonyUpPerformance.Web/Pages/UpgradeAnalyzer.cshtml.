@@ -1,1 +1,69 @@
+@page
+@model PonyUpPerformance.Web.Pages.UpgradeAnalyzerModel
 
+@{
+    ViewData["Title"] = "Upgrade Analyzer";
+}
+
+<section class="page-section">
+    <h1 class="section-title">UPGRADE ANALYZER</h1>
+    <p class="section-subtitle">
+        Should you spend money upgrading this vehicle?
+    </p>
+
+    <div class="price-card" style="max-width:1000px;margin:0 auto;">
+
+        <form method="post">
+
+            <label>Year</label>
+            <input asp-for="Input.Year" />
+
+            <label>Make</label>
+            <input asp-for="Input.Make" />
+
+            <label>Model</label>
+            <input asp-for="Input.Model" />
+
+            <label>Current Vehicle Value</label>
+            <input asp-for="Input.CurrentValue" />
+
+            <label>Upgrade Cost</label>
+            <input asp-for="Input.UpgradeCost" />
+
+            <label>Estimated Value Added</label>
+            <input asp-for="Input.ValueAdded" />
+
+            <label>Estimated Horsepower Gain</label>
+            <input asp-for="Input.HorsepowerGain" />
+
+            <label>Reliability Impact (-100 to +100)</label>
+            <input asp-for="Input.ReliabilityImpact" />
+
+            <button
+                type="submit"
+                class="btn-red"
+                style="margin-top:25px;">
+                ANALYZE UPGRADE
+            </button>
+
+        </form>
+    </div>
+
+    @if (Model.Result != null)
+    {
+        <div class="price-card featured"
+             style="max-width:1000px;margin:30px auto 0;">
+
+            <h2>@Model.Result.Decision</h2>
+
+            <strong>
+                @Model.Result.Score%
+            </strong>
+
+            <p>
+                @Model.Result.Summary
+            </p>
+
+        </div>
+    }
+</section>
