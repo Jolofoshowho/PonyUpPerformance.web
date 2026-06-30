@@ -1,313 +1,34 @@
-﻿@page
+@page
 @model PonyUpPerformance.Web.Pages.MyGarageModel
+
 @{
     ViewData["Title"] = "My Garage";
 }
 
-<section class="garage-page">
-    <div class="garage-shell garage-mockup-shell">
+<section class="page-section">
+    <h1 class="section-title">MY GARAGE</h1>
+    <p class="section-subtitle">
+        Full vehicle garage, paint selector, analysis history, and quick actions are coming soon.
+    </p>
 
-        <aside class="garage-sidebar garage-mockup-sidebar">
+    <div class="price-card featured" style="max-width:1000px;margin:0 auto;text-align:center;">
+        <h2>GARAGE COMING SOON</h2>
 
-            <div class="garage-sidebar-header garage-mockup-sidebar-header">
-                <h2>My Vehicles</h2>
+        <p>
+            This section will let users save vehicles, view past analyses, track repair decisions,
+            and manage their personal PonyUp vehicle profile.
+        </p>
 
-                <button class="garage-small-button" type="button" onclick="document.getElementById('addVehiclePanel').classList.toggle('garage-hidden')">
-                    + Add Vehicle
-                </button>
-            </div>
+        <p style="margin-top:20px;">
+            For now, use the analyzers from the navigation bar:
+        </p>
 
-            @if (Model.Vehicles.Any())
-            {
-                <div class="garage-vehicle-list">
-                    @foreach (var vehicle in Model.Vehicles)
-                    {
-                        var selectedClass = Model.SelectedVehicle != null && Model.SelectedVehicle.Id == vehicle.Id ? "active" : "";
-
-                        <a class="garage-vehicle-card garage-mockup-vehicle-card @selectedClass"
-                           asp-page="/MyGarage"
-                           asp-route-vehicleId="@vehicle.Id">
-
-                            <div class="garage-mini-car" style="background:@vehicle.SelectedPaintHex"></div>
-
-                            <div class="garage-vehicle-text">
-                                <strong>@vehicle.Year @vehicle.Make</strong>
-                                <span>@vehicle.Model</span>
-                                <small>@vehicle.Mileage.ToString("N0") mi</small>
-                            </div>
-
-                            <b>›</b>
-                        </a>
-                    }
-                </div>
-            }
-            else
-            {
-                <p class="garage-muted">No vehicles yet. Add your first vehicle.</p>
-            }
-
-            <<div id="addVehiclePanel" class="garage-add-panel">
-    <h3>Add Vehicle</h3>
-
-    <form method="post" asp-page-handler="DecodeVin">
-    <input asp-for="NewVehicle.Vin" placeholder="Enter VIN to auto-fill vehicle" />
-    <button type="submit" class="garage-save-button">Decode VIN</button>
-</form>
-
-    <form method="post" asp-page-handler="AddVehicle">
-        <input asp-for="NewVehicle.Vin" placeholder="VIN" />
-        <input asp-for="NewVehicle.Year" placeholder="Year" />
-        <input asp-for="NewVehicle.Make" placeholder="Make" />
-        <input asp-for="NewVehicle.Model" placeholder="Model" />
-        <input asp-for="NewVehicle.Trim" placeholder="Trim" />
-        <input asp-for="NewVehicle.Mileage" placeholder="Mileage" />
-
-        <select asp-for="NewVehicle.BodyStyle">
-            <option value="">Body Style</option>
-            <option value="Sedan">Sedan</option>
-            <option value="Coupe">Coupe</option>
-            <option value="Truck">Truck</option>
-            <option value="SUV">SUV</option>
-            <option value="Van">Van</option>
-            <option value="Wagon">Wagon</option>
-        </select>
-
-        <select asp-for="NewVehicle.Drivetrain">
-            <option value="">Drivetrain</option>
-            <option value="FWD">FWD</option>
-            <option value="RWD">RWD</option>
-            <option value="AWD">AWD</option>
-            <option value="4WD">4WD</option>
-        </select>
-
-        <select asp-for="NewVehicle.FuelType">
-            <option value="">Fuel Type</option>
-            <option value="Gasoline">Gasoline</option>
-            <option value="Diesel">Diesel</option>
-            <option value="Hybrid">Hybrid</option>
-            <option value="Electric">Electric</option>
-        </select>
-
-        <input asp-for="NewVehicle.Engine" placeholder="Engine" />
-
-        <button type="submit" class="garage-save-button">
-            Save Vehicle
-        </button>
-    </form>
-</div>
-
-        </aside>
-
-        <main class="garage-main garage-mockup-main">
-
-            <header class="garage-main-header garage-mockup-main-header">
-                <div>
-                    <h1>My Garage</h1>
-                    <p>View, rotate, paint, and manage your vehicles.</p>
-                </div>
-
-                <a class="btn btn-danger garage-top-action" href="/RepairAnalyzer">
-                    Run New Analysis
-                </a>
-            </header>
-
-            @if (Model.SelectedVehicle == null)
-            {
-                <div class="garage-empty">
-                    <h2>No Vehicle Selected</h2>
-                    <p>Add a vehicle to start building your garage.</p>
-                </div>
-            }
-            else
-            {
-                <section class="garage-vehicle-hero">
-
-                    <div class="garage-selected-title garage-mockup-selected-title">
-                        <h2>@Model.SelectedVehicle.Year @Model.SelectedVehicle.Make @Model.SelectedVehicle.Model</h2>
-
-                        <p>
-                            @Model.SelectedVehicle.Mileage.ToString("N0") mi
-                            <span>|</span>
-                            @Model.SelectedVehicle.BodyStyle
-                            <span>|</span>
-                            @Model.SelectedVehicle.Engine
-                            <span>|</span>
-                            @Model.SelectedVehicle.FuelType
-                            <span>|</span>
-                            @Model.SelectedVehicle.Drivetrain
-                        </p>
-                    </div>
-
-                    <div class="garage-stage-row">
-
-                        <div class="garage-showroom-panel">
-
-                            @if (Model.PreviousVehicleId.HasValue)
-                            {
-                                <a class="garage-arrow garage-arrow-left"
-                                   asp-page="/MyGarage"
-                                   asp-route-vehicleId="@Model.PreviousVehicleId.Value">‹</a>
-                            }
-
-                            <div class="garage-viewer-frame">
-                                <div id="garage3dViewer"
-                                     class="garage-three-viewer"
-                                     data-paint="@Model.SelectedVehicle.SelectedPaintHex"
-                                     data-body="@Model.SelectedVehicle.BodyStyle">
-                                </div>
-                            </div>
-
-                            @if (Model.NextVehicleId.HasValue)
-                            {
-                                <a class="garage-arrow garage-arrow-right"
-                                   asp-page="/MyGarage"
-                                   asp-route-vehicleId="@Model.NextVehicleId.Value">›</a>
-                            }
-
-                            <div class="garage-view-controls">
-                                <span class="active">Exterior</span>
-                                <span>Touch / Drag To Rotate</span>
-                                <span>Scroll To Zoom</span>
-                            </div>
-
-                        </div>
-
-                        <aside class="garage-paint-panel garage-mockup-paint-panel">
-                            <h3>Paint Color</h3>
-                            <p>@Model.SelectedVehicle.Make Factory Colors</p>
-
-                            <div class="garage-paint-grid">
-                                @foreach (var color in Model.PaintColors)
-                                {
-                                    var activePaint = string.Equals(Model.SelectedVehicle.SelectedPaintHex, color.Hex, StringComparison.OrdinalIgnoreCase) ? "active" : "";
-
-                                    <form method="post" asp-page-handler="SelectPaint">
-                                        <input type="hidden" name="vehicleId" value="@Model.SelectedVehicle.Id" />
-                                        <input type="hidden" name="paintName" value="@color.Name" />
-                                        <input type="hidden" name="paintCode" value="@color.Code" />
-                                        <input type="hidden" name="paintHex" value="@color.Hex" />
-
-                                        <button class="garage-paint-dot @activePaint"
-                                                type="submit"
-                                                title="@color.Name @color.Code"
-                                                style="background:@color.Hex">
-                                        </button>
-                                    </form>
-                                }
-                            </div>
-
-                            <div class="garage-paint-preview" style="background:@Model.SelectedVehicle.SelectedPaintHex"></div>
-
-                            <div class="garage-selected-paint">
-                                <small>Selected Color</small>
-                                <strong>@(string.IsNullOrWhiteSpace(Model.SelectedVehicle.SelectedPaintName) ? "Unselected Color" : Model.SelectedVehicle.SelectedPaintName)</strong>
-                                <span>@Model.SelectedVehicle.SelectedPaintCode</span>
-                            </div>
-                        </aside>
-
-                    </div>
-                </section>
-
-                <section class="garage-bottom-grid garage-mockup-bottom-grid">
-
-                    <div class="garage-info-card garage-mockup-info-card">
-                        <h3>Vehicle Details</h3>
-
-                        <dl>
-                            <dt>VIN</dt>
-                            <dd>@(string.IsNullOrWhiteSpace(Model.SelectedVehicle.Vin) ? "Not Added" : Model.SelectedVehicle.Vin)</dd>
-
-                            <dt>Year</dt>
-                            <dd>@Model.SelectedVehicle.Year</dd>
-
-                            <dt>Make</dt>
-                            <dd>@Model.SelectedVehicle.Make</dd>
-
-                            <dt>Model</dt>
-                            <dd>@Model.SelectedVehicle.Model</dd>
-
-                            <dt>Trim</dt>
-                            <dd>@Model.SelectedVehicle.Trim</dd>
-
-                            <dt>Body Style</dt>
-                            <dd>@Model.SelectedVehicle.BodyStyle</dd>
-
-                            <dt>Mileage</dt>
-                            <dd>@Model.SelectedVehicle.Mileage.ToString("N0") mi</dd>
-
-                            <dt>Drivetrain</dt>
-                            <dd>@Model.SelectedVehicle.Drivetrain</dd>
-
-                            <dt>Fuel Type</dt>
-                            <dd>@Model.SelectedVehicle.FuelType</dd>
-
-                            <dt>Engine</dt>
-                            <dd>@Model.SelectedVehicle.Engine</dd>
-                        </dl>
-                    </div>
-
-                    <div class="garage-info-card garage-mockup-info-card">
-                        <h3>Recent Analysis</h3>
-
-                        @if (Model.RecentAnalyses.Any())
-                        {
-                            var latest = Model.RecentAnalyses.First();
-
-                            <dl>
-                                <dt>Repair Type</dt>
-                                <dd>@latest.RepairType</dd>
-
-                                <dt>Date</dt>
-                                <dd>@latest.CreatedOn.ToLocalTime().ToString("MMM d, yyyy")</dd>
-
-                                <dt>Expected Cost</dt>
-                                <dd>$@latest.ExpectedEstimate.ToString("N0")</dd>
-
-                                <dt>Recommendation</dt>
-                                <dd class="garage-green">@latest.Recommendation</dd>
-
-                                <dt>Confidence</dt>
-                                <dd>@latest.ConfidenceScore%</dd>
-                            </dl>
-
-                            <a class="garage-outline-button" href="/RepairAnalyzer">
-                                Run Analysis
-                            </a>
-                        }
-                        else
-                        {
-                            <p class="garage-muted">
-                                No repair analysis saved for this vehicle yet.
-                            </p>
-
-                            <a class="garage-outline-button" href="/RepairAnalyzer">
-                                Run Analysis
-                            </a>
-                        }
-                    </div>
-
-                    <div class="garage-info-card garage-mockup-info-card garage-actions-card">
-                        <h3>Vehicle Quick Actions</h3>
-
-                        <a class="garage-action-button primary" href="/RepairAnalyzer">
-                            Run New Analysis
-                        </a>
-
-                        <a class="garage-action-button" href="#history">
-                            View All Analyses
-                        </a>
-
-                        <button class="garage-action-button" type="button">
-                            Edit Vehicle
-                        </button>
-                    </div>
-
-                </section>
-            }
-        </main>
+        <div class="hero-buttons" style="justify-content:center;flex-wrap:wrap;margin-top:20px;">
+            <a class="btn-red" asp-page="/RepairAnalyzer">Repair</a>
+            <a class="btn-red" asp-page="/BuyAnalyzer">Buy</a>
+            <a class="btn-red" asp-page="/SellAnalyzer">Sell</a>
+            <a class="btn-red" asp-page="/TradeAnalyzer">Trade</a>
+            <a class="btn-red" asp-page="/UpgradeAnalyzer">Upgrade</a>
+        </div>
     </div>
 </section>
-
-@section Scripts {
-    <script type="module" src="/js/garageVehicleViewer.js"></script>
-}
