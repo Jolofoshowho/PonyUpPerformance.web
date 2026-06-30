@@ -1,13 +1,18 @@
-﻿namespace PonyUpPerformance.Web.Models;
+namespace PonyUpPerformance.Web.Models;
 
 public class TradeDecisionInput
 {
-	public int VehicleYear { get; set; }
-	public string VehicleMake { get; set; } = string.Empty;
-	public string VehicleModel { get; set; } = string.Empty;
-	public int Mileage { get; set; }
-	public decimal TradeOffer { get; set; }
-	public decimal PrivateSaleValue { get; set; }
-	public decimal RepairNeeds { get; set; }
-	public decimal ReplacementVehicleCost { get; set; }
+    public int YourYear { get; set; }
+    public string? YourMake { get; set; }
+    public string? YourModel { get; set; }
+    public int YourMileage { get; set; }
+    public decimal YourValue { get; set; }
+
+    public int TheirYear { get; set; }
+    public string? TheirMake { get; set; }
+    public string? TheirModel { get; set; }
+    public int TheirMileage { get; set; }
+    public decimal TheirValue { get; set; }
+
+    public decimal EstimatedRepairCost { get; set; }
 }
