@@ -8,7 +8,7 @@ namespace PonyUpPerformance.Web.Models
 
         public string UserId { get; set; } = "";
 
-        public string Vin { get; set; } = "";
+        public string? Vin { get; set; } = "";
 
         public int Year { get; set; }
 
