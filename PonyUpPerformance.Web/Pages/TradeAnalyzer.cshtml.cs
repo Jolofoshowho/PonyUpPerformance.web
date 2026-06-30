@@ -54,11 +54,11 @@ namespace PonyUpPerformance.Web.Pages
                         : "The trade does not currently make sense. Too much value or risk is stacked against you.";
 
             Result = new BuyDecisionResult
-            {
-                Score = score,
-                Decision = decision,
-                Summary = summary
-            };
+{
+    ConfidenceScore = score,
+    Recommendation = decision,
+    Reasoning = summary
+};
         }
     }
 }
