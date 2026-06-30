@@ -676,7 +676,7 @@ hr {
     content: "";
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, .78);
+    background: rgba(.78, .78, .78, .78);
     z-index: 0;
 }
 
