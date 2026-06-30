@@ -704,3 +704,13 @@ hr {
 .upgrade-bg {
     background-image: url('/images/ponyup-lavamare.png');
 }
+
+.garage-coming-soon {
+    background:
+        linear-gradient(rgba(0,0,0,.80), rgba(0,0,0,.90)),
+        url('/images/ponyup-garage-concept-v1.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    min-height: 90vh;
+}
