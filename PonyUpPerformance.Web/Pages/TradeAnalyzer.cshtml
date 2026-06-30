@@ -1,0 +1,84 @@
+@page
+@model PonyUpPerformance.Web.Pages.TradeAnalyzerModel
+
+@{
+    ViewData["Title"] = "Trade Analyzer";
+}
+
+<section class="page-section">
+    <h1 class="section-title">TRADE ANALYZER</h1>
+    <p class="section-subtitle">
+        Is this trade actually worth making?
+    </p>
+
+    <div class="price-card" style="max-width:1000px;margin:0 auto;">
+
+        <h3 style="margin-bottom:20px;">YOUR VEHICLE</h3>
+
+        <form method="post">
+
+            <label>Year</label>
+            <input asp-for="Input.YourYear" />
+
+            <label>Make</label>
+            <input asp-for="Input.YourMake" />
+
+            <label>Model</label>
+            <input asp-for="Input.YourModel" />
+
+            <label>Mileage</label>
+            <input asp-for="Input.YourMileage" />
+
+            <label>Estimated Value</label>
+            <input asp-for="Input.YourValue" />
+
+            <hr />
+
+            <h3 style="margin-bottom:20px;">THEIR VEHICLE</h3>
+
+            <label>Year</label>
+            <input asp-for="Input.TheirYear" />
+
+            <label>Make</label>
+            <input asp-for="Input.TheirMake" />
+
+            <label>Model</label>
+            <input asp-for="Input.TheirModel" />
+
+            <label>Mileage</label>
+            <input asp-for="Input.TheirMileage" />
+
+            <label>Estimated Value</label>
+            <input asp-for="Input.TheirValue" />
+
+            <label>Estimated Repairs Needed</label>
+            <input asp-for="Input.EstimatedRepairCost" />
+
+            <button
+                type="submit"
+                class="btn-red"
+                style="margin-top:25px;">
+                ANALYZE TRADE
+            </button>
+
+        </form>
+    </div>
+
+    @if (Model.Result != null)
+    {
+        <div class="price-card featured"
+             style="max-width:1000px;margin:30px auto 0;">
+
+            <h2>@Model.Result.Decision</h2>
+
+            <strong>
+                @Model.Result.Score%
+            </strong>
+
+            <p>
+                @Model.Result.Summary
+            </p>
+
+        </div>
+    }
+</section>
