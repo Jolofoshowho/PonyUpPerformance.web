@@ -21,45 +21,16 @@
             </a>
 
             <div class="ponyup-nav-links">
-
     <a asp-page="/Index">HOME</a>
-
-    <a asp-page="/DecisionCenter">
-        DECISION CENTER
-    </a>
-
-    <a asp-page="/RepairAnalyzer">
-        REPAIR
-    </a>
-
-    <a asp-page="/BuyAnalyzer">
-        BUY
-    </a>
-
-    <a asp-page="/SellAnalyzer">
-        SELL
-    </a>
-
-    <a asp-page="/TradeAnalyzer">
-        TRADE
-    </a>
-
-    <a asp-page="/UpgradeAnalyzer">
-        UPGRADE
-    </a>
-
-    <a asp-page="/Resources">
-        RESOURCES
-    </a>
-
-    <a class="pricing-nav"
-       asp-page="/Pricing">
-        PRICING
-    </a>
-
-    <a asp-page="/MyGarage">
-        GARAGE
-    </a>
+    <a asp-page="/DecisionCenter">DECISION CENTER</a>
+    <a asp-page="/RepairAnalyzer">REPAIR</a>
+    <a asp-page="/BuyAnalyzer">BUY</a>
+    <a asp-page="/SellAnalyzer">SELL</a>
+    <a asp-page="/TradeAnalyzer">TRADE</a>
+    <a asp-page="/UpgradeAnalyzer">UPGRADE</a>
+    <a asp-page="/Resources">RESOURCES</a>
+    <a class="pricing-nav" asp-page="/Pricing">PRICING</a>
+    <a asp-page="/MyGarage">GARAGE</a>
 
     @if (User.Identity?.IsAuthenticated ?? false)
     {
@@ -68,29 +39,19 @@
               asp-route-returnUrl="@Url.Page("/Index")"
               method="post"
               style="display:inline;">
-
-            <button type="submit"
-                    class="ponyup-auth-button">
-                LOGOUT
-            </button>
-
+            <button type="submit" class="ponyup-auth-button">LOGOUT</button>
         </form>
     }
     else
     {
         <a class="ponyup-auth-link"
            asp-area="Identity"
-           asp-page="/Account/Register">
-            REGISTER
-        </a>
+           asp-page="/Account/Register">REGISTER</a>
 
         <a class="ponyup-auth-button"
            asp-area="Identity"
-           asp-page="/Account/Login">
-            LOGIN
-        </a>
+           asp-page="/Account/Login">LOGIN</a>
     }
-
 </div>
         </nav>
     </header>
