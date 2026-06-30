@@ -21,51 +21,77 @@
             </a>
 
             <div class="ponyup-nav-links">
-                <a asp-page="/Index">HOME</a>
-                <a asp-page="/DecisionCenter">DECISION CENTER</a>
-                <a asp-page="/RepairAnalyzer">REPAIR</a>
-                <a asp-page="/Buy">BUY</a>
-                <a asp-page="/Sell">SELL</a>
-                <a asp-page="/Trade">TRADE</a>
-                <a asp-page="/Upgrade">UPGRADE</a>
-                <a asp-page="/Resources">RESOURCES</a>
-                <a class="pricing-nav" asp-page="/Pricing">PRICING</a>
-                <a asp-page="/MyGarage">GARAGE</a>
 
-                @if (User.Identity?.IsAuthenticated ?? false)
-                {
-                    <form asp-area="Identity"
-                          asp-page="/Account/Logout"
-                          asp-route-returnUrl="@Url.Page("/Index")"
-                          method="post"
-                          style="display:inline;">
-                        <button type="submit"
-                                style="background:#ff3131;
-                                       color:white;
-                                       border:none;
-                                       padding:10px 18px;
-                                       border-radius:6px;
-                                       font-weight:bold;
-                                       cursor:pointer;">
-                            LOGOUT
-                        </button>
-                    </form>
-                }
-                else
-                {
-                    <a asp-area="Identity"
-   asp-page="/Account/Register"
-   class="ponyup-auth-link">
-    REGISTER
-</a>
+    <a asp-page="/Index">HOME</a>
 
-<a asp-area="Identity"
-   asp-page="/Account/Login"
-   class="ponyup-auth-button">
-    LOGIN
-</a>
-                }
-            </div>
+    <a asp-page="/DecisionCenter">
+        DECISION CENTER
+    </a>
+
+    <a asp-page="/RepairAnalyzer">
+        REPAIR
+    </a>
+
+    <a asp-page="/BuyAnalyzer">
+        BUY
+    </a>
+
+    <a asp-page="/SellAnalyzer">
+        SELL
+    </a>
+
+    <a asp-page="/TradeAnalyzer">
+        TRADE
+    </a>
+
+    <a asp-page="/UpgradeAnalyzer">
+        UPGRADE
+    </a>
+
+    <a asp-page="/Resources">
+        RESOURCES
+    </a>
+
+    <a class="pricing-nav"
+       asp-page="/Pricing">
+        PRICING
+    </a>
+
+    <a asp-page="/MyGarage">
+        GARAGE
+    </a>
+
+    @if (User.Identity?.IsAuthenticated ?? false)
+    {
+        <form asp-area="Identity"
+              asp-page="/Account/Logout"
+              asp-route-returnUrl="@Url.Page("/Index")"
+              method="post"
+              style="display:inline;">
+
+            <button type="submit"
+                    class="ponyup-auth-button">
+                LOGOUT
+            </button>
+
+        </form>
+    }
+    else
+    {
+        <a class="ponyup-auth-link"
+           asp-area="Identity"
+           asp-page="/Account/Register">
+            REGISTER
+        </a>
+
+        <a class="ponyup-auth-button"
+           asp-area="Identity"
+           asp-page="/Account/Login">
+            LOGIN
+        </a>
+    }
+
+</div>
         </nav>
     </header>
 
