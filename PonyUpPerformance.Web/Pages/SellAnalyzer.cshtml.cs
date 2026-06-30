@@ -40,14 +40,14 @@ public class SellAnalyzerModel : PageModel
         score = Math.Max(0, Math.Min(100, score));
 
         Result = new BuyDecisionResult
-        {
-            Score = score,
-            Decision = score >= 75 ? "SELL NOW" : score >= 50 ? "NEGOTIATE / REPAIR FIRST" : "HOLD OR REWORK",
-            Summary = score >= 75
-                ? "The numbers support selling now."
-                : score >= 50
-                    ? "Selling may make sense, but repairs, pricing, or timing need to be tightened up."
-                    : "The current sale path leaves too much money on the table."
-        };
+{
+    ConfidenceScore = score,
+    Recommendation = score >= 75 ? "SELL NOW" : score >= 50 ? "NEGOTIATE / REPAIR FIRST" : "HOLD OR REWORK",
+    Reasoning = score >= 75
+        ? "The numbers support selling now."
+        : score >= 50
+            ? "Selling may make sense, but repairs, pricing, or timing need to be tightened up."
+            : "The current sale path leaves too much money on the table."
+};
     }
 }
