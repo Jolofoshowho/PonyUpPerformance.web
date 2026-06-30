@@ -41,9 +41,8 @@
     @if (Model.Result != null)
     {
         <div class="price-card featured" style="max-width:900px;margin:30px auto 0;">
-            <h2>@Model.Result.Decision</h2>
-            <strong>@Model.Result.Score / 100</strong>
-            <p>@Model.Result.Summary</p>
-        </div>
+            <h2>@Model.Result.Recommendation</h2>
+<strong>@Model.Result.ConfidenceScore / 100</strong>
+<p>@Model.Result.Reasoning</p>
     }
 </section>
