@@ -43,11 +43,11 @@ namespace PonyUpPerformance.Web.Pages
                         : "The risk is too high compared to the likely value. Walk away unless the deal changes hard.";
 
             Result = new BuyDecisionResult
-            {
-                Score = score,
-                Decision = decision,
-                Summary = summary
-            };
+{
+    ConfidenceScore = score,
+    Recommendation = decision,
+    Reasoning = summary
+};
         }
     }
 }
