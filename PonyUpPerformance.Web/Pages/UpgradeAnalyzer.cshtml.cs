@@ -52,11 +52,11 @@ namespace PonyUpPerformance.Web.Pages
                         : "The upgrade does not currently justify the spend. Too much money is going out for too little return.";
 
             Result = new BuyDecisionResult
-            {
-                Score = score,
-                Decision = decision,
-                Summary = summary
-            };
+{
+    ConfidenceScore = score,
+    Recommendation = decision,
+    Reasoning = summary
+};
         }
     }
 }
