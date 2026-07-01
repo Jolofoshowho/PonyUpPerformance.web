@@ -1068,3 +1068,5 @@ hr {
         grid-template-columns: 1fr;
     }
 }
+
+/* PonyUp homepage background with dark overlay */ body { background: linear-gradient( rgba(0,0,0,0.75), rgba(0,0,0,0.75) ), url('/images/ponyup-nightmare.png'); background-size: cover; background-position: center center; background-repeat: no-repeat; background-attachment: fixed; background-color: #050505; }
