@@ -1082,6 +1082,7 @@ body::before {
 
 .ponyup-hero,
 .hero-image,
+.page-section
  {
     background: transparent !important;
 }
