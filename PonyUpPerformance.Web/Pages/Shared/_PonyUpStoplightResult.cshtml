@@ -1,0 +1,90 @@
+@model PonyUpPerformance.Web.Models.PonyUpStoplightResultViewModel
+
+@{
+    string state =
+        !Model.HasResult ? "off" :
+        Model.ConfidenceScore >= 75 ? "green" :
+        Model.ConfidenceScore >= 50 ? "yellow" :
+        "red";
+
+    string stoplightImage =
+        state == "green" ? "~/images/ponyup-stoplight-green.png" :
+        state == "yellow" ? "~/images/ponyup-stoplight-yellow.png" :
+        state == "red" ? "~/images/ponyup-stoplight-red.png" :
+        "~/images/ponyup-stoplight-off.png";
+
+    string scoreText = Model.HasResult ? $"{Model.ConfidenceScore}%" : "---";
+
+    string confidence =
+        !Model.HasResult ? "---" :
+        Model.ConfidenceScore >= 85 ? "HIGH" :
+        Model.ConfidenceScore >= 65 ? "MODERATE" :
+        "LOW";
+
+    string risk =
+        !Model.HasResult ? "---" :
+        Model.ConfidenceScore >= 75 ? "LOW" :
+        Model.ConfidenceScore >= 50 ? "MODERATE" :
+        "HIGH";
+}
+
+<div class="ponyup-stoplight-panel @state">
+    <div class="ponyup-stoplight-left">
+        <img src="@Url.Content(stoplightImage)"
+             class="ponyup-stoplight-art"
+             alt="PonyUp Stoplight" />
+    </div>
+
+    <div class="ponyup-stoplight-center">
+        <div class="ponyup-analysis-label">
+            @(Model.HasResult ? "ANALYSIS COMPLETE" : Model.AnalysisType)
+        </div>
+
+        <h2>@Model.Recommendation</h2>
+
+        <div class="ponyup-score-label">OVERALL SCORE</div>
+        <div class="ponyup-score">@scoreText</div>
+
+        <div class="ponyup-meta-row">
+            <div>
+                <span>CONFIDENCE:</span>
+                <strong>@confidence</strong>
+            </div>
+
+            <div>
+                <span>RISK LEVEL:</span>
+                <strong>@risk</strong>
+            </div>
+        </div>
+
+        <div class="ponyup-reasoning-title">
+            WHY WE RECOMMEND THIS
+        </div>
+
+        <p class="ponyup-result-reasoning">
+            @Model.Reasoning
+        </p>
+    </div>
+
+    <div class="ponyup-stoplight-legend">
+        <h3>WHAT YOUR SCORE MEANS</h3>
+
+        <div class="ponyup-legend-card red">
+            <strong>WALK AWAY</strong>
+            <span>0 - 49%</span>
+            <p>High Risk / Poor Value</p>
+        </div>
+
+        <div class="ponyup-legend-card yellow">
+            <strong>PROCEED WITH CAUTION</strong>
+            <span>50 - 74%</span>
+            <p>Moderate Risk / Fair Value</p>
+        </div>
+
+        <div class="ponyup-legend-card green">
+            <strong>PONY UP</strong>
+            <span>75 - 100%</span>
+            <p>Low Risk / Strong Value</p>
+        </div>
+    </div>
+</div>
