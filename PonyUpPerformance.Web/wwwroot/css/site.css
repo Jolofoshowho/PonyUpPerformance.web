@@ -126,11 +126,11 @@ a {
 .hero-image img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: fill;
     object-position: center;
-
-    border-bottom: 1px solid rgba(255,255,255,.13);
+    display: block;
 }
+
 
 .hero-copy {
     width: 520px;
