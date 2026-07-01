@@ -7,9 +7,6 @@
     int confidence = 0;
     string recommendation = "READY";
     string reasoning = "Enter the repair details and run the analysis.";
-    string stoplightImage = "/images/ponyup-stoplight-off.png";
-    string stoplightClass = "off";
-    string scoreText = "---";
 
     if (Model.Result != null)
     {
@@ -30,18 +27,16 @@
         confidence = scoreProp != null ? Convert.ToInt32(scoreProp.GetValue(Model.Result)) : 0;
         recommendation = recommendationProp?.GetValue(Model.Result)?.ToString() ?? "ANALYSIS COMPLETE";
         reasoning = reasoningProp?.GetValue(Model.Result)?.ToString() ?? "Repair analysis complete.";
-        scoreText = confidence + "%";
-
-        stoplightClass =
-            confidence >= 75 ? "green" :
-            confidence >= 50 ? "yellow" :
-            "red";
-
-        stoplightImage =
-            confidence >= 75 ? "/images/ponyup-stoplight-green.png" :
-            confidence >= 50 ? "/images/ponyup-stoplight-yellow.png" :
-            "/images/ponyup-stoplight-red.png";
     }
+
+    var stoplight = new PonyUpPerformance.Web.Models.PonyUpStoplightResultViewModel
+    {
+        HasResult = Model.Result != null,
+        AnalysisType = "ANALYSIS STATUS",
+        Recommendation = recommendation,
+        ConfidenceScore = confidence,
+        Reasoning = reasoning
+    };
 }
 
 <section class="page-section analyzer-page repair-bg">
@@ -75,16 +70,5 @@
         </form>
     </div>
 
-    <div class="ponyup-result-panel @stoplightClass">
-        <div>
-            <img src="@stoplightImage" class="ponyup-stoplight-img" alt="PonyUp Stoplight" />
-        </div>
-
-        <div class="ponyup-result-copy">
-            <p>@(Model.Result == null ? "ANALYSIS STATUS" : "ANALYSIS COMPLETE")</p>
-            <h2>@recommendation</h2>
-            <strong>@scoreText</strong>
-            <p>@reasoning</p>
-        </div>
-    </div>
+    <partial name="_PonyUpStoplightResult" model="stoplight" />
 </section>
