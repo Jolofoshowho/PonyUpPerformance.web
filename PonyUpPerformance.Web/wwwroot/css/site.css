@@ -714,3 +714,91 @@ hr {
     background-attachment: fixed;
     min-height: 90vh;
 }
+/* PONYUP STOPLIGHT RESULT */
+
+.ponyup-result-panel {
+    max-width: 1100px;
+    margin: 34px auto 0;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 34px;
+    align-items: center;
+    padding: 32px;
+    background: linear-gradient(180deg, rgba(18,18,18,.95), rgba(3,3,3,.98));
+    border: 1px solid rgba(255,255,255,.28);
+    border-radius: 12px;
+    box-shadow: 0 0 38px rgba(0,0,0,.85);
+}
+
+.ponyup-stoplight-img {
+    width: 100%;
+    max-width: 300px;
+    display: block;
+    margin: 0 auto;
+    filter: drop-shadow(0 0 22px rgba(255,49,49,.45));
+}
+
+.ponyup-result-panel.green .ponyup-stoplight-img {
+    filter:
+        drop-shadow(0 0 18px rgba(70,255,40,.9))
+        drop-shadow(0 0 42px rgba(70,255,40,.65));
+}
+
+.ponyup-result-panel.yellow .ponyup-stoplight-img {
+    filter:
+        drop-shadow(0 0 18px rgba(255,190,20,.9))
+        drop-shadow(0 0 38px rgba(255,190,20,.55));
+}
+
+.ponyup-result-panel.red .ponyup-stoplight-img {
+    filter:
+        drop-shadow(0 0 26px rgba(255,20,20,1))
+        drop-shadow(0 0 62px rgba(255,20,20,.95));
+}
+
+.ponyup-result-copy h2 {
+    font-size: clamp(2.4rem, 5vw, 5rem);
+    font-weight: 1000;
+    text-transform: uppercase;
+    margin: 0 0 10px;
+}
+
+.ponyup-result-panel.green h2,
+.ponyup-result-panel.green strong {
+    color: #58ff35;
+    text-shadow: 0 0 24px rgba(70,255,40,.9);
+}
+
+.ponyup-result-panel.yellow h2,
+.ponyup-result-panel.yellow strong {
+    color: #ffc21a;
+    text-shadow: 0 0 22px rgba(255,190,20,.8);
+}
+
+.ponyup-result-panel.red h2,
+.ponyup-result-panel.red strong {
+    color: #ff3131;
+    text-shadow: 0 0 30px rgba(255,20,20,1);
+}
+
+.ponyup-result-copy strong {
+    display: block;
+    font-size: clamp(3rem, 7vw, 6rem);
+    font-weight: 1000;
+    line-height: 1;
+    margin: 18px 0;
+}
+
+.ponyup-result-copy p {
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 750;
+    line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+    .ponyup-result-panel {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+}
