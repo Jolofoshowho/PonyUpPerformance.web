@@ -1070,3 +1070,18 @@ hr {
 }
 
 /* PonyUp homepage background with dark overlay */ body { background: linear-gradient( rgba(0,0,0,0.75), rgba(0,0,0,0.75) ), url('/images/ponyup-nightmare.png'); background-size: cover; background-position: center center; background-repeat: no-repeat; background-attachment: fixed; background-color: #050505; }
+
+/* EMERGENCY HOMEPAGE BACKGROUND RESTORE */
+body {
+    background: url('/images/ponyup-nightmare.png') center center / cover no-repeat fixed !important;
+}
+
+body::before {
+    content: none !important;
+}
+
+.ponyup-hero,
+.hero-image,
+.page-section {
+    background: transparent !important;
+}
