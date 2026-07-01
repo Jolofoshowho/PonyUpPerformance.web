@@ -1,220 +1,90 @@
-﻿@page
+@page
 @model PonyUpPerformance.Web.Pages.RepairAnalyzerModel
+
 @{
     ViewData["Title"] = "Repair Analyzer";
+
+    int confidence = 0;
+    string recommendation = "READY";
+    string reasoning = "Enter the repair details and run the analysis.";
+    string stoplightImage = "/images/ponyup-stoplight-off.png";
+    string stoplightClass = "off";
+    string scoreText = "---";
+
+    if (Model.Result != null)
+    {
+        var resultType = Model.Result.GetType();
+
+        var scoreProp =
+            resultType.GetProperty("ConfidenceScore") ??
+            resultType.GetProperty("Score");
+
+        var recommendationProp =
+            resultType.GetProperty("Recommendation") ??
+            resultType.GetProperty("Decision");
+
+        var reasoningProp =
+            resultType.GetProperty("Reasoning") ??
+            resultType.GetProperty("Summary");
+
+        confidence = scoreProp != null ? Convert.ToInt32(scoreProp.GetValue(Model.Result)) : 0;
+        recommendation = recommendationProp?.GetValue(Model.Result)?.ToString() ?? "ANALYSIS COMPLETE";
+        reasoning = reasoningProp?.GetValue(Model.Result)?.ToString() ?? "Repair analysis complete.";
+        scoreText = confidence + "%";
+
+        stoplightClass =
+            confidence >= 75 ? "green" :
+            confidence >= 50 ? "yellow" :
+            "red";
+
+        stoplightImage =
+            confidence >= 75 ? "/images/ponyup-stoplight-green.png" :
+            confidence >= 50 ? "/images/ponyup-stoplight-yellow.png" :
+            "/images/ponyup-stoplight-red.png";
+    }
 }
 
-<section class="account-page-section analyzer-page repair-bg">
-    <div class="container">
+<section class="page-section analyzer-page repair-bg">
+    <h1 class="section-title">REPAIR ANALYZER</h1>
+    <p class="section-subtitle">Should you repair it, price it differently, or walk away?</p>
 
-        <h1 class="section-title">Repair Analyzer</h1>
-        <p class="section-subtitle">
-            Estimate the repair cost, compare it against vehicle value, and decide if the money makes sense.
-        </p>
+    @if (!string.IsNullOrWhiteSpace(Model.CreditMessage))
+    {
+        <div class="price-card featured" style="max-width:900px;margin:0 auto 24px;">
+            <p>@Model.CreditMessage</p>
+        </div>
+    }
 
-        <div class="account-card mt-4">
-            <h2>Account Status</h2>
+    <div class="price-card" style="max-width:900px;margin:0 auto;">
+        <form method="post">
+            <label>Year</label>
+            <input asp-for="Input.VehicleYear" />
 
-            @if (Model.CreditStatus.IsLoggedIn)
-            {
-                <p><strong>Current Plan:</strong> @Model.CreditStatus.CurrentPlan</p>
+            <label>Make</label>
+            <input asp-for="Input.VehicleMake" />
 
-                @if (Model.CreditStatus.CurrentPlan == "Owner")
-                {
-                    <p><strong>Credits Remaining:</strong> <span style="font-size: 1.8rem;">👑 ☁️</span></p>
-                }
-                else
-                {
-                    <p><strong>Credits Remaining:</strong> @Model.CreditStatus.RemainingCredits</p>
-                }
-            }
-            else
-            {
-                <p>Create a free account to unlock your first full analysis.</p>
-                <a class="btn btn-danger" asp-area="Identity" asp-page="/Account/Register">Create Free Account</a>
-                <a class="btn btn-outline-light ms-2" asp-area="Identity" asp-page="/Account/Login">Login</a>
-            }
+            <label>Model</label>
+            <input asp-for="Input.VehicleModel" />
 
-            @if (!string.IsNullOrWhiteSpace(Model.CreditMessage))
-            {
-                <hr />
-                <p class="text-danger"><strong>@Model.CreditMessage</strong></p>
-                <a class="btn btn-danger" asp-page="/Pricing">View Pricing</a>
-            }
+            <label>Repair Cost</label>
+            <input asp-for="Input.RepairCost" />
+
+            <button class="btn-red" type="submit" style="margin-top:20px;">
+                ANALYZE REPAIR
+            </button>
+        </form>
+    </div>
+
+    <div class="ponyup-result-panel @stoplightClass">
+        <div>
+            <img src="@stoplightImage" class="ponyup-stoplight-img" alt="PonyUp Stoplight" />
         </div>
 
-        <form method="post" class="account-card mt-4">
-
-            <h2>Vehicle</h2>
-
-            <div class="row">
-                <div class="col-md-3 mb-3">
-                    <label>Year</label>
-                    <input asp-for="Input.VehicleYear" class="form-control" />
-                </div>
-
-                <div class="col-md-3 mb-3">
-                    <label>Make</label>
-                    <input asp-for="Input.VehicleMake" class="form-control" />
-                </div>
-
-                <div class="col-md-3 mb-3">
-                    <label>Model</label>
-                    <input asp-for="Input.VehicleModel" class="form-control" />
-                </div>
-
-                <div class="col-md-3 mb-3">
-                    <label>Mileage</label>
-                    <input asp-for="Input.Mileage" class="form-control" />
-                </div>
-            </div>
-
-            <hr />
-
-            <h2>Location-Based Estimate</h2>
-
-            <div class="row">
-                <div class="col-md-3 mb-3">
-                    <label>City</label>
-                    <input asp-for="EstimateInput.City" class="form-control" />
-                </div>
-
-                <div class="col-md-3 mb-3">
-                    <label>State</label>
-                    <input asp-for="EstimateInput.State" class="form-control" placeholder="AR" />
-                </div>
-
-                <div class="col-md-3 mb-3">
-                    <label>ZIP Code</label>
-                    <input asp-for="EstimateInput.ZipCode" class="form-control" />
-                </div>
-
-                <div class="col-md-3 mb-3">
-                    <label>Repair Type</label>
-                    <select asp-for="EstimateInput.RepairType" class="form-control">
-                        @foreach (var repairType in Model.RepairTypes)
-                        {
-                            <option value="@repairType">@repairType</option>
-                        }
-                    </select>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-3 mb-3">
-                    <label>
-                        <input asp-for="EstimateInput.IncludeDiagnosticFee" />
-                        Include Diagnostic Fee
-                    </label>
-                </div>
-
-                <div class="col-md-3 mb-3">
-                    <label>
-                        <input asp-for="EstimateInput.IncludeTowFee" />
-                        Include Tow Fee
-                    </label>
-                </div>
-            </div>
-
-            <hr />
-
-            <h2>Decision Inputs</h2>
-
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label>Estimated Vehicle Value</label>
-                    <input asp-for="Input.VehicleValue" class="form-control" />
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label>Vehicle Condition</label>
-                    <select asp-for="Input.Condition" class="form-control">
-                        <option value="Poor">Poor</option>
-                        <option value="Fair">Fair</option>
-                        <option value="Good">Good</option>
-                        <option value="Excellent">Excellent</option>
-                    </select>
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label>Planned Ownership Years</label>
-                    <input asp-for="Input.OwnershipYears" class="form-control" />
-                </div>
-            </div>
-
-            @if (Model.CreditStatus.IsLoggedIn && Model.CreditStatus.CanRunAnalysis)
-            {
-                <button type="submit" class="btn btn-danger btn-lg">
-                    Estimate + Analyze Repair
-                </button>
-            }
-            else if (Model.CreditStatus.IsLoggedIn && !Model.CreditStatus.CanRunAnalysis)
-            {
-                <a class="btn btn-danger btn-lg" asp-page="/Pricing">
-                    Upgrade To Continue
-                </a>
-            }
-            else
-            {
-                <a class="btn btn-danger btn-lg" asp-area="Identity" asp-page="/Account/Register">
-                    Create Free Account
-                </a>
-            }
-
-        </form>
-
-        @if (Model.EstimateResult != null)
-        {
-            <div class="account-card mt-4">
-                <h2>Repair Cost Estimate</h2>
-
-                <p><strong>Repair Type:</strong> @Model.EstimateResult.RepairType</p>
-                <p><strong>Location Used:</strong> @Model.EstimateResult.LocationUsed</p>
-
-                <div class="row">
-                    <div class="col-md-4">
-                        <h3>Low</h3>
-                        <p>$@Model.EstimateResult.LowEstimate</p>
-                    </div>
-
-                    <div class="col-md-4">
-                        <h3>Expected</h3>
-                        <p>$@Model.EstimateResult.ExpectedEstimate</p>
-                    </div>
-
-                    <div class="col-md-4">
-                        <h3>High</h3>
-                        <p>$@Model.EstimateResult.HighEstimate</p>
-                    </div>
-                </div>
-
-                <p>@Model.EstimateResult.EstimateNote</p>
-            </div>
-        }
-
-        @if (Model.Result != null)
-        {
-            <div class="account-card mt-4">
-                <h2>Decision Result</h2>
-
-                <p><strong>Recommendation:</strong> @Model.Result.Recommendation</p>
-                <p><strong>Confidence Score:</strong> @Model.Result.ConfidenceScore%</p>
-                <p><strong>Risk Level:</strong> @Model.Result.RiskLevel</p>
-                <p><strong>Financial Impact:</strong> @Model.Result.FinancialImpact</p>
-                <p><strong>Reasoning:</strong> @Model.Result.Reasoning</p>
-
-                @if (Model.Result.NextSteps.Any())
-                {
-                    <h3>Next Steps</h3>
-                    <ul>
-                        @foreach (var step in Model.Result.NextSteps)
-                        {
-                            <li>@step</li>
-                        }
-                    </ul>
-                }
-            </div>
-        }
-
+        <div class="ponyup-result-copy">
+            <p>@(Model.Result == null ? "ANALYSIS STATUS" : "ANALYSIS COMPLETE")</p>
+            <h2>@recommendation</h2>
+            <strong>@scoreText</strong>
+            <p>@reasoning</p>
+        </div>
     </div>
 </section>
