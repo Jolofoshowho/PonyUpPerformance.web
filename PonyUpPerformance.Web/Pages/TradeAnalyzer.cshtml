@@ -3,19 +3,38 @@
 
 @{
     ViewData["Title"] = "Trade Analyzer";
+
+    string stoplightImage = "/images/ponyup-stoplight-off.png";
+    string stoplightClass = "off";
+    string recommendation = "READY";
+    string scoreText = "---";
+    string reasoning = "Enter both vehicles and run the trade analysis.";
+
+    if (Model.Result != null)
+    {
+        stoplightClass =
+            Model.Result.ConfidenceScore >= 75 ? "green" :
+            Model.Result.ConfidenceScore >= 50 ? "yellow" :
+            "red";
+
+        stoplightImage =
+            Model.Result.ConfidenceScore >= 75 ? "/images/ponyup-stoplight-green.png" :
+            Model.Result.ConfidenceScore >= 50 ? "/images/ponyup-stoplight-yellow.png" :
+            "/images/ponyup-stoplight-red.png";
+
+        recommendation = Model.Result.Recommendation;
+        scoreText = Model.Result.ConfidenceScore + "%";
+        reasoning = Model.Result.Reasoning;
+    }
 }
 
 <section class="page-section analyzer-page trade-bg">
     <h1 class="section-title">TRADE ANALYZER</h1>
-    <p class="section-subtitle">
-        Is this trade actually worth making?
-    </p>
+    <p class="section-subtitle">Is this trade actually worth making?</p>
 
     <div class="price-card" style="max-width:1000px;margin:0 auto;">
-
-        <h3 style="margin-bottom:20px;">YOUR VEHICLE</h3>
-
         <form method="post">
+            <h3>YOUR VEHICLE</h3>
 
             <label>Year</label>
             <input asp-for="Input.YourYear" />
@@ -34,7 +53,7 @@
 
             <hr />
 
-            <h3 style="margin-bottom:20px;">THEIR VEHICLE</h3>
+            <h3>THEIR VEHICLE</h3>
 
             <label>Year</label>
             <input asp-for="Input.TheirYear" />
@@ -54,25 +73,22 @@
             <label>Estimated Repairs Needed</label>
             <input asp-for="Input.EstimatedRepairCost" />
 
-            <button
-                type="submit"
-                class="btn-red"
-                style="margin-top:25px;">
+            <button class="btn-red" type="submit" style="margin-top:25px;">
                 ANALYZE TRADE
             </button>
-
         </form>
     </div>
 
-    @if (Model.Result != null)
-    {
-        <div class="price-card featured"
-             style="max-width:1000px;margin:30px auto 0;">
+    <div class="ponyup-result-panel @stoplightClass">
+        <div>
+            <img src="@stoplightImage" class="ponyup-stoplight-img" alt="PonyUp Stoplight" />
+        </div>
 
-            <h2>@Model.Result.Recommendation</h2>
-<strong>@Model.Result.ConfidenceScore / 100</strong>
-<p>@Model.Result.Reasoning</p>
-
-</div>
-    }
+        <div class="ponyup-result-copy">
+            <p>@(Model.Result == null ? "ANALYSIS STATUS" : "ANALYSIS COMPLETE")</p>
+            <h2>@recommendation</h2>
+            <strong>@scoreText</strong>
+            <p>@reasoning</p>
+        </div>
+    </div>
 </section>
