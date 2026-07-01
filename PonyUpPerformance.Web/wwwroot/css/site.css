@@ -802,3 +802,266 @@ hr {
         text-align: center;
     }
 }
+
+/* FINAL PONYUP STOPLIGHT RESULT PANEL */
+
+.ponyup-stoplight-panel {
+    max-width: 1320px;
+    margin: 42px auto 0;
+    display: grid;
+    grid-template-columns: 300px 1fr 360px;
+    gap: 28px;
+    align-items: stretch;
+    padding: 28px;
+    background:
+        radial-gradient(circle at 50% 20%, rgba(255,255,255,.06), transparent 35%),
+        linear-gradient(180deg, rgba(12,12,12,.97), rgba(2,2,2,.99));
+    border: 1px solid rgba(255,255,255,.20);
+    border-radius: 14px;
+    box-shadow:
+        0 0 42px rgba(0,0,0,.95),
+        inset 0 0 60px rgba(255,255,255,.035);
+}
+
+.ponyup-stoplight-left {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ponyup-stoplight-art {
+    width: 100%;
+    max-width: 290px;
+    display: block;
+}
+
+.ponyup-stoplight-panel.off .ponyup-stoplight-art {
+    filter: drop-shadow(0 0 18px rgba(255,255,255,.25));
+}
+
+.ponyup-stoplight-panel.green .ponyup-stoplight-art {
+    filter:
+        drop-shadow(0 0 28px rgba(70,255,40,.95))
+        drop-shadow(0 0 70px rgba(70,255,40,.70));
+}
+
+.ponyup-stoplight-panel.yellow .ponyup-stoplight-art {
+    filter:
+        drop-shadow(0 0 24px rgba(255,190,20,.95))
+        drop-shadow(0 0 58px rgba(255,190,20,.65));
+}
+
+.ponyup-stoplight-panel.red .ponyup-stoplight-art {
+    filter:
+        drop-shadow(0 0 34px rgba(255,20,20,1))
+        drop-shadow(0 0 86px rgba(255,20,20,1));
+}
+
+.ponyup-stoplight-center {
+    padding: 28px;
+    border-radius: 12px;
+    background:
+        linear-gradient(180deg, rgba(0,0,0,.52), rgba(0,0,0,.86));
+    border: 1px solid rgba(255,255,255,.18);
+}
+
+.ponyup-analysis-label,
+.ponyup-score-label,
+.ponyup-reasoning-title {
+    color: #ffffff;
+    font-size: .9rem;
+    font-weight: 1000;
+    letter-spacing: .12rem;
+    text-transform: uppercase;
+}
+
+.ponyup-stoplight-center h2 {
+    font-size: clamp(3rem, 6vw, 6rem);
+    font-weight: 1000;
+    text-transform: uppercase;
+    line-height: .95;
+    margin: 12px 0 22px;
+}
+
+.ponyup-score {
+    font-size: clamp(4rem, 8vw, 7rem);
+    font-weight: 1000;
+    line-height: 1;
+    margin: 8px 0 22px;
+}
+
+.ponyup-meta-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin: 18px 0 28px;
+}
+
+.ponyup-meta-row span {
+    display: block;
+    color: #d8d8d8;
+    font-weight: 900;
+    letter-spacing: .06rem;
+}
+
+.ponyup-meta-row strong {
+    display: block;
+    font-size: 1.45rem;
+    font-weight: 1000;
+    text-transform: uppercase;
+}
+
+.ponyup-reasoning-title {
+    margin: 20px 0 12px;
+}
+
+.ponyup-result-reasoning {
+    font-size: 1.15rem;
+    line-height: 1.55;
+    font-weight: 850;
+    margin: 0;
+}
+
+.ponyup-stoplight-panel.off .ponyup-stoplight-center h2,
+.ponyup-stoplight-panel.off .ponyup-score,
+.ponyup-stoplight-panel.off .ponyup-meta-row strong,
+.ponyup-stoplight-panel.off .ponyup-result-reasoning {
+    color: #ffffff;
+    text-shadow: 0 0 18px rgba(255,255,255,.65);
+}
+
+.ponyup-stoplight-panel.green .ponyup-stoplight-center {
+    border-color: rgba(88,255,53,.75);
+    box-shadow:
+        0 0 34px rgba(88,255,53,.22),
+        inset 0 0 44px rgba(88,255,53,.08);
+}
+
+.ponyup-stoplight-panel.green h2,
+.ponyup-stoplight-panel.green .ponyup-score,
+.ponyup-stoplight-panel.green .ponyup-meta-row strong,
+.ponyup-stoplight-panel.green .ponyup-reasoning-title,
+.ponyup-stoplight-panel.green .ponyup-result-reasoning {
+    color: #58ff35;
+    text-shadow:
+        0 0 18px rgba(88,255,53,.95),
+        0 0 42px rgba(88,255,53,.65);
+}
+
+.ponyup-stoplight-panel.yellow .ponyup-stoplight-center {
+    border-color: rgba(255,194,26,.78);
+    box-shadow:
+        0 0 30px rgba(255,194,26,.24),
+        inset 0 0 40px rgba(255,194,26,.08);
+}
+
+.ponyup-stoplight-panel.yellow h2,
+.ponyup-stoplight-panel.yellow .ponyup-score,
+.ponyup-stoplight-panel.yellow .ponyup-meta-row strong,
+.ponyup-stoplight-panel.yellow .ponyup-reasoning-title,
+.ponyup-stoplight-panel.yellow .ponyup-result-reasoning {
+    color: #ffc21a;
+    text-shadow:
+        0 0 16px rgba(255,194,26,.92),
+        0 0 34px rgba(255,194,26,.58);
+}
+
+.ponyup-stoplight-panel.red .ponyup-stoplight-center {
+    border-color: rgba(255,49,49,.9);
+    box-shadow:
+        0 0 42px rgba(255,49,49,.35),
+        inset 0 0 50px rgba(255,49,49,.10);
+}
+
+.ponyup-stoplight-panel.red h2,
+.ponyup-stoplight-panel.red .ponyup-score,
+.ponyup-stoplight-panel.red .ponyup-meta-row strong,
+.ponyup-stoplight-panel.red .ponyup-reasoning-title,
+.ponyup-stoplight-panel.red .ponyup-result-reasoning {
+    color: #ff3131;
+    text-shadow:
+        0 0 22px rgba(255,49,49,1),
+        0 0 55px rgba(255,49,49,.90);
+}
+
+.ponyup-stoplight-legend {
+    padding: 24px;
+    border-radius: 12px;
+    background: rgba(0,0,0,.58);
+    border: 1px solid rgba(255,255,255,.16);
+}
+
+.ponyup-stoplight-legend h3 {
+    color: #ffffff;
+    font-size: 1.25rem;
+    font-weight: 1000;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: .12rem;
+    margin: 0 0 18px;
+}
+
+.ponyup-legend-card {
+    padding: 16px;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    background: rgba(0,0,0,.50);
+}
+
+.ponyup-legend-card strong {
+    display: block;
+    font-size: 1.3rem;
+    font-weight: 1000;
+    text-transform: uppercase;
+}
+
+.ponyup-legend-card span {
+    display: block;
+    color: #ffffff;
+    font-weight: 900;
+    margin-top: 4px;
+}
+
+.ponyup-legend-card p {
+    color: #ffffff;
+    font-weight: 750;
+    margin: 6px 0 0;
+}
+
+.ponyup-legend-card.red {
+    border: 1px solid rgba(255,49,49,.75);
+}
+
+.ponyup-legend-card.red strong {
+    color: #ff3131;
+    text-shadow: 0 0 16px rgba(255,49,49,.95);
+}
+
+.ponyup-legend-card.yellow {
+    border: 1px solid rgba(255,194,26,.75);
+}
+
+.ponyup-legend-card.yellow strong {
+    color: #ffc21a;
+    text-shadow: 0 0 14px rgba(255,194,26,.85);
+}
+
+.ponyup-legend-card.green {
+    border: 1px solid rgba(88,255,53,.75);
+}
+
+.ponyup-legend-card.green strong {
+    color: #58ff35;
+    text-shadow: 0 0 14px rgba(88,255,53,.85);
+}
+
+@media (max-width: 1100px) {
+    .ponyup-stoplight-panel {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .ponyup-meta-row {
+        grid-template-columns: 1fr;
+    }
+}
