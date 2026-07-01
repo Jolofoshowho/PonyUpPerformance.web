@@ -4,28 +4,14 @@
 @{
     ViewData["Title"] = "Upgrade Analyzer";
 
-    string stoplightImage = "/images/ponyup-stoplight-off.png";
-    string stoplightClass = "off";
-    string recommendation = "READY";
-    string scoreText = "---";
-    string reasoning = "Enter the upgrade details and run the analysis.";
-
-    if (Model.Result != null)
+    var stoplight = new PonyUpPerformance.Web.Models.PonyUpStoplightResultViewModel
     {
-        stoplightClass =
-            Model.Result.ConfidenceScore >= 75 ? "green" :
-            Model.Result.ConfidenceScore >= 50 ? "yellow" :
-            "red";
-
-        stoplightImage =
-            Model.Result.ConfidenceScore >= 75 ? "/images/ponyup-stoplight-green.png" :
-            Model.Result.ConfidenceScore >= 50 ? "/images/ponyup-stoplight-yellow.png" :
-            "/images/ponyup-stoplight-red.png";
-
-        recommendation = Model.Result.Recommendation;
-        scoreText = Model.Result.ConfidenceScore + "%";
-        reasoning = Model.Result.Reasoning;
-    }
+        HasResult = Model.Result != null,
+        AnalysisType = "ANALYSIS STATUS",
+        Recommendation = Model.Result?.Recommendation ?? "READY",
+        ConfidenceScore = Model.Result?.ConfidenceScore ?? 0,
+        Reasoning = Model.Result?.Reasoning ?? "Enter the upgrade details and run the analysis."
+    };
 }
 
 <section class="page-section analyzer-page upgrade-bg">
@@ -64,16 +50,5 @@
         </form>
     </div>
 
-    <div class="ponyup-result-panel @stoplightClass">
-        <div>
-            <img src="@stoplightImage" class="ponyup-stoplight-img" alt="PonyUp Stoplight" />
-        </div>
-
-        <div class="ponyup-result-copy">
-            <p>@(Model.Result == null ? "ANALYSIS STATUS" : "ANALYSIS COMPLETE")</p>
-            <h2>@recommendation</h2>
-            <strong>@scoreText</strong>
-            <p>@reasoning</p>
-        </div>
-    </div>
+    <partial name="_PonyUpStoplightResult" model="stoplight" />
 </section>
