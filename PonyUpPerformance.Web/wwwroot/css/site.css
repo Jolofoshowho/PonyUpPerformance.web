@@ -109,23 +109,19 @@ a {
 }
 
 /* HERO */
-
 .ponyup-hero {
-    min-height: calc(100vh - 86px);
-    background:
-        linear-gradient(
-            90deg,
-            rgba(0,0,0,.95) 0%,
-            rgba(0,0,0,.82) 31%,
-            rgba(0,0,0,.35) 56%,
-            rgba(0,0,0,.06) 100%
-        ),
-        url('/images/ponyup-nightmare.png');
-    background-repeat: no-repeat;
+    min-height: calc(100vh - 90px);
+          linear-gradient(90deg,
+                          rgba(0,0,0,.92) 0%,
+                          rgba(0,0,0,.72) 38%,
+                          rgba(0,0,0,.15) 100%),
+                             url('images/ponyup-nightmare.png');
     background-size: cover;
-    background-position: right center;
+    background-position: center center;
+    background-repeat: no-repeat;
     display: flex;
     align-items: center;
+
     border-bottom: 1px solid rgba(255,255,255,.13);
 }
 
