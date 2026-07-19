@@ -31,7 +31,7 @@ builder.Services.AddDataProtection()
 
 builder.Services.AddRazorPages();
 
-builder.Services.AddScoped<RepairScoringService, RepairScoringService>();
+builder.Services.AddScoped<IRepairScoringService, RepairScoringService>();
 builder.Services.AddScoped<AnalysisHistoryService>();
 builder.Services.AddScoped<RepairCostEstimatorService>();
 builder.Services.AddScoped<VehiclePaintPaletteService>();
