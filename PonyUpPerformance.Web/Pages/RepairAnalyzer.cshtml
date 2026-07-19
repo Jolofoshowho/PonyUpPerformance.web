@@ -24,36 +24,50 @@
             resultType.GetProperty("Reasoning") ??
             resultType.GetProperty("Summary");
 
-        confidence = scoreProp != null ? Convert.ToInt32(scoreProp.GetValue(Model.Result)) : 0;
-        recommendation = recommendationProp?.GetValue(Model.Result)?.ToString() ?? "ANALYSIS COMPLETE";
-        reasoning = reasoningProp?.GetValue(Model.Result)?.ToString() ?? "Repair analysis complete.";
+        confidence = scoreProp != null
+            ? Convert.ToInt32(scoreProp.GetValue(Model.Result))
+            : 0;
+
+        recommendation =
+            recommendationProp?.GetValue(Model.Result)?.ToString()
+            ?? "ANALYSIS COMPLETE";
+
+        reasoning =
+            reasoningProp?.GetValue(Model.Result)?.ToString()
+            ?? "Repair analysis complete.";
     }
 
-    var stoplight = new PonyUpPerformance.Web.Models.PonyUpStoplightResultViewModel
-    {
-        HasResult = Model.Result != null,
-        AnalysisType = "ANALYSIS STATUS",
-        Recommendation = recommendation,
-        ConfidenceScore = confidence,
-        Reasoning = reasoning
-    };
+    var stoplight =
+        new PonyUpPerformance.Web.Models.PonyUpStoplightResultViewModel
+        {
+            HasResult = Model.Result != null,
+            AnalysisType = "ANALYSIS STATUS",
+            Recommendation = recommendation,
+            ConfidenceScore = confidence,
+            Reasoning = reasoning
+        };
 }
 
 <section class="page-section analyzer-page repair-bg">
     <h1 class="section-title">REPAIR ANALYZER</h1>
+
     <p class="section-subtitle">
-Know before you spend. Determine whether repairing this vehicle makes financial sense.
-</p>
+        Know before you spend. Determine whether repairing this vehicle makes financial sense.
+    </p>
 
     @if (!string.IsNullOrWhiteSpace(Model.CreditMessage))
     {
-        <div class="price-card featured" style="max-width:900px;margin:0 auto 24px;">
+        <div class="price-card featured"
+             style="max-width:900px;margin:0 auto 24px;">
             <p>@Model.CreditMessage</p>
         </div>
     }
 
-    <div class="price-card" style="max-width:900px;margin:0 auto;">
+    <div class="price-card"
+         style="max-width:900px;margin:0 auto;">
+
         <form method="post">
+
             <label>Year</label>
             <input asp-for="Input.VehicleYear" />
 
@@ -63,35 +77,153 @@ Know before you spend. Determine whether repairing this vehicle makes financial 
             <label>Model</label>
             <input asp-for="Input.VehicleModel" />
 
+            <label>City</label>
+            <input asp-for="EstimateInput.City" />
+
+            <label>State</label>
+            <input asp-for="EstimateInput.State" />
+
+            <label>ZIP Code</label>
+            <input asp-for="EstimateInput.ZipCode" />
+
+            <label>Repair Type</label>
+            <select asp-for="EstimateInput.RepairType">
+                @foreach (string repairType in Model.RepairTypes)
+                {
+                    <option value="@repairType">
+                        @repairType
+                    </option>
+                }
+            </select>
+
+            <label>
+                <input asp-for="EstimateInput.IncludeDiagnosticFee" />
+                Include Diagnostic Fee
+            </label>
+
+            <label>
+                <input asp-for="EstimateInput.IncludeTowFee" />
+                Include Tow Fee
+            </label>
+
+            <button class="btn-red"
+                    type="submit"
+                    asp-page-handler="Estimate"
+                    style="margin-top:20px;"
+                    onclick="return confirm('Does all of the information look correct? Estimating the repair cost will use one analysis credit.');">
+                ESTIMATE REPAIR COST
+            </button>
+
+            @if (Model.EstimateResult != null)
+            {
+                <div class="price-card featured"
+                     style="margin:24px 0;">
+
+                    <h2>REPAIR COST ESTIMATE</h2>
+
+                    <p>
+                        <strong>Repair:</strong>
+                        @Model.EstimateResult.RepairType
+                    </p>
+
+                    <p>
+                        <strong>Location:</strong>
+                        @Model.EstimateResult.LocationUsed
+                    </p>
+
+                    <p>
+                        <strong>Low Estimate:</strong>
+                        @Model.EstimateResult.LowEstimate.ToString("C")
+                    </p>
+
+                    <p>
+                        <strong>Expected Estimate:</strong>
+                        @Model.EstimateResult.ExpectedEstimate.ToString("C")
+                    </p>
+
+                    <p>
+                        <strong>High Estimate:</strong>
+                        @Model.EstimateResult.HighEstimate.ToString("C")
+                    </p>
+
+                    <p>
+                        <strong>Average Labor Rate:</strong>
+                        @Model.EstimateResult.LaborRateAverage.ToString("C")
+                        per hour
+                    </p>
+
+                    <p>
+                        <strong>Average Labor Time:</strong>
+                        @Model.EstimateResult.LaborHoursAverage hours
+                    </p>
+
+                    <p>
+                        <strong>Average Parts Cost:</strong>
+                        @Model.EstimateResult.PartsAverage.ToString("C")
+                    </p>
+
+                    <p>
+                        <strong>Average Shop Fee:</strong>
+                        @Model.EstimateResult.ShopFeeAverage.ToString("C")
+                    </p>
+
+                    @if (Model.EstimateResult.DiagnosticFee > 0)
+                    {
+                        <p>
+                            <strong>Diagnostic Fee:</strong>
+                            @Model.EstimateResult.DiagnosticFee.ToString("C")
+                        </p>
+                    }
+
+                    @if (Model.EstimateResult.TowFee > 0)
+                    {
+                        <p>
+                            <strong>Tow Fee:</strong>
+                            @Model.EstimateResult.TowFee.ToString("C")
+                        </p>
+                    }
+
+                    <p>
+                        @Model.EstimateResult.EstimateNote
+                    </p>
+                </div>
+            }
+
             <label>Repair Cost</label>
             <input asp-for="Input.RepairCost" />
+
             <label>Mileage</label>
-<input asp-for="Input.Mileage" />
+            <input asp-for="Input.Mileage" />
 
-<label>Estimated Vehicle Value</label>
-<input asp-for="Input.VehicleValue" />
+            <label>Estimated Vehicle Value</label>
+            <input asp-for="Input.VehicleValue" />
 
-<label>Overall Vehicle Condition</label>
-<select asp-for="Input.Condition">
-    <option value="Poor">Poor</option>
-    <option value="Fair">Fair</option>
-    <option value="Good">Good</option>
-    <option value="Excellent">Excellent</option>
-</select>
+            <label>Overall Vehicle Condition</label>
+            <select asp-for="Input.Condition">
+                <option value="Poor">Poor</option>
+                <option value="Fair">Fair</option>
+                <option value="Good">Good</option>
+                <option value="Excellent">Excellent</option>
+            </select>
 
-<label>Years You Plan to Keep It</label>
-<input asp-for="Input.OwnershipYears" />
+            <label>Years You Plan to Keep It</label>
+            <input asp-for="Input.OwnershipYears" />
 
-<label>
-    <input asp-for="Input.IsSafetyCritical" />
-    Safety-Critical Repair
-</label>
+            <label>
+                <input asp-for="Input.IsSafetyCritical" />
+                Safety-Critical Repair
+            </label>
 
-            <button class="btn-red" type="submit" style="margin-top:20px;">
+            <button class="btn-red"
+                    type="submit"
+                    style="margin-top:20px;"
+                    onclick="return confirm('Does all of the information look correct? Running this analysis may use one analysis credit.');">
                 ANALYZE REPAIR
             </button>
+
         </form>
     </div>
 
-    <partial name="_PonyUpStoplightResult" model="stoplight" />
+    <partial name="_PonyUpStoplightResult"
+             model="stoplight" />
 </section>
