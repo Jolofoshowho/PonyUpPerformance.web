@@ -32,6 +32,9 @@ public class RepairAnalyzerModel : PageModel
 
     public RepairCostEstimateResult? EstimateResult { get; set; }
 
+    [TempData]
+    public bool EstimateCreditConsumed { get; set; }
+
     public DecisionResult? Result { get; set; }
 
     public UsageCreditStatus CreditStatus { get; set; } = new();
