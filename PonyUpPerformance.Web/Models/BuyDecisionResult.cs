@@ -4,6 +4,8 @@
     {
         public string Recommendation { get; set; } = "";
 
+        public int Score { get; set; }
+
         public int ConfidenceScore { get; set; }
 
         public string PurchaseRisk { get; set; } = "";
