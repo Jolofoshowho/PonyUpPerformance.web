@@ -104,45 +104,63 @@ public class RepairAnalyzerModel : PageModel
 }
 
     public async Task<IActionResult> OnPostAsync()
+{
+    RepairTypes = _repairCostEstimatorService.GetRepairTypes();
+    CreditStatus = await _usageCreditService.GetStatusAsync(User);
+
+    if (!CreditStatus.IsLoggedIn)
     {
-        RepairTypes = _repairCostEstimatorService.GetRepairTypes();
-        CreditStatus = await _usageCreditService.GetStatusAsync(User);
-
-        if (!CreditStatus.IsLoggedIn)
-        {
-            CreditMessage =
-                "Create a free account to run a repair analysis.";
-
-            return Page();
-        }
-
-        bool estimateWasCompleted =
-            string.Equals(
-                TempData[EstimateCreditKey]?.ToString(),
-                "true",
-                StringComparison.OrdinalIgnoreCase);
-
-        if (!estimateWasCompleted)
-        {
-            CreditMessage =
-                "Estimate the repair cost before running the repair analysis.";
-
-            return Page();
-        }
-
-        if (Input.RepairCost <= 0)
-        {
-            CreditMessage =
-                "A valid repair cost is required before running the analysis.";
-
-            return Page();
-        }
-
-        Result = _repairScoringService.Analyze(Input);
-
-        CreditStatus =
-            await _usageCreditService.GetStatusAsync(User);
+        CreditMessage =
+            "Create a free account to run a repair analysis.";
 
         return Page();
     }
+
+    if (Input.RepairCost <= 0)
+    {
+        CreditMessage =
+            "Enter a valid repair cost or use the repair cost estimator first.";
+
+        return Page();
+    }
+
+    // If the estimator was not used, this manual analysis costs one credit.
+    if (!EstimateCreditConsumed)
+    {
+        if (!CreditStatus.CanRunAnalysis)
+        {
+            CreditMessage =
+                "You are out of analysis credits. Choose a plan to continue.";
+
+            return Page();
+        }
+
+        bool creditConsumed =
+            await _usageCreditService.ConsumeCreditAsync(
+                User,
+                "Repair");
+
+        if (!creditConsumed)
+        {
+            CreditMessage =
+                "Unable to consume an analysis credit. Please log in again or choose a plan.";
+
+            CreditStatus =
+                await _usageCreditService.GetStatusAsync(User);
+
+            return Page();
+        }
+    }
+
+    // Run the analysis using the estimated or manually entered repair cost.
+    Result = _repairScoringService.Analyze(Input);
+
+    // The paid estimate can authorize only this one analysis.
+    EstimateCreditConsumed = false;
+
+    CreditStatus =
+        await _usageCreditService.GetStatusAsync(User);
+
+    return Page();
+}
 }
