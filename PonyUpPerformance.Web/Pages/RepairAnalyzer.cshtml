@@ -68,63 +68,73 @@
 
         <form method="post" class="analyzer-form">
 
-            <label>Year</label>
-            <input asp-for="Input.VehicleYear" />
+            <div class="form-row">
+                <label>Year</label>
+                <input asp-for="Input.VehicleYear" />
+            </div>
 
-            <label>Make</label>
-            <input asp-for="Input.VehicleMake" />
+            <div class="form-row">
+                <label>Make</label>
+                <input asp-for="Input.VehicleMake" />
+            </div>
 
-            <label>Model</label>
-            <input asp-for="Input.VehicleModel" />
+            <div class="form-row">
+                <label>Model</label>
+                <input asp-for="Input.VehicleModel" />
+            </div>
 
-            <label>City</label>
-            <input asp-for="EstimateInput.City" />
+            <div class="form-row">
+                <label>City</label>
+                <input asp-for="EstimateInput.City" />
+            </div>
 
-            <label>State</label>
-            <input asp-for="EstimateInput.State" />
+            <div class="form-row">
+                <label>State</label>
+                <input asp-for="EstimateInput.State" />
+            </div>
 
-            <label>ZIP Code</label>
-            <input asp-for="EstimateInput.ZipCode" />
+            <div class="form-row">
+                <label>ZIP Code</label>
+                <input asp-for="EstimateInput.ZipCode" />
+            </div>
 
-            <div style="display:flex;align-items:center;gap:10px;">
-    <label style="margin:0.25;">Repair Type</label>
+            <div class="form-row">
+                <label>Repair Type</label>
 
-    <select asp-for="EstimateInput.RepairType">
-        @foreach (string repairType in Model.RepairTypes)
-        {
-            <option value="@repairType">
-                @repairType
-            </option>
-        }
-    </select>
-</div>
+                <select asp-for="EstimateInput.RepairType">
+                    @foreach (string repairType in Model.RepairTypes)
+                    {
+                        <option value="@repairType">
+                            @repairType
+                        </option>
+                    }
+                </select>
+            </div>
 
-            <label>
-                <input asp-for="EstimateInput.IncludeDiagnosticFee" />
-                Include Diagnostic Fee
-            </label>
+            <div class="form-check-row">
+                <label>
+                    <input asp-for="EstimateInput.IncludeDiagnosticFee" />
+                    Include Diagnostic Fee
+                </label>
 
-            <label>
-                <input asp-for="EstimateInput.IncludeTowFee" />
-                Include Tow Fee
-            </label>
+                <label>
+                    <input asp-for="EstimateInput.IncludeTowFee" />
+                    Include Tow Fee
+                </label>
+            </div>
 
-        <div style="margin-bottom:28px;">
-
-            <button class="btn-red"
-                    type="submit"
-                    asp-page-handler="Estimate"
-                    style="margin-top:20px;"
-                    onclick="return confirm('Does all of the information look correct? Estimating the repair cost will use one analysis credit.');">
-                ESTIMATE REPAIR COST
-            </button>
-
+            <div class="form-actions">
+                <button class="btn-red"
+                        type="submit"
+                        asp-page-handler="Estimate"
+                        onclick="return confirm('Does all of the information look correct? Estimating the repair cost will use one analysis credit.');">
+                    ESTIMATE REPAIR COST
+                </button>
             </div>
 
             @if (Model.EstimateResult != null)
             {
-                <div class="price-card featured"
-                     style="margin:24px 0;">
+                <div class="price-card featured estimate-result-card">
 
                     <h2>REPAIR COST ESTIMATE</h2>
 
@@ -196,40 +206,53 @@
                 </div>
             }
 
-            <label>Repair Cost</label>
-            <input asp-for="Input.RepairCost" />
+            <div class="analyzer-section-divider"></div>
 
-            <label>Mileage</label>
-            <input asp-for="Input.Mileage" />
+            <div class="form-row">
+                <label>Repair Cost</label>
+                <input asp-for="Input.RepairCost" />
+            </div>
 
-            <label>Estimated Vehicle Value</label>
-            <input asp-for="Input.VehicleValue" />
+            <div class="form-row">
+                <label>Mileage</label>
+                <input asp-for="Input.Mileage" />
+            </div>
 
-            <label>Overall Vehicle Condition</label>
-            <select asp-for="Input.Condition">
-                <option value="Poor">Poor</option>
-                <option value="Fair">Fair</option>
-                <option value="Good">Good</option>
-                <option value="Excellent">Excellent</option>
-            </select>
+            <div class="form-row">
+                <label>Estimated Vehicle Value</label>
+                <input asp-for="Input.VehicleValue" />
+            </div>
 
-            <div style="display:flex;align-items:center;gap:10px;">
-    <label style="margin:0;">Years You Plan to Keep It</label>
-    <input asp-for="Input.OwnershipYears" />
-</div>
+            <div class="form-row">
+                <label>Overall Vehicle Condition</label>
 
-            <label>
-    <input asp-for="Input.IsSafetyCritical" />
-    Safety-Critical Repair
-</label>
+                <select asp-for="Input.Condition">
+                    <option value="Poor">Poor</option>
+                    <option value="Fair">Fair</option>
+                    <option value="Good">Good</option>
+                    <option value="Excellent">Excellent</option>
+                </select>
+            </div>
 
-<div style="margin-top:20px;">
-    <button class="btn-red"
-            type="submit"
-            onclick="return confirm('Does all of the information look correct? Running this analysis may use one analysis credit.');">
-        ANALYZE REPAIR
-    </button>
-</div>
+            <div class="form-row">
+                <label>Years You Plan to Keep It</label>
+                <input asp-for="Input.OwnershipYears" />
+            </div>
+
+            <div class="form-check-row single-check">
+                <label>
+                    <input asp-for="Input.IsSafetyCritical" />
+                    Safety-Critical Repair
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn-red"
+                        type="submit"
+                        onclick="return confirm('Does all of the information look correct? Running this analysis may use one analysis credit.');">
+                    ANALYZE REPAIR
+                </button>
+            </div>
 
         </form>
     </div>
