@@ -4,46 +4,24 @@
 @{
     ViewData["Title"] = "Repair Analyzer";
 
-    int confidence = 0;
-    string recommendation = "READY";
-    string reasoning = "Enter the repair details and run the analysis.";
+    int decisionScore = Model.Result?.Score ?? 0;
+    int confidenceScore = Model.Result?.ConfidenceScore ?? 0;
 
-    if (Model.Result != null)
-    {
-        var resultType = Model.Result.GetType();
+    string recommendation =
+        Model.Result?.Recommendation
+        ?? "READY";
 
-        var scoreProp =
-            resultType.GetProperty("ConfidenceScore") ??
-            resultType.GetProperty("Score");
-
-        var recommendationProp =
-            resultType.GetProperty("Recommendation") ??
-            resultType.GetProperty("Decision");
-
-        var reasoningProp =
-            resultType.GetProperty("Reasoning") ??
-            resultType.GetProperty("Summary");
-
-        confidence = scoreProp != null
-            ? Convert.ToInt32(scoreProp.GetValue(Model.Result))
-            : 0;
-
-        recommendation =
-            recommendationProp?.GetValue(Model.Result)?.ToString()
-            ?? "ANALYSIS COMPLETE";
-
-        reasoning =
-            reasoningProp?.GetValue(Model.Result)?.ToString()
-            ?? "Repair analysis complete.";
-    }
+    string reasoning =
+        Model.Result?.Reasoning
+        ?? "Enter the repair details and run the analysis.";
 
     var stoplight =
         new PonyUpPerformance.Web.Models.PonyUpStoplightResultViewModel
         {
             HasResult = Model.Result != null,
-            AnalysisType = "ANALYSIS STATUS",
+            AnalysisType = "REPAIR DECISION",
             Recommendation = recommendation,
-            ConfidenceScore = confidence,
+            ConfidenceScore = decisionScore,
             Reasoning = reasoning
         };
 }
@@ -63,43 +41,44 @@
         </div>
     }
 
-<div class="price-card analyzer-card"
-     style="max-width:900px;margin:0 auto;">
+    <div class="price-card analyzer-card"
+         style="max-width:900px;margin:0 auto;">
 
         <form method="post" class="analyzer-form">
+            <input asp-for="EstimateCreditConsumed" type="hidden" />
 
             <div class="form-row">
-                <label>Year</label>
+                <label asp-for="Input.VehicleYear">Year</label>
                 <input asp-for="Input.VehicleYear" />
             </div>
 
             <div class="form-row">
-                <label>Make</label>
+                <label asp-for="Input.VehicleMake">Make</label>
                 <input asp-for="Input.VehicleMake" />
             </div>
 
             <div class="form-row">
-                <label>Model</label>
+                <label asp-for="Input.VehicleModel">Model</label>
                 <input asp-for="Input.VehicleModel" />
             </div>
 
             <div class="form-row">
-                <label>City</label>
+                <label asp-for="EstimateInput.City">City</label>
                 <input asp-for="EstimateInput.City" />
             </div>
 
             <div class="form-row">
-                <label>State</label>
+                <label asp-for="EstimateInput.State">State</label>
                 <input asp-for="EstimateInput.State" />
             </div>
 
             <div class="form-row">
-                <label>ZIP Code</label>
+                <label asp-for="EstimateInput.ZipCode">ZIP Code</label>
                 <input asp-for="EstimateInput.ZipCode" />
             </div>
 
             <div class="form-row">
-                <label>Repair Type</label>
+                <label asp-for="EstimateInput.RepairType">Repair Type</label>
 
                 <select asp-for="EstimateInput.RepairType">
                     @foreach (string repairType in Model.RepairTypes)
@@ -135,7 +114,6 @@
             @if (Model.EstimateResult != null)
             {
                 <div class="price-card featured estimate-result-card">
-
                     <h2>REPAIR COST ESTIMATE</h2>
 
                     <p>
@@ -209,22 +187,26 @@
             <div class="analyzer-section-divider"></div>
 
             <div class="form-row">
-                <label>Repair Cost</label>
+                <label asp-for="Input.RepairCost">Repair Cost</label>
                 <input asp-for="Input.RepairCost" />
             </div>
 
             <div class="form-row">
-                <label>Mileage</label>
+                <label asp-for="Input.Mileage">Mileage</label>
                 <input asp-for="Input.Mileage" />
             </div>
 
             <div class="form-row">
-                <label>Estimated Vehicle Value</label>
+                <label asp-for="Input.VehicleValue">
+                    Estimated Vehicle Value
+                </label>
                 <input asp-for="Input.VehicleValue" />
             </div>
 
             <div class="form-row">
-                <label>Overall Vehicle Condition</label>
+                <label asp-for="Input.Condition">
+                    Overall Vehicle Condition
+                </label>
 
                 <select asp-for="Input.Condition">
                     <option value="Poor">Poor</option>
@@ -235,7 +217,9 @@
             </div>
 
             <div class="form-row">
-                <label>Years You Plan to Keep It</label>
+                <label asp-for="Input.OwnershipYears">
+                    Years You Plan to Keep It
+                </label>
                 <input asp-for="Input.OwnershipYears" />
             </div>
 
@@ -253,9 +237,60 @@
                     ANALYZE REPAIR
                 </button>
             </div>
-
         </form>
     </div>
+
+    @if (Model.Result != null)
+    {
+        <div class="price-card featured"
+             style="max-width:900px;margin:24px auto 0;">
+
+            <h2>REPAIR ANALYSIS</h2>
+
+            <p>
+                <strong>Decision Score:</strong>
+                @Model.Result.Score / 100
+            </p>
+
+            <p>
+                <strong>Confidence Score:</strong>
+                @Model.Result.ConfidenceScore / 100
+            </p>
+
+            <p>
+                <strong>Recommendation:</strong>
+                @Model.Result.Recommendation
+            </p>
+
+            <p>
+                <strong>Risk Level:</strong>
+                @Model.Result.RiskLevel
+            </p>
+
+            <p>
+                <strong>Financial Impact:</strong>
+                @Model.Result.FinancialImpact
+            </p>
+
+            <div class="analyzer-section-divider"></div>
+
+            <h3>WHY WE RECOMMEND THIS</h3>
+
+            <p>@Model.Result.Reasoning</p>
+
+            @if (Model.Result.NextSteps.Count > 0)
+            {
+                <h3>NEXT STEPS</h3>
+
+                <ul>
+                    @foreach (string nextStep in Model.Result.NextSteps)
+                    {
+                        <li>@nextStep</li>
+                    }
+                </ul>
+            }
+        </div>
+    }
 
     <partial name="_PonyUpStoplightResult"
              model="stoplight" />
