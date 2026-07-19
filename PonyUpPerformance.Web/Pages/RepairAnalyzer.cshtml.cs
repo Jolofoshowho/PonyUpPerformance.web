@@ -50,61 +50,58 @@ public class RepairAnalyzerModel : PageModel
     }
 
     public async Task<IActionResult> OnPostEstimateAsync()
+{
+    RepairTypes = _repairCostEstimatorService.GetRepairTypes();
+    CreditStatus = await _usageCreditService.GetStatusAsync(User);
+
+    if (!CreditStatus.IsLoggedIn)
     {
-        RepairTypes = _repairCostEstimatorService.GetRepairTypes();
-        CreditStatus = await _usageCreditService.GetStatusAsync(User);
+        CreditMessage =
+            "Create a free account to estimate the repair cost.";
 
-        if (!CreditStatus.IsLoggedIn)
-        {
-            CreditMessage =
-                "Create a free account to unlock your first repair cost estimate.";
+        return Page();
+    }
 
-            return Page();
-        }
+    if (!CreditStatus.CanRunAnalysis)
+    {
+        CreditMessage =
+            "You are out of analysis credits. Choose a plan to continue.";
 
-        if (!CreditStatus.CanRunAnalysis)
-        {
-            CreditMessage =
-                "You are out of analysis credits. Choose a plan to continue.";
+        return Page();
+    }
 
-            return Page();
-        }
+    EstimateInput.VehicleYear = Input.VehicleYear;
+    EstimateInput.VehicleMake = Input.VehicleMake;
+    EstimateInput.VehicleModel = Input.VehicleModel;
 
-        EstimateInput.VehicleYear = Input.VehicleYear;
-        EstimateInput.VehicleMake = Input.VehicleMake;
-        EstimateInput.VehicleModel = Input.VehicleModel;
+    EstimateResult =
+        _repairCostEstimatorService.Estimate(EstimateInput);
 
-        EstimateResult =
-            _repairCostEstimatorService.Estimate(EstimateInput);
+    bool creditConsumed =
+        await _usageCreditService.ConsumeCreditAsync(
+            User,
+            "Repair Cost Estimate");
 
-        Input.RepairCost = EstimateResult.ExpectedEstimate;
+    if (!creditConsumed)
+    {
+        CreditMessage =
+            "Unable to consume an analysis credit. Please log in again or choose a plan.";
 
-        bool creditConsumed =
-            await _usageCreditService.ConsumeCreditAsync(
-                User,
-                "Repair");
-
-        if (!creditConsumed)
-        {
-            CreditMessage =
-                "Unable to consume analysis credit. Please log in again or choose a plan.";
-
-            EstimateResult = null;
-            Input.RepairCost = 0;
-
-            CreditStatus =
-                await _usageCreditService.GetStatusAsync(User);
-
-            return Page();
-        }
-
-        TempData[EstimateCreditKey] = "true";
-
+        EstimateResult = null;
         CreditStatus =
             await _usageCreditService.GetStatusAsync(User);
 
         return Page();
     }
+
+    Input.RepairCost = EstimateResult.ExpectedEstimate;
+    EstimateCreditConsumed = true;
+
+    CreditStatus =
+        await _usageCreditService.GetStatusAsync(User);
+
+    return Page();
+}
 
     public async Task<IActionResult> OnPostAsync()
     {
