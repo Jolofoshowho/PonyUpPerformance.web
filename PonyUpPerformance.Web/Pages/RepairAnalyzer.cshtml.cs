@@ -65,9 +65,11 @@ public class RepairAnalyzerModel : PageModel
         EstimateInput.VehicleMake = Input.VehicleMake;
         EstimateInput.VehicleModel = Input.VehicleModel;
 
-        EstimateResult = _repairCostEstimatorService.Estimate(EstimateInput);
-
-        Input.RepairCost = EstimateResult.ExpectedEstimate;
+       if (Input.RepairCost <= 0)
+{
+    EstimateResult = _repairCostEstimatorService.Estimate(EstimateInput);
+    Input.RepairCost = EstimateResult.ExpectedEstimate;
+}
 
         Result = _repairScoringService.Analyze(Input);
 
