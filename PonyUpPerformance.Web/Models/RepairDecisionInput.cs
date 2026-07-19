@@ -1,4 +1,4 @@
-﻿namespace PonyUpPerformance.Web.Models;
+namespace PonyUpPerformance.Web.Models;
 
 public class RepairDecisionInput
 {
@@ -15,6 +15,8 @@ public class RepairDecisionInput
     public decimal RepairCost { get; set; }
 
     public VehicleCondition Condition { get; set; }
+
+    public bool IsSafetyCritical { get; set; }
 
     public int OwnershipYears { get; set; }
 }
