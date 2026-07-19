@@ -1117,3 +1117,7 @@ body::before {
     text-align: center;
     margin: 24px 0;
 }
+
+.analyzer-card {
+    background: rgba(0, 0, 0, 0.12);
+}
