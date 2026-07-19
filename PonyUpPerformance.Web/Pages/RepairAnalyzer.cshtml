@@ -86,15 +86,18 @@
             <label>ZIP Code</label>
             <input asp-for="EstimateInput.ZipCode" />
 
-            <label>Repair Type</label>
-            <select asp-for="EstimateInput.RepairType">
-                @foreach (string repairType in Model.RepairTypes)
-                {
-                    <option value="@repairType">
-                        @repairType
-                    </option>
-                }
-            </select>
+            <div style="display:flex;align-items:center;gap:10px;">
+    <label style="margin:0;">Repair Type</label>
+
+    <select asp-for="EstimateInput.RepairType">
+        @foreach (string repairType in Model.RepairTypes)
+        {
+            <option value="@repairType">
+                @repairType
+            </option>
+        }
+    </select>
+</div>
 
             <label>
                 <input asp-for="EstimateInput.IncludeDiagnosticFee" />
@@ -106,6 +109,8 @@
                 Include Tow Fee
             </label>
 
+        <div style="margin-bottom:28px;">
+
             <button class="btn-red"
                     type="submit"
                     asp-page-handler="Estimate"
@@ -113,6 +118,8 @@
                     onclick="return confirm('Does all of the information look correct? Estimating the repair cost will use one analysis credit.');">
                 ESTIMATE REPAIR COST
             </button>
+
+            </div>
 
             @if (Model.EstimateResult != null)
             {
@@ -206,20 +213,23 @@
                 <option value="Excellent">Excellent</option>
             </select>
 
-            <label>Years You Plan to Keep It</label>
-            <input asp-for="Input.OwnershipYears" />
+            <div style="display:flex;align-items:center;gap:10px;">
+    <label style="margin:0;">Years You Plan to Keep It</label>
+    <input asp-for="Input.OwnershipYears" />
+</div>
 
             <label>
-                <input asp-for="Input.IsSafetyCritical" />
-                Safety-Critical Repair
-            </label>
+    <input asp-for="Input.IsSafetyCritical" />
+    Safety-Critical Repair
+</label>
 
-            <button class="btn-red"
-                    type="submit"
-                    style="margin-top:20px;"
-                    onclick="return confirm('Does all of the information look correct? Running this analysis may use one analysis credit.');">
-                ANALYZE REPAIR
-            </button>
+<div style="margin-top:20px;">
+    <button class="btn-red"
+            type="submit"
+            onclick="return confirm('Does all of the information look correct? Running this analysis may use one analysis credit.');">
+        ANALYZE REPAIR
+    </button>
+</div>
 
         </form>
     </div>
