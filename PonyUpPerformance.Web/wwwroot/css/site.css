@@ -1086,3 +1086,34 @@ body::before {
  {
     background: transparent !important;
 }
+.analyzer-form {
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 220px 280px;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.form-row label {
+    margin: 0;
+    text-align: right;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.form-row input,
+.form-row select {
+    width: 100%;
+}
+
+.form-actions {
+    text-align: center;
+    margin: 24px 0;
+}
