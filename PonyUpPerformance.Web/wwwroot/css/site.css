@@ -1121,3 +1121,31 @@ body::before {
 .analyzer-card {
     background: rgba(0, 0, 0, 0.12);
 }
+
+.analyzer-page {
+    min-height: 100vh;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}    
+
+.page-section.repair-bg {
+    background-image: url('/images/ponyup-nightmare.png') !important;
+}
+
+.page-section.buy-bg {
+    background-image: url('/images/ponyup-firesteed.png') !important;
+}
+
+.page-section.sell-bg {
+    background-image: url('/images/ponyup-mechanical.png') !important;
+}
+
+.page-section.trade-bg {
+    background-image: url('/images/ponyup-nightmare1.png') !important;
+}
+
+.page-section.upgrade-bg {
+    background-image: url('/images/ponyup-lavamare.png') !important;
+}
