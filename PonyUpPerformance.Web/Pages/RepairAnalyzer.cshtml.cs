@@ -8,12 +8,12 @@ namespace PonyUpPerformance.Web.Pages;
 
 public class RepairAnalyzerModel : PageModel
 {
-    private readonly IRepairScoringService _repairScoringService;
+    private readonly RepairScoringService _repairScoringService;
     private readonly RepairCostEstimatorService _repairCostEstimatorService;
     private readonly UsageCreditService _usageCreditService;
 
     public RepairAnalyzerModel(
-        IRepairScoringService repairScoringService,
+        RepairScoringService repairScoringService,
         RepairCostEstimatorService repairCostEstimatorService,
         UsageCreditService usageCreditService)
     {
