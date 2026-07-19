@@ -96,7 +96,7 @@ public class RepairAnalyzerModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostAsync()
+    public async Task<IActionResult> OnPostAnalyzeAsync()
     {
         RepairTypes = _repairCostEstimatorService.GetRepairTypes();
         CreditStatus = await _usageCreditService.GetStatusAsync(User);
