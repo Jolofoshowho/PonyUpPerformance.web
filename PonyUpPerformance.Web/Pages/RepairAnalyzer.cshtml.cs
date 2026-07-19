@@ -8,6 +8,8 @@ namespace PonyUpPerformance.Web.Pages;
 
 public class RepairAnalyzerModel : PageModel
 {
+    private const string EstimateCreditKey = "RepairEstimateCreditPaid";
+
     private readonly IRepairScoringService _repairScoringService;
     private readonly RepairCostEstimatorService _repairCostEstimatorService;
     private readonly UsageCreditService _usageCreditService;
@@ -44,20 +46,24 @@ public class RepairAnalyzerModel : PageModel
         CreditStatus = await _usageCreditService.GetStatusAsync(User);
     }
 
-    public async Task<IActionResult> OnPostAsync()
+    public async Task<IActionResult> OnPostEstimateAsync()
     {
         RepairTypes = _repairCostEstimatorService.GetRepairTypes();
         CreditStatus = await _usageCreditService.GetStatusAsync(User);
 
         if (!CreditStatus.IsLoggedIn)
         {
-            CreditMessage = "Create a free account to unlock your first full analysis.";
+            CreditMessage =
+                "Create a free account to unlock your first repair cost estimate.";
+
             return Page();
         }
 
         if (!CreditStatus.CanRunAnalysis)
         {
-            CreditMessage = "You are out of analysis credits. Choose a plan to continue.";
+            CreditMessage =
+                "You are out of analysis credits. Choose a plan to continue.";
+
             return Page();
         }
 
@@ -65,26 +71,77 @@ public class RepairAnalyzerModel : PageModel
         EstimateInput.VehicleMake = Input.VehicleMake;
         EstimateInput.VehicleModel = Input.VehicleModel;
 
-       if (Input.RepairCost <= 0)
-{
-    EstimateResult = _repairCostEstimatorService.Estimate(EstimateInput);
-    Input.RepairCost = EstimateResult.ExpectedEstimate;
-}
+        EstimateResult =
+            _repairCostEstimatorService.Estimate(EstimateInput);
 
-        Result = _repairScoringService.Analyze(Input);
+        Input.RepairCost = EstimateResult.ExpectedEstimate;
 
-        bool creditConsumed = await _usageCreditService.ConsumeCreditAsync(User, "Repair");
+        bool creditConsumed =
+            await _usageCreditService.ConsumeCreditAsync(
+                User,
+                "Repair");
 
         if (!creditConsumed)
         {
-            CreditMessage = "Unable to consume analysis credit. Please log in again or choose a plan.";
-            Result = null;
+            CreditMessage =
+                "Unable to consume analysis credit. Please log in again or choose a plan.";
+
             EstimateResult = null;
-            CreditStatus = await _usageCreditService.GetStatusAsync(User);
+            Input.RepairCost = 0;
+
+            CreditStatus =
+                await _usageCreditService.GetStatusAsync(User);
+
             return Page();
         }
 
+        TempData[EstimateCreditKey] = "true";
+
+        CreditStatus =
+            await _usageCreditService.GetStatusAsync(User);
+
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostAsync()
+    {
+        RepairTypes = _repairCostEstimatorService.GetRepairTypes();
         CreditStatus = await _usageCreditService.GetStatusAsync(User);
+
+        if (!CreditStatus.IsLoggedIn)
+        {
+            CreditMessage =
+                "Create a free account to run a repair analysis.";
+
+            return Page();
+        }
+
+        bool estimateWasCompleted =
+            string.Equals(
+                TempData[EstimateCreditKey]?.ToString(),
+                "true",
+                StringComparison.OrdinalIgnoreCase);
+
+        if (!estimateWasCompleted)
+        {
+            CreditMessage =
+                "Estimate the repair cost before running the repair analysis.";
+
+            return Page();
+        }
+
+        if (Input.RepairCost <= 0)
+        {
+            CreditMessage =
+                "A valid repair cost is required before running the analysis.";
+
+            return Page();
+        }
+
+        Result = _repairScoringService.Analyze(Input);
+
+        CreditStatus =
+            await _usageCreditService.GetStatusAsync(User);
 
         return Page();
     }
