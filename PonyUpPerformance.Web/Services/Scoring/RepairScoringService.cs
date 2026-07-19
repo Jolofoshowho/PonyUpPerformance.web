@@ -1,4 +1,4 @@
-﻿using PonyUpPerformance.Web.Models;
+using PonyUpPerformance.Web.Models;
 
 namespace PonyUpPerformance.Web.Services.Scoring;
 
@@ -10,6 +10,7 @@ public class RepairScoringService : IRepairScoringService
         {
             return new DecisionResult
             {
+                Score = 0,
                 Recommendation = "Insufficient Data",
                 ConfidenceScore = 0,
                 RiskLevel = "Unknown",
@@ -18,29 +19,397 @@ public class RepairScoringService : IRepairScoringService
             };
         }
 
-        decimal ratio = input.RepairCost / input.VehicleValue;
+        int repairCostScore = ScoreRepairCostVsValue(input);
+        int conditionScore = ScoreCondition(input.Condition);
+        int safetyScore = ScoreSafety(input.IsSafetyCritical);
+        int mileageScore = ScoreMileage(input.Mileage);
+        int ageScore = ScoreVehicleAge(input.VehicleYear);
+        int ownershipScore = ScoreOwnershipIntent(input.OwnershipYears);
 
-        string recommendation;
+        int totalScore =
+            repairCostScore +
+            conditionScore +
+            safetyScore +
+            mileageScore +
+            ageScore +
+            ownershipScore;
 
-        if (ratio <= 0.25m)
-            recommendation = "Repair";
-        else if (ratio <= 0.50m)
-            recommendation = "Lean Repair";
-        else if (ratio <= 0.75m)
-            recommendation = "Get Second Opinion";
-        else if (ratio <= 1.00m)
-            recommendation = "Lean Replace";
-        else
-            recommendation = "Do Not Repair";
+        totalScore = Math.Clamp(totalScore, 0, 100);
+
+        string recommendation = totalScore switch
+        {
+            >= 75 => "PONY UP",
+            >= 50 => "PROCEED WITH CAUTION",
+            _ => "WALK AWAY"
+        };
+
+        int confidenceScore = CalculateConfidence(input);
+
+        string riskLevel = CalculateRiskLevel(
+            input,
+            totalScore,
+            repairCostScore,
+            conditionScore,
+            mileageScore);
+
+        string financialImpact = CalculateFinancialImpact(
+            totalScore,
+            repairCostScore);
+
+        string reasoning = BuildReasoning(
+            input,
+            totalScore,
+            repairCostScore,
+            conditionScore,
+            safetyScore,
+            mileageScore,
+            ageScore,
+            ownershipScore);
 
         return new DecisionResult
         {
+            Score = totalScore,
             Recommendation = recommendation,
-            ConfidenceScore = 75,
-            RiskLevel = ratio > 0.75m ? "High" : "Medium",
-            FinancialImpact = ratio <= 0.50m ? "Positive" : "Negative",
-            Reasoning =
-                $"Repair cost equals {(ratio * 100):F0}% of vehicle value."
+            ConfidenceScore = confidenceScore,
+            RiskLevel = riskLevel,
+            FinancialImpact = financialImpact,
+            Reasoning = reasoning,
+            NextSteps = BuildNextSteps(
+                input,
+                totalScore,
+                recommendation,
+                riskLevel)
+        };
+    }
+
+    private static int ScoreRepairCostVsValue(RepairDecisionInput input)
+    {
+        if (input.RepairCost < 0)
+            return 0;
+
+        decimal ratio = input.RepairCost / input.VehicleValue;
+
+        if (ratio <= 0.10m)
+            return 30;
+
+        if (ratio <= 0.20m)
+            return 27;
+
+        if (ratio <= 0.30m)
+            return 24;
+
+        if (ratio <= 0.40m)
+            return 18;
+
+        if (ratio <= 0.50m)
+            return 12;
+
+        if (ratio <= 0.75m)
+            return 6;
+
+        return 0;
+    }
+
+    private static int ScoreCondition(VehicleCondition condition)
+    {
+        return condition switch
+        {
+            VehicleCondition.Excellent => 20,
+            VehicleCondition.Good => 15,
+            VehicleCondition.Fair => 10,
+            VehicleCondition.Poor => 0,
+            _ => 0
+        };
+    }
+
+    private static int ScoreSafety(bool isSafetyCritical)
+    {
+        return isSafetyCritical ? 20 : 10;
+    }
+
+    private static int ScoreMileage(int mileage)
+    {
+        if (mileage < 0)
+            return 0;
+
+        if (mileage <= 50_000)
+            return 15;
+
+        if (mileage <= 100_000)
+            return 12;
+
+        if (mileage <= 150_000)
+            return 9;
+
+        if (mileage <= 200_000)
+            return 5;
+
+        return 0;
+    }
+
+    private static int ScoreVehicleAge(int vehicleYear)
+    {
+        if (vehicleYear <= 0)
+            return 0;
+
+        int currentYear = DateTime.UtcNow.Year;
+        int vehicleAge = currentYear - vehicleYear;
+
+        if (vehicleAge < 0)
+            vehicleAge = 0;
+
+        if (vehicleAge <= 3)
+            return 10;
+
+        if (vehicleAge <= 7)
+            return 8;
+
+        if (vehicleAge <= 12)
+            return 6;
+
+        if (vehicleAge <= 20)
+            return 3;
+
+        return 0;
+    }
+
+    private static int ScoreOwnershipIntent(int ownershipYears)
+    {
+        if (ownershipYears >= 5)
+            return 5;
+
+        if (ownershipYears >= 3)
+            return 4;
+
+        if (ownershipYears == 2)
+            return 3;
+
+        if (ownershipYears == 1)
+            return 2;
+
+        return 1;
+    }
+
+    private static int CalculateConfidence(RepairDecisionInput input)
+    {
+        int confidence = 100;
+
+        if (input.RepairCost <= 0)
+            confidence -= 20;
+
+        if (input.VehicleValue <= 0)
+            confidence -= 20;
+
+        if (input.Mileage <= 0)
+            confidence -= 15;
+
+        if (input.VehicleYear <= 0)
+            confidence -= 15;
+
+        if (input.OwnershipYears < 0)
+            confidence -= 15;
+
+        if (string.IsNullOrWhiteSpace(input.VehicleMake))
+            confidence -= 5;
+
+        if (string.IsNullOrWhiteSpace(input.VehicleModel))
+            confidence -= 5;
+
+        return Math.Clamp(confidence, 0, 100);
+    }
+
+    private static string CalculateRiskLevel(
+        RepairDecisionInput input,
+        int totalScore,
+        int repairCostScore,
+        int conditionScore,
+        int mileageScore)
+    {
+        decimal ratio = input.RepairCost / input.VehicleValue;
+
+        if (ratio > 1.00m ||
+            input.Condition == VehicleCondition.Poor ||
+            totalScore < 30)
+        {
+            return "Severe";
+        }
+
+        if (ratio > 0.75m ||
+            totalScore < 50 ||
+            conditionScore == 0 ||
+            mileageScore == 0)
+        {
+            return "High";
+        }
+
+        if (ratio > 0.40m ||
+            totalScore < 75 ||
+            repairCostScore <= 12)
+        {
+            return "Moderate";
+        }
+
+        return "Low";
+    }
+
+    private static string CalculateFinancialImpact(
+        int totalScore,
+        int repairCostScore)
+    {
+        if (totalScore >= 75 && repairCostScore >= 18)
+            return "Positive";
+
+        if (totalScore >= 50)
+            return "Mixed";
+
+        return "Negative";
+    }
+
+    private static string BuildReasoning(
+        RepairDecisionInput input,
+        int totalScore,
+        int repairCostScore,
+        int conditionScore,
+        int safetyScore,
+        int mileageScore,
+        int ageScore,
+        int ownershipScore)
+    {
+        decimal ratio = input.RepairCost / input.VehicleValue;
+        decimal ratioPercent = ratio * 100m;
+
+        List<string> strengths = new();
+        List<string> concerns = new();
+
+        if (repairCostScore >= 24)
+        {
+            strengths.Add(
+                $"repair cost is favorable at approximately {ratioPercent:F0}% of vehicle value");
+        }
+        else if (repairCostScore <= 6)
+        {
+            concerns.Add(
+                $"repair cost is high at approximately {ratioPercent:F0}% of vehicle value");
+        }
+
+        if (conditionScore >= 15)
+        {
+            strengths.Add(
+                $"the vehicle is in {input.Condition.ToString().ToLowerInvariant()} overall condition");
+        }
+        else if (conditionScore <= 10)
+        {
+            concerns.Add(
+                $"the vehicle is in {input.Condition.ToString().ToLowerInvariant()} overall condition");
+        }
+
+        if (mileageScore >= 12)
+        {
+            strengths.Add("mileage remains relatively favorable");
+        }
+        else if (mileageScore <= 5)
+        {
+            concerns.Add("high mileage reduces the expected remaining service life");
+        }
+
+        if (ageScore >= 8)
+        {
+            strengths.Add("vehicle age supports continued ownership");
+        }
+        else if (ageScore <= 3)
+        {
+            concerns.Add("vehicle age increases the likelihood of additional repairs");
+        }
+
+        if (ownershipScore >= 4)
+        {
+            strengths.Add("the planned ownership period gives more time to recover the repair cost");
+        }
+        else if (ownershipScore <= 2)
+        {
+            concerns.Add("the short planned ownership period limits the return on the repair");
+        }
+
+        if (safetyScore == 20)
+        {
+            strengths.Add("the repair addresses a safety-critical concern");
+        }
+
+        string opening = totalScore switch
+        {
+            >= 75 => "The repair is financially justified.",
+            >= 50 => "The repair may be worthwhile, but caution is recommended.",
+            _ => "The repair is unlikely to be financially justified."
+        };
+
+        string strongestStrengths = JoinFactors(strengths.Take(2));
+        string strongestConcerns = JoinFactors(concerns.Take(2));
+
+        if (!string.IsNullOrWhiteSpace(strongestStrengths) &&
+            !string.IsNullOrWhiteSpace(strongestConcerns))
+        {
+            return $"{opening} Supporting factors include {strongestStrengths}, while {strongestConcerns}.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(strongestStrengths))
+        {
+            return $"{opening} The strongest factors are that {strongestStrengths}.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(strongestConcerns))
+        {
+            return $"{opening} The main concerns are that {strongestConcerns}.";
+        }
+
+        return $"{opening} The final score is {totalScore} out of 100.";
+    }
+
+    private static List<string> BuildNextSteps(
+        RepairDecisionInput input,
+        int totalScore,
+        string recommendation,
+        string riskLevel)
+    {
+        List<string> nextSteps = new();
+
+        if (recommendation == "PONY UP")
+        {
+            nextSteps.Add("Confirm the repair estimate and warranty terms.");
+            nextSteps.Add("Schedule the repair with a qualified shop.");
+        }
+        else if (recommendation == "PROCEED WITH CAUTION")
+        {
+            nextSteps.Add("Get a second repair estimate.");
+            nextSteps.Add("Confirm there are no additional major mechanical or structural issues.");
+        }
+        else
+        {
+            nextSteps.Add("Compare the repair cost with the vehicle's sale or trade value.");
+            nextSteps.Add("Consider replacing, selling, or trading the vehicle.");
+        }
+
+        if (input.IsSafetyCritical)
+        {
+            nextSteps.Add("Do not continue driving until the safety concern is evaluated.");
+        }
+
+        if (riskLevel is "High" or "Severe")
+        {
+            nextSteps.Add("Request a complete inspection before committing additional money.");
+        }
+
+        return nextSteps.Distinct().ToList();
+    }
+
+    private static string JoinFactors(IEnumerable<string> factors)
+    {
+        List<string> items = factors.ToList();
+
+        return items.Count switch
+        {
+            0 => string.Empty,
+            1 => items[0],
+            _ => $"{items[0]} and {items[1]}"
         };
     }
 }
