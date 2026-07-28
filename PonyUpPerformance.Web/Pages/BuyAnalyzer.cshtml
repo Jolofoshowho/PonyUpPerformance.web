@@ -1,38 +1,559 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using PonyUpPerformance.Web.Models;
-using PonyUpPerformance.Web.Services.Scoring;
+@page
+@model PonyUpPerformance.Web.Pages.BuyAnalyzerModel
+@using PonyUpPerformance.Web.Models
+@{
+    ViewData["Title"] = "Buy Analyzer";
+}
 
-namespace PonyUpPerformance.Web.Pages
-{
-    public class BuyAnalyzerModel : PageModel
+<div class="container py-4">
+    <div class="mb-4">
+        <h1 class="mb-2">Buy Analyzer</h1>
+        <p class="text-muted mb-0">
+            Evaluate the vehicle, purchase price, known repairs, risk, and intended use.
+        </p>
+    </div>
+
+    <form method="post">
+        <div asp-validation-summary="ModelOnly"
+             class="alert alert-danger"
+             role="alert">
+        </div>
+
+        <section class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h2 class="h5 mb-0">Vehicle Information</h2>
+            </div>
+
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="Input.Vin" class="form-label"></label>
+                        <input asp-for="Input.Vin"
+                               class="form-control text-uppercase"
+                               maxlength="17"
+                               autocomplete="off"
+                               placeholder="17-character VIN" />
+                        <span asp-validation-for="Input.Vin"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Input.Year" class="form-label"></label>
+                        <input asp-for="Input.Year"
+                               class="form-control"
+                               inputmode="numeric" />
+                        <span asp-validation-for="Input.Year"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Input.Make" class="form-label"></label>
+                        <input asp-for="Input.Make"
+                               class="form-control"
+                               autocomplete="off" />
+                        <span asp-validation-for="Input.Make"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Input.Model" class="form-label"></label>
+                        <input asp-for="Input.Model"
+                               class="form-control"
+                               autocomplete="off" />
+                        <span asp-validation-for="Input.Model"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Input.Trim" class="form-label"></label>
+                        <input asp-for="Input.Trim"
+                               class="form-control"
+                               autocomplete="off" />
+                        <span asp-validation-for="Input.Trim"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Input.Engine" class="form-label"></label>
+                        <input asp-for="Input.Engine"
+                               class="form-control"
+                               autocomplete="off" />
+                        <span asp-validation-for="Input.Engine"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Input.Transmission" class="form-label"></label>
+                        <input asp-for="Input.Transmission"
+                               class="form-control"
+                               autocomplete="off" />
+                        <span asp-validation-for="Input.Transmission"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Input.Drivetrain" class="form-label"></label>
+                        <input asp-for="Input.Drivetrain"
+                               class="form-control"
+                               autocomplete="off" />
+                        <span asp-validation-for="Input.Drivetrain"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Input.BodyStyle" class="form-label"></label>
+                        <input asp-for="Input.BodyStyle"
+                               class="form-control"
+                               autocomplete="off" />
+                        <span asp-validation-for="Input.BodyStyle"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Input.FuelType" class="form-label"></label>
+                        <input asp-for="Input.FuelType"
+                               class="form-control"
+                               autocomplete="off" />
+                        <span asp-validation-for="Input.FuelType"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Input.Mileage" class="form-label"></label>
+                        <input asp-for="Input.Mileage"
+                               class="form-control"
+                               inputmode="numeric" />
+                        <span asp-validation-for="Input.Mileage"
+                              class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h2 class="h5 mb-0">Purchase Information</h2>
+            </div>
+
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="Input.AskingPrice" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input asp-for="Input.AskingPrice"
+                                   class="form-control"
+                                   inputmode="decimal" />
+                        </div>
+                        <span asp-validation-for="Input.AskingPrice"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Input.MarketValue" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input asp-for="Input.MarketValue"
+                                   class="form-control"
+                                   inputmode="decimal" />
+                        </div>
+                        <span asp-validation-for="Input.MarketValue"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="Input.EstimatedRepairCost" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input asp-for="Input.EstimatedRepairCost"
+                                   class="form-control"
+                                   inputmode="decimal" />
+                        </div>
+                        <span asp-validation-for="Input.EstimatedRepairCost"
+                              class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h2 class="h5 mb-0">Decision Factors</h2>
+            </div>
+
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Input.MechanicalCondition"
+                               class="form-label"></label>
+
+                        <select asp-for="Input.MechanicalCondition"
+                                asp-items="Html.GetEnumSelectList<MechanicalCondition>()"
+                                class="form-select">
+                        </select>
+
+                        <span asp-validation-for="Input.MechanicalCondition"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Input.TitleStatus"
+                               class="form-label"></label>
+
+                        <select asp-for="Input.TitleStatus"
+                                asp-items="Html.GetEnumSelectList<TitleStatus>()"
+                                class="form-select">
+                        </select>
+
+                        <span asp-validation-for="Input.TitleStatus"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Input.AccidentHistory"
+                               class="form-label"></label>
+
+                        <select asp-for="Input.AccidentHistory"
+                                asp-items="Html.GetEnumSelectList<AccidentHistory>()"
+                                class="form-select">
+                        </select>
+
+                        <span asp-validation-for="Input.AccidentHistory"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Input.IntendedUse"
+                               class="form-label"></label>
+
+                        <select asp-for="Input.IntendedUse"
+                                asp-items="Html.GetEnumSelectList<IntendedUse>()"
+                                class="form-select">
+                        </select>
+
+                        <span asp-validation-for="Input.IntendedUse"
+                              class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="d-grid d-md-flex justify-content-md-end mb-5">
+            <button type="submit" class="btn btn-primary btn-lg px-5">
+                Analyze Purchase
+            </button>
+        </div>
+    </form>
+
+    @if (Model.Result is not null)
     {
-        private readonly IBuyScoringService _buyScoringService;
-
-        public BuyAnalyzerModel(IBuyScoringService buyScoringService)
+        var lightClass = Model.Result.Decision switch
         {
-            _buyScoringService = buyScoringService;
-        }
+            DecisionType.Buy => "buy-light-green",
+            DecisionType.Consider => "buy-light-yellow",
+            _ => "buy-light-red"
+        };
 
-        [BindProperty]
-        public BuyDecisionInput Input { get; set; } = new();
+        <section aria-labelledby="buy-result-heading">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center py-5">
+                    <div class="buy-traffic-light @lightClass"
+                         role="img"
+                         aria-label="@Model.Result.DecisionSummary">
+                    </div>
 
-        public BuyDecisionResult? Result { get; private set; }
+                    <h2 id="buy-result-heading" class="display-6 fw-bold mb-2">
+                        @Model.Result.DecisionSummary
+                    </h2>
 
-        public void OnGet()
-        {
-        }
+                    <p class="fs-4 mb-0">
+                        Decision Score:
+                        <strong>@Model.Result.DecisionScore/100</strong>
+                    </p>
+                </div>
+            </div>
 
-        public IActionResult OnPost()
-        {
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h3 class="h5">Risk</h3>
 
-            Result = _buyScoringService.Analyze(Input);
+                            <p class="display-6 mb-1">
+                                @Model.Result.RiskScore/100
+                            </p>
 
-            return Page();
-        }
+                            <p class="fw-semibold mb-2">
+                                @Model.Result.RiskLevel Risk
+                            </p>
+
+                            <p class="mb-0">
+                                @Model.Result.RiskExplanation
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h3 class="h5">Confidence</h3>
+
+                            <p class="display-6 mb-1">
+                                @Model.Result.ConfidenceScore/100
+                            </p>
+
+                            <p class="fw-semibold mb-2">
+                                @Model.Result.ConfidenceLevel Confidence
+                            </p>
+
+                            <p class="mb-0">
+                                @Model.Result.ConfidenceExplanation
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">Purchase Numbers</h3>
+                </div>
+
+                <div class="card-body">
+                    <div class="row g-4 text-center">
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="text-muted">Maximum Recommended Price</div>
+                            <div class="fs-4 fw-bold">
+                                @Model.Result.MaximumRecommendedPrice.ToString("C0")
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="text-muted">Fair Purchase Price</div>
+                            <div class="fs-4 fw-bold">
+                                @Model.Result.FairPurchasePrice.ToString("C0")
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="text-muted">Suggested First Offer</div>
+                            <div class="fs-4 fw-bold">
+                                @Model.Result.SuggestedFirstOffer.ToString("C0")
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="text-muted">Total Acquisition Cost</div>
+                            <div class="fs-4 fw-bold">
+                                @Model.Result.TotalAcquisitionCost.ToString("C0")
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="text-muted">Estimated Equity</div>
+                            <div class="fs-4 fw-bold">
+                                @Model.Result.EstimatedEquity.ToString("C0")
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="text-muted">Estimated Profit Potential</div>
+                            <div class="fs-4 fw-bold">
+                                @Model.Result.EstimatedProfitPotential.ToString("C0")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">Score Breakdown</h3>
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Influencer</th>
+                                    <th scope="col">Adjustment</th>
+                                    <th scope="col">Explanation</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach (var adjustment in Model.Result.ScoreAdjustments)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@adjustment.Influencer</strong>
+                                        </td>
+
+                                        <td>
+                                            @if (adjustment.Adjustment > 0)
+                                            {
+                                                <span class="fw-bold">
+                                                    +@adjustment.Adjustment
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="fw-bold">
+                                                    @adjustment.Adjustment
+                                                </span>
+                                            }
+
+                                            <span class="text-muted">
+                                                / ±@adjustment.MaximumAdjustment
+                                            </span>
+                                        </td>
+
+                                        <td>@adjustment.Explanation</td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                            <tfoot>
+                                <tr>
+                                    <th scope="row">Base Score</th>
+                                    <td colspan="2">50</td>
+                                </tr>
+
+                                <tr>
+                                    <th scope="row">Positive Adjustments</th>
+                                    <td colspan="2">
+                                        +@Model.Result.PositiveAdjustmentTotal
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <th scope="row">Negative Adjustments</th>
+                                    <td colspan="2">
+                                        @Model.Result.NegativeAdjustmentTotal
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <th scope="row">Final Decision Score</th>
+                                    <td colspan="2">
+                                        <strong>@Model.Result.DecisionScore/100</strong>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-lg-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Strengths</h3>
+                        </div>
+
+                        <div class="card-body">
+                            @if (Model.Result.Strengths.Count > 0)
+                            {
+                                <ul class="mb-0">
+                                    @foreach (var strength in Model.Result.Strengths)
+                                    {
+                                        <li class="mb-2">@strength</li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <p class="mb-0">
+                                    No significant purchase strengths were identified.
+                                </p>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Concerns</h3>
+                        </div>
+
+                        <div class="card-body">
+                            @if (Model.Result.Concerns.Count > 0)
+                            {
+                                <ul class="mb-0">
+                                    @foreach (var concern in Model.Result.Concerns)
+                                    {
+                                        <li class="mb-2">@concern</li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <p class="mb-0">
+                                    No significant purchase concerns were identified.
+                                </p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">Reasoning</h3>
+                </div>
+
+                <div class="card-body">
+                    <p class="mb-0">@Model.Result.Reasoning</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">Next Steps</h3>
+                </div>
+
+                <div class="card-body">
+                    <ol class="mb-0">
+                        @foreach (var nextStep in Model.Result.NextSteps)
+                        {
+                            <li class="mb-2">@nextStep</li>
+                        }
+                    </ol>
+                </div>
+            </div>
+        </section>
     }
+</div>
+
+<style>
+    .buy-traffic-light {
+        width: 110px;
+        height: 110px;
+        margin: 0 auto 1.5rem;
+        border: 7px solid #212529;
+        border-radius: 50%;
+        box-shadow:
+            inset 0 0 18px rgba(0, 0, 0, 0.35),
+            0 6px 18px rgba(0, 0, 0, 0.2);
+    }
+
+    .buy-light-green {
+        background: #198754;
+    }
+
+    .buy-light-yellow {
+        background: #ffc107;
+    }
+
+    .buy-light-red {
+        background: #dc3545;
+    }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
 }
