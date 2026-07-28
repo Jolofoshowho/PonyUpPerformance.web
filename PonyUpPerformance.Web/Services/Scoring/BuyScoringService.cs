@@ -75,6 +75,7 @@ namespace PonyUpPerformance.Web.Services.Scoring
             var strengths = BuildStrengths(input, adjustments, estimatedEquity);
             var concerns = BuildConcerns(input, adjustments, estimatedEquity);
             var nextSteps = BuildNextSteps(input, decision, riskLevel);
+            var decisionSummary = BuildDecisionSummary(decision);
 
             return new BuyDecisionResult
             {
