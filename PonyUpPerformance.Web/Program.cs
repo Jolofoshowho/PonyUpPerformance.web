@@ -39,6 +39,7 @@ builder.Services.AddScoped<VehicleRenderService>();
 builder.Services.AddHttpClient<NhtsaVehicleService>();
 builder.Services.AddScoped<StripeCheckoutService>();
 builder.Services.AddScoped<UsageCreditService>();
+builder.Services.AddScoped<IBuyScoringService, BuyScoringService>();
 
 var app = builder.Build();
 
