@@ -41,6 +41,8 @@ namespace PonyUpPerformance.Web.Models
 
         public List<string> NextSteps { get; set; } = new();
 
+        public string Recommendation { get; set; } = string.Empty;
+
         public string DecisionSummary { get; set; } = string.Empty;
 
         public string RiskExplanation { get; set; } = string.Empty;
