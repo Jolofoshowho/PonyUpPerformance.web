@@ -55,16 +55,4 @@ namespace PonyUpPerformance.Web.Models
         Severe = 4
     }
 
-    public enum IntendedUse
-    {
-        NotProvided = -1,
-        DailyDriver = 0,
-        WorkVehicle = 1,
-        FamilyVehicle = 2,
-        ProjectVehicle = 3,
-        PerformanceBuild = 4,
-        RacingOrOffRoad = 5,
-        Resale = 6,
-        CollectorVehicle = 7
-    }
 }
