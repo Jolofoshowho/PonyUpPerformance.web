@@ -15,4 +15,10 @@ public class DecisionResult
     public string Reasoning { get; set; } = string.Empty;
 
     public List<string> NextSteps { get; set; } = new();
+
+    public decimal MaximumRecommendedPrice { get; set; }
+
+    public decimal FairPurchasePrice { get; set; }
+
+    public decimal SuggestedFirstOffer { get; set; }
 }
