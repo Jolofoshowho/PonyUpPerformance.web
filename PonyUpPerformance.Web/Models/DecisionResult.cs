@@ -1,24 +1,30 @@
 namespace PonyUpPerformance.Web.Models;
-
 public class DecisionResult
 {
-    public int Score { get; set; }
+public int Score { get; set; }
 
-    public string Recommendation { get; set; } = string.Empty;
 
-    public int ConfidenceScore { get; set; }
 
-    public string RiskLevel { get; set; } = string.Empty;
+public string Recommendation { get; set; } = string.Empty;
 
-    public string FinancialImpact { get; set; } = string.Empty;
 
-    public string Reasoning { get; set; } = string.Empty;
 
-    public List<string> NextSteps { get; set; } = new();
+public int ConfidenceScore { get; set; }
 
-    public decimal MaximumRecommendedPrice { get; set; }
 
-    public decimal FairPurchasePrice { get; set; }
 
-    public decimal SuggestedFirstOffer { get; set; }
+public string RiskLevel { get; set; } = string.Empty;
+
+
+
+public string FinancialImpact { get; set; } = string.Empty;
+
+
+
+public string Reasoning { get; set; } = string.Empty;
+
+
+
+public List<string> NextSteps { get; set; } = new();
+
 }
