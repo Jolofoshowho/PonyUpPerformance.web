@@ -4,8 +4,7 @@
 @{
     ViewData["Title"] = "Buy Analyzer";
 
-    int decisionScore = Model.Result?.DecisionScore ?? 0;
-    int confidenceScore = Model.Result?.ConfidenceScore ?? 0;
+    int score = Model.Result?.Score ?? 0;
 
     string recommendation =
         Model.Result?.Recommendation
@@ -21,7 +20,7 @@
             HasResult = Model.Result != null,
             AnalysisType = "BUY DECISION",
             Recommendation = recommendation,
-            ConfidenceScore = decisionScore,
+            ConfidenceScore = score,
             Reasoning = reasoning
         };
 }
@@ -296,7 +295,7 @@
 
             <p>
                 <strong>Decision Score:</strong>
-                @Model.Result.DecisionScore / 100
+                @Model.Result.Score / 100
             </p>
 
             <p>
@@ -329,11 +328,6 @@
             </p>
 
             <p>
-                <strong>Total Acquisition Cost:</strong>
-                @Model.Result.TotalAcquisitionCost.ToString("C")
-            </p>
-
-            <p>
                 <strong>Estimated Market Value:</strong>
                 @Model.Input.MarketValue.ToString("C")
             </p>
@@ -353,47 +347,14 @@
                 @Model.Result.SuggestedFirstOffer.ToString("C")
             </p>
 
-            <p>
-                <strong>Estimated Equity:</strong>
-                @Model.Result.EstimatedEquity.ToString("C")
-            </p>
-
-            <p>
-                <strong>Estimated Profit Potential:</strong>
-                @Model.Result.EstimatedProfitPotential.ToString("C")
-            </p>
-
             <div class="analyzer-section-divider"></div>
 
             <h3>WHY WE RECOMMEND THIS</h3>
 
             <p>@Model.Result.Reasoning</p>
 
-            @if (Model.Result.Strengths.Count > 0)
-            {
-                <h3>STRENGTHS</h3>
-
-                <ul>
-                    @foreach (string strength in Model.Result.Strengths)
-                    {
-                        <li>@strength</li>
-                    }
-                </ul>
-            }
-
-            @if (Model.Result.Concerns.Count > 0)
-            {
-                <h3>CONCERNS</h3>
-
-                <ul>
-                    @foreach (string concern in Model.Result.Concerns)
-                    {
-                        <li>@concern</li>
-                    }
-                </ul>
-            }
-
-            @if (Model.Result.NextSteps.Count > 0)
+            @if (Model.Result.NextSteps != null &&
+     Model.Result.NextSteps.Count > 0)
             {
                 <h3>NEXT STEPS</h3>
 
