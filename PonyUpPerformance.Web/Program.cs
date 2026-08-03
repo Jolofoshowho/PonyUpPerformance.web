@@ -7,13 +7,39 @@ using PonyUpPerformance.Web.Models;
 using PonyUpPerformance.Web.Services;
 using PonyUpPerformance.Web.Services.Scoring;
 using Stripe;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+var databaseUrl = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("DefaultConnection is missing.");
+
+string connectionString;
+
+if (databaseUrl.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase) ||
+    databaseUrl.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+{
+    var databaseUri = new Uri(databaseUrl);
+
+    var userInfo = databaseUri.UserInfo.Split(':', 2);
+
+    connectionString = new NpgsqlConnectionStringBuilder
+    {
+        Host = databaseUri.Host,
+        Port = databaseUri.Port,
+        Database = databaseUri.AbsolutePath.TrimStart('/'),
+        Username = Uri.UnescapeDataString(userInfo[0]),
+        Password = Uri.UnescapeDataString(userInfo[1]),
+        SslMode = SslMode.Require,
+        TrustServerCertificate = true
+    }.ConnectionString;
+}
+else
+{
+    connectionString = databaseUrl;
+}
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
