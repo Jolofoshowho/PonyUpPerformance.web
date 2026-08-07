@@ -1,121 +1,318 @@
-﻿@page
+@page
 @model LoginModel
 
 @{
     ViewData["Title"] = "Log in";
 }
 
-<h1>@ViewData["Title"]</h1>
-<div class="row">
-    <div class="col-md-4">
-        <section>
-            <form id="account" method="post">
-                <h2>Use a local account to log in.</h2>
-                <hr />
-                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-                <div class="form-floating mb-3">
-                    <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                    <label asp-for="Input.Email" class="form-label">Email</label>
-                    <span asp-validation-for="Input.Email" class="text-danger"></span>
+<style>
+    .login-page {
+        padding: 2rem 0 3rem;
+    }
+
+    .login-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 2rem;
+        align-items: start;
+    }
+
+    .login-panel {
+        background: rgba(10, 10, 10, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        padding: 1.5rem;
+        backdrop-filter: blur(4px);
+    }
+
+    .login-panel h2 {
+        margin-bottom: 1.25rem;
+        color: #fff;
+    }
+
+    .login-input {
+        min-height: 52px;
+        margin-bottom: 1rem;
+    }
+
+    .login-button {
+        width: 100%;
+        min-height: 52px;
+        font-weight: 700;
+        font-size: 1.05rem;
+    }
+
+    .login-links {
+        margin-top: 1rem;
+    }
+
+    .login-links a {
+        display: block;
+        margin-bottom: .65rem;
+    }
+
+    .external-login-button {
+        width: 100%;
+        min-height: 56px;
+        border-radius: 8px;
+        border: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        font-weight: 700;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        transition:
+            transform .15s ease,
+            box-shadow .15s ease;
+    }
+
+    .external-login-button:hover {
+        transform: translateY(-1px);
+    }
+
+    .google-login {
+        background: #ffffff;
+        color: #202124;
+        border: 1px solid #dadce0;
+    }
+
+    .google-login:hover {
+        background: #f8f9fa;
+        color: #202124;
+        box-shadow: 0 3px 10px rgba(0,0,0,.25);
+    }
+
+    .facebook-login {
+        background: #1877f2;
+        color: #ffffff;
+    }
+
+    .facebook-login:hover {
+        background: #166fe5;
+        color: #ffffff;
+        box-shadow: 0 3px 10px rgba(0,0,0,.25);
+    }
+
+    .provider-logo {
+        width: 27px;
+        height: 27px;
+        flex: 0 0 27px;
+    }
+
+    .external-divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 1.25rem 0;
+        color: #aaa;
+        font-size: .9rem;
+        font-weight: 700;
+    }
+
+    .external-divider::before,
+    .external-divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: rgba(255,255,255,.2);
+    }
+
+    @media (max-width: 768px) {
+        .login-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .login-page {
+            padding-top: 1rem;
+        }
+    }
+</style>
+
+<div class="container login-page">
+
+    <h1 class="mb-4">Log in</h1>
+
+    <div class="login-grid">
+
+        <!-- LOCAL ACCOUNT LOGIN -->
+        <section class="login-panel">
+
+            <h2>Use a local account to log in.</h2>
+
+            <form method="post">
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3"
+                     role="alert">
                 </div>
-                <div class="form-floating mb-3">
-                    <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                    <label asp-for="Input.Password" class="form-label">Password</label>
-                    <span asp-validation-for="Input.Password" class="text-danger"></span>
+
+                <div class="form-floating">
+                    <input asp-for="Input.Email"
+                           class="form-control login-input"
+                           autocomplete="username"
+                           aria-required="true"
+                           placeholder="name@example.com" />
+
+                    <label asp-for="Input.Email">
+                        Email
+                    </label>
+
+                    <span asp-validation-for="Input.Email"
+                          class="text-danger">
+                    </span>
                 </div>
-                <div class="checkbox mb-3">
-                    <label asp-for="Input.RememberMe" class="form-label">
-                        <input class="form-check-input" asp-for="Input.RememberMe" />
+
+                <div class="form-floating">
+                    <input asp-for="Input.Password"
+                           class="form-control login-input"
+                           autocomplete="current-password"
+                           aria-required="true"
+                           placeholder="Password" />
+
+                    <label asp-for="Input.Password">
+                        Password
+                    </label>
+
+                    <span asp-validation-for="Input.Password"
+                          class="text-danger">
+                    </span>
+                </div>
+
+                <div class="form-check mb-3">
+
+                    <input class="form-check-input"
+                           asp-for="Input.RememberMe" />
+
+                    <label class="form-check-label"
+                           asp-for="Input.RememberMe">
                         @Html.DisplayNameFor(m => m.Input.RememberMe)
                     </label>
+
                 </div>
-                <div>
-                    <button id="login-submit" type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+
+                <button type="submit"
+                        class="btn btn-primary login-button">
+                    Log in
+                </button>
+
+                <div class="login-links">
+
+                    <a asp-page="./ForgotPassword">
+                        Forgot your password?
+                    </a>
+
+                    <a asp-page="./Register"
+                       asp-route-returnUrl="@Model.ReturnUrl">
+                        Register as a new user
+                    </a>
+
+                    <a asp-page="./ResendEmailConfirmation">
+                        Resend email confirmation
+                    </a>
+
                 </div>
-                <div>
-                    <p>
-                        <a id="forgot-password" asp-page="./ForgotPassword">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Register as a new user</a>
-                    </p>
-                    <p>
-                        <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
-                </div>
+
             </form>
+
         </section>
-    </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr />
-            @{
-                if ((Model.ExternalLogins?.Count ?? 0) == 0)
-                {
-                    <div>
-                        <p>
-                            There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article
-                            about setting up this ASP.NET application to support logging in via external services</a>.
-                        </p>
-                    </div>
-                }
-                else
-                {
-                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
-                        <div>
-                            <p>
-                                @foreach (var provider in Model.ExternalLogins!)
-                                {
-                                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
-                                }
-                            </p>
-                        </div>
-                    </form>
-                }
+
+
+        <!-- GOOGLE / FACEBOOK LOGIN -->
+        <section class="login-panel">
+
+            <h2>Use another service to log in.</h2>
+
+            @if (Model.ExternalLogins != null &&
+                 Model.ExternalLogins.Count > 0)
+            {
+                <div class="external-divider">
+                    CONTINUE WITH
+                </div>
+
+                <form asp-page="./ExternalLogin"
+                      asp-route-returnUrl="@Model.ReturnUrl"
+                      method="post">
+
+                    @foreach (var provider in Model.ExternalLogins)
+                    {
+                        if (provider.Name == "Google")
+                        {
+                            <button type="submit"
+                                    class="external-login-button google-login"
+                                    name="provider"
+                                    value="@provider.Name"
+                                    title="Log in with Google">
+
+                                <!-- GOOGLE LOGO -->
+                                <svg class="provider-logo"
+                                     viewBox="0 0 24 24"
+                                     aria-hidden="true">
+
+                                    <path fill="#4285F4"
+                                          d="M21.805 10.023h-9.58v3.955h5.51c-.238 1.273-.951 2.352-2.03 3.078v2.559h3.29c1.927-1.774 3.04-4.39 3.04-7.51 0-.726-.065-1.427-.23-2.082z" />
+
+                                    <path fill="#34A853"
+                                          d="M12.225 22c2.75 0 5.056-.912 6.741-2.385l-3.29-2.559c-.912.612-2.079.974-3.451.974-2.653 0-4.902-1.79-5.706-4.195H3.12v2.638A10.18 10.18 0 0 0 12.225 22z" />
+
+                                    <path fill="#FBBC05"
+                                          d="M6.519 13.835a6.15 6.15 0 0 1-.321-1.96c0-.681.117-1.343.321-1.96V7.277H3.12A10.18 10.18 0 0 0 2 11.875c0 1.645.394 3.201 1.12 4.598l3.399-2.638z" />
+
+                                    <path fill="#EA4335"
+                                          d="M12.225 5.72c1.495 0 2.837.514 3.893 1.524l2.915-2.915C17.276 2.692 14.97 1.75 12.225 1.75A10.18 10.18 0 0 0 3.12 7.277l3.399 2.638c.804-2.405 3.053-4.195 5.706-4.195z" />
+
+                                </svg>
+
+                                <span>Continue with Google</span>
+
+                            </button>
+                        }
+
+                        if (provider.Name == "Facebook")
+                        {
+                            <button type="submit"
+                                    class="external-login-button facebook-login"
+                                    name="provider"
+                                    value="@provider.Name"
+                                    title="Log in with Facebook">
+
+                                <!-- FACEBOOK LOGO -->
+                                <svg class="provider-logo"
+                                     viewBox="0 0 24 24"
+                                     aria-hidden="true">
+
+                                    <circle cx="12"
+                                            cy="12"
+                                            r="12"
+                                            fill="#ffffff" />
+
+                                    <path fill="#1877F2"
+                                          d="M13.55 21v-8.2h2.75l.41-3.2h-3.16V7.56c0-.93.26-1.56 1.59-1.56h1.69V3.14A22.7 22.7 0 0 0 14.36 3c-2.45 0-4.13 1.5-4.13 4.25V9.6H7.46v3.2h2.77V21h3.32z" />
+
+                                </svg>
+
+                                <span>Continue with Facebook</span>
+
+                            </button>
+                        }
+                    }
+
+                </form>
             }
+            else
+            {
+                <p class="text-light">
+                    External login services are temporarily unavailable.
+                </p>
+            }
+
         </section>
+
     </div>
+
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-}
-@if (Model.ExternalLogins != null && Model.ExternalLogins.Count > 0)
-{
-    <div class="mt-4">
-        <div class="d-flex align-items-center mb-3">
-            <hr class="flex-grow-1" />
-            <span class="px-3 text-secondary">OR</span>
-            <hr class="flex-grow-1" />
-        </div>
-
-        <form asp-page="./ExternalLogin"
-              asp-route-returnUrl="@Model.ReturnUrl"
-              method="post">
-
-            @foreach (var provider in Model.ExternalLogins)
-            {
-                @if (provider.Name == "Google")
-                {
-                    <button type="submit"
-                            class="btn btn-light w-100 mb-3"
-                            name="provider"
-                            value="@provider.Name">
-                        Continue with Google
-                    </button>
-                }
-
-                @if (provider.Name == "Facebook")
-                {
-                    <button type="submit"
-                            class="btn btn-primary w-100 mb-3"
-                            name="provider"
-                            value="@provider.Name">
-                        Continue with Facebook
-                    </button>
-                }
-            }
-        </form>
-    </div>
 }
