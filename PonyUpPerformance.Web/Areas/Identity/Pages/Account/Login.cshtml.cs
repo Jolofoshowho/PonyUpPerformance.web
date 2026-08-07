@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -10,25 +10,27 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account
     public class LoginModel : PageModel
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
-private readonly UserManager<ApplicationUser> _userManager;
-private readonly IConfiguration _configuration;
-private readonly ILogger<LoginModel> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<LoginModel> _logger;
+
         public LoginModel(
-    SignInManager<ApplicationUser> signInManager,
-    UserManager<ApplicationUser> userManager,
-    IConfiguration configuration,
-    ILogger<LoginModel> logger)
-{
-    _signInManager = signInManager;
-    _userManager = userManager;
-    _configuration = configuration;
-    _logger = logger;
-}
+            SignInManager<ApplicationUser> signInManager,
+            UserManager<ApplicationUser> userManager,
+            IConfiguration configuration,
+            ILogger<LoginModel> logger)
+        {
+            _signInManager = signInManager;
+            _userManager = userManager;
+            _configuration = configuration;
+            _logger = logger;
+        }
 
         [BindProperty]
         public InputModel Input { get; set; } = new();
 
-        public IList<AuthenticationScheme> ExternalLogins { get; set; } = new List<AuthenticationScheme>();
+        public IList<AuthenticationScheme> ExternalLogins { get; set; } =
+            new List<AuthenticationScheme>();
 
         public string ReturnUrl { get; set; } = string.Empty;
 
@@ -71,22 +73,48 @@ private readonly ILogger<LoginModel> _logger;
             {
                 return Page();
             }
-var ownerEmail = _configuration["OwnerLogin:Email"];
-var ownerToken = _configuration["OwnerLogin:Token"];
 
-if (Input.Email.Equals(ownerEmail, StringComparison.OrdinalIgnoreCase)
-    && Input.Password == ownerToken)
-{
-    var ownerUser = await _userManager.FindByEmailAsync(ownerEmail);
+            var email = Input.Email.Trim();
 
-    if (ownerUser != null)
-    {
-        await _signInManager.SignInAsync(ownerUser, Input.RememberMe);
-        return LocalRedirect(returnUrl);
-    }
-}
+            var user = await _userManager.FindByEmailAsync(email);
+
+            var ownerEmail = _configuration["OwnerLogin:Email"];
+            var ownerToken = _configuration["OwnerLogin:Token"];
+
+            if (!string.IsNullOrWhiteSpace(ownerEmail) &&
+                !string.IsNullOrWhiteSpace(ownerToken) &&
+                email.Equals(ownerEmail, StringComparison.OrdinalIgnoreCase) &&
+                Input.Password == ownerToken)
+            {
+                if (user != null)
+                {
+                    await _signInManager.SignInAsync(
+                        user,
+                        isPersistent: Input.RememberMe);
+
+                    _logger.LogInformation("Owner logged in.");
+
+                    return LocalRedirect(returnUrl);
+                }
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Owner account does not exist in the current database.");
+
+                return Page();
+            }
+
+            if (user == null)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Invalid login attempt.");
+
+                return Page();
+            }
+
             var result = await _signInManager.PasswordSignInAsync(
-                Input.Email,
+                user.UserName!,
                 Input.Password,
                 Input.RememberMe,
                 lockoutOnFailure: false);
@@ -94,21 +122,32 @@ if (Input.Email.Equals(ownerEmail, StringComparison.OrdinalIgnoreCase)
             if (result.Succeeded)
             {
                 _logger.LogInformation("User logged in.");
+
                 return LocalRedirect(returnUrl);
             }
 
             if (result.RequiresTwoFactor)
             {
-                return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
+                return RedirectToPage(
+                    "./LoginWith2fa",
+                    new
+                    {
+                        ReturnUrl = returnUrl,
+                        RememberMe = Input.RememberMe
+                    });
             }
 
             if (result.IsLockedOut)
             {
                 _logger.LogWarning("User account locked out.");
+
                 return RedirectToPage("./Lockout");
             }
 
-            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            ModelState.AddModelError(
+                string.Empty,
+                "Invalid login attempt.");
+
             return Page();
         }
     }
