@@ -62,12 +62,20 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account
 
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
+            ExternalLogins = (await _signInManager
+                .GetExternalAuthenticationSchemesAsync())
+                .ToList();
+
             ReturnUrl = returnUrl;
         }
 
         public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
+
+            ExternalLogins = (await _signInManager
+                .GetExternalAuthenticationSchemesAsync())
+                .ToList();
 
             if (!ModelState.IsValid)
             {
