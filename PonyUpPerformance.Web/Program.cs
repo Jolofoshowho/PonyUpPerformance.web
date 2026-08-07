@@ -8,6 +8,7 @@ using PonyUpPerformance.Web.Services;
 using PonyUpPerformance.Web.Services.Scoring;
 using Stripe;
 using Npgsql;
+using Microsoft.AspNetCore.Authentication.Google;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,6 +68,13 @@ builder.Services.AddAuthentication()
 
 builder.Services.AddDataProtection()
     .PersistKeysToDbContext<ApplicationDbContext>();
+builder.Services
+    .AddAuthentication()
+    .AddGoogle(options =>
+    {
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+    });
 
 builder.Services.AddRazorPages();
 
