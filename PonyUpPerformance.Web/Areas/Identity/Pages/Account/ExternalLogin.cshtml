@@ -1,1 +1,79 @@
 
+@page
+@model ExternalLoginModel
+
+@{
+    ViewData["Title"] = "External Login";
+}
+
+<div class="container py-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-md-6">
+
+            <div class="card bg-dark text-light border-secondary">
+
+                <div class="card-body p-4">
+
+                    <h1 class="mb-3">
+                        Complete Sign In
+                    </h1>
+
+                    <p class="text-light">
+                        You successfully authenticated with
+                        <strong>@Model.ProviderDisplayName</strong>.
+                    </p>
+
+                    <p class="text-secondary">
+                        We could not automatically obtain an email
+                        address from the provider. Enter the email
+                        address you want associated with your
+                        PonyUp Performance account.
+                    </p>
+
+                    <form method="post"
+                          asp-page-handler="Confirmation"
+                          asp-route-returnUrl="@Model.ReturnUrl">
+
+                        <div asp-validation-summary="ModelOnly"
+                             class="text-danger mb-3">
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label asp-for="Input.Email"
+                                   class="form-label">
+                                Email
+                            </label>
+
+                            <input asp-for="Input.Email"
+                                   class="form-control"
+                                   autocomplete="email" />
+
+                            <span asp-validation-for="Input.Email"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+                        <button type="submit"
+                                class="btn btn-primary w-100">
+                            Continue
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
