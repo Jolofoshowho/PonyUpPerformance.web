@@ -68,13 +68,7 @@ builder.Services.AddAuthentication()
 
 builder.Services.AddDataProtection()
     .PersistKeysToDbContext<ApplicationDbContext>();
-builder.Services
-    .AddAuthentication()
-    .AddGoogle(options =>
-    {
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
-    });
+
 
 builder.Services.AddRazorPages();
 
