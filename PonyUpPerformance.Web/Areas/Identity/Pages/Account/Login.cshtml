@@ -81,3 +81,41 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }
+@if (Model.ExternalLogins != null && Model.ExternalLogins.Count > 0)
+{
+    <div class="mt-4">
+        <div class="d-flex align-items-center mb-3">
+            <hr class="flex-grow-1" />
+            <span class="px-3 text-secondary">OR</span>
+            <hr class="flex-grow-1" />
+        </div>
+
+        <form asp-page="./ExternalLogin"
+              asp-route-returnUrl="@Model.ReturnUrl"
+              method="post">
+
+            @foreach (var provider in Model.ExternalLogins)
+            {
+                @if (provider.Name == "Google")
+                {
+                    <button type="submit"
+                            class="btn btn-light w-100 mb-3"
+                            name="provider"
+                            value="@provider.Name">
+                        Continue with Google
+                    </button>
+                }
+
+                @if (provider.Name == "Facebook")
+                {
+                    <button type="submit"
+                            class="btn btn-primary w-100 mb-3"
+                            name="provider"
+                            value="@provider.Name">
+                        Continue with Facebook
+                    </button>
+                }
+            }
+        </form>
+    </div>
+}
