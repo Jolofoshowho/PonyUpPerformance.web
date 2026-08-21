@@ -1,94 +1,779 @@
-using System.ComponentModel.DataAnnotations;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using PonyUpPerformance.Web.Models;
 
-namespace PonyUpPerformance.Web.Models
+namespace PonyUpPerformance.Web.Services.Scoring
 {
-    public class BuyDecisionInput
+    public class BuyScoringService : IBuyScoringService
     {
-        [Display(Name = "VIN")]
-        [RegularExpression(
-            @"^$|(?i)^[A-HJ-NPR-Z0-9]{17}$",
-            ErrorMessage = "Enter a valid 17-character VIN.")]
-        public string Vin { get; set; } = string.Empty;
+        private const int BaseScore = 50;
 
-        [Required]
-        [Range(1886, 2100, ErrorMessage = "Enter a valid vehicle year.")]
-        public int Year { get; set; }
+        private const int PonyUpThreshold = 70;
+        private const int CautionThreshold = 45;
 
-        [Required]
-        [StringLength(50)]
-        public string Make { get; set; } = string.Empty;
+        private const int MechanicalMaximum = 12;
+        private const int AskingPriceMaximum = 10;
+        private const int MileageMaximum = 8;
+        private const int TitleMaximum = 8;
+        private const int AccidentMaximum = 8;
+        private const int IntendedUseMaximum = 4;
 
-        [Required]
-        [StringLength(80)]
-        public string Model { get; set; } = string.Empty;
+        public BuyDecisionResult Analyze(BuyDecisionInput input)
+        {
+            ArgumentNullException.ThrowIfNull(input);
 
-        [StringLength(80)]
-        public string Trim { get; set; } = string.Empty;
+            var adjustments = new List<BuyScoreAdjustment>
+            {
+                ScoreMechanicalCondition(input),
+                ScoreAskingPrice(input),
+                ScoreMileageForAge(input),
+                ScoreTitleStatus(input),
+                ScoreAccidentHistory(input),
+                ScoreIntendedUse(input)
+            };
 
-        [StringLength(120)]
-        public string Engine { get; set; } = string.Empty;
+            var totalAdjustment = adjustments
+                .Sum(adjustment => adjustment.Adjustment);
 
-        [StringLength(80)]
-        public string Transmission { get; set; } = string.Empty;
+            var score = Math.Clamp(
+                BaseScore + totalAdjustment,
+                0,
+                100);
 
-        [StringLength(80)]
-        public string Drivetrain { get; set; } = string.Empty;
+            var recommendation = DetermineRecommendation(score);
 
-        [Display(Name = "Body Style")]
-        [StringLength(80)]
-        public string BodyStyle { get; set; } = string.Empty;
+            var riskScore = CalculateRiskScore(input);
+            var riskLevel = DetermineRiskLevel(riskScore);
 
-        [Display(Name = "Fuel Type")]
-        [StringLength(50)]
-        public string FuelType { get; set; } = string.Empty;
+            var confidenceScore = CalculateConfidenceScore(input);
 
-        [Required]
-        [Range(0, 2_000_000, ErrorMessage = "Enter valid mileage.")]
-        public int Mileage { get; set; }
+            var totalAcquisitionCost =
+                input.AskingPrice + input.EstimatedRepairCost;
 
-        [Required]
-        [Display(Name = "Asking Price")]
-        [Range(typeof(decimal), "0.01", "100000000")]
-        public decimal AskingPrice { get; set; }
+            var estimatedEquity =
+                input.MarketValue - totalAcquisitionCost;
 
-        [Required]
-        [Display(Name = "Estimated Repair Cost")]
-        [Range(typeof(decimal), "0", "100000000")]
-        public decimal EstimatedRepairCost { get; set; }
+            var maximumRecommendedPrice =
+                CalculateMaximumRecommendedPrice(input);
 
-        [Required]
-        [Display(Name = "Estimated Market Value")]
-        [Range(typeof(decimal), "0.01", "100000000")]
-        public decimal MarketValue { get; set; }
+            var fairPurchasePrice =
+                CalculateFairPurchasePrice(
+                    input,
+                    maximumRecommendedPrice);
 
-        [Required]
-        [Display(Name = "Mechanical Condition")]
-        public MechanicalCondition MechanicalCondition { get; set; }
-            = MechanicalCondition.NotProvided;
+            var suggestedFirstOffer =
+                CalculateSuggestedFirstOffer(
+                    input,
+                    fairPurchasePrice);
 
-        [Required]
-        [Display(Name = "Title Status")]
-        public TitleStatus TitleStatus { get; set; }
-            = TitleStatus.NotProvided;
+            return new BuyDecisionResult
+            {
+                Score = score,
+                Recommendation = recommendation,
+                ConfidenceScore = confidenceScore,
+                RiskLevel = riskLevel,
 
-        [Required]
-        [Display(Name = "Accident History")]
-        public AccidentHistory AccidentHistory { get; set; }
-            = AccidentHistory.NotProvided;
+                FinancialImpact = BuildFinancialImpact(
+                    totalAcquisitionCost,
+                    estimatedEquity),
 
-        [Required]
-        [Display(Name = "Intended Use")]
-        public IntendedUse IntendedUse { get; set; }
-            = IntendedUse.NotProvided;
-    }
+                Reasoning = BuildReasoning(
+                    score,
+                    recommendation,
+                    adjustments,
+                    totalAcquisitionCost,
+                    estimatedEquity),
 
-    public enum IntendedUse
-    {
-        NotProvided = -1,
-        DailyDriver = 0,
-        WorkVehicle = 1,
-        FamilyVehicle = 2,
-        ProjectVehicle = 3,
-        PerformanceBuild = 4
+                NextSteps = BuildNextSteps(
+                    input,
+                    score,
+                    riskLevel),
+
+                MaximumRecommendedPrice =
+                    RoundCurrency(maximumRecommendedPrice),
+
+                FairPurchasePrice =
+                    RoundCurrency(fairPurchasePrice),
+
+                SuggestedFirstOffer =
+                    RoundCurrency(suggestedFirstOffer)
+            };
+        }
+
+        private static BuyScoreAdjustment ScoreMechanicalCondition(
+            BuyDecisionInput input)
+        {
+            var repairRatio = input.MarketValue > 0
+                ? input.EstimatedRepairCost / input.MarketValue
+                : 1m;
+
+            var conditionAdjustment =
+                input.MechanicalCondition switch
+                {
+                    MechanicalCondition.Excellent => 8,
+                    MechanicalCondition.Good => 5,
+                    MechanicalCondition.Fair => 0,
+                    MechanicalCondition.Poor => -6,
+                    MechanicalCondition.Severe => -10,
+                    _ => 0
+                };
+
+            var repairAdjustment = repairRatio switch
+            {
+                <= 0.02m => 4,
+                <= 0.05m => 2,
+                <= 0.10m => 0,
+                <= 0.20m => -4,
+                <= 0.35m => -8,
+                _ => -12
+            };
+
+            var adjustment = Math.Clamp(
+                conditionAdjustment + repairAdjustment,
+                -MechanicalMaximum,
+                MechanicalMaximum);
+
+            var explanation =
+                $"Mechanical condition is " +
+                $"{FormatEnum(input.MechanicalCondition)}. " +
+                $"Estimated repairs equal " +
+                $"{repairRatio:P0} of market value.";
+
+            return CreateAdjustment(
+                "Mechanical Condition vs Needed Repairs",
+                adjustment,
+                MechanicalMaximum,
+                explanation);
+        }
+
+        private static BuyScoreAdjustment ScoreAskingPrice(
+            BuyDecisionInput input)
+        {
+            if (input.MarketValue <= 0)
+            {
+                return CreateAdjustment(
+                    "Asking Price vs Market",
+                    0,
+                    AskingPriceMaximum,
+                    "Market value was unavailable, so price position could not be scored.");
+            }
+
+            var priceDifferenceRatio =
+                (input.MarketValue - input.AskingPrice)
+                / input.MarketValue;
+
+            var adjustment = priceDifferenceRatio switch
+            {
+                >= 0.25m => 10,
+                >= 0.15m => 8,
+                >= 0.10m => 6,
+                >= 0.05m => 3,
+                >= -0.03m => 0,
+                >= -0.08m => -3,
+                >= -0.15m => -6,
+                >= -0.25m => -8,
+                _ => -10
+            };
+
+            var explanation = priceDifferenceRatio >= 0
+                ? $"The asking price is " +
+                  $"{priceDifferenceRatio:P0} below " +
+                  $"estimated market value."
+                : $"The asking price is " +
+                  $"{Math.Abs(priceDifferenceRatio):P0} above " +
+                  $"estimated market value.";
+
+            return CreateAdjustment(
+                "Asking Price vs Market",
+                adjustment,
+                AskingPriceMaximum,
+                explanation);
+        }
+
+        private static BuyScoreAdjustment ScoreMileageForAge(
+            BuyDecisionInput input)
+        {
+            var currentYear = DateTime.UtcNow.Year;
+
+            var vehicleAge = Math.Max(
+                1,
+                currentYear - input.Year);
+
+            var expectedMileage =
+                vehicleAge * 12_000m;
+
+            var mileageRatio = expectedMileage > 0
+                ? input.Mileage / expectedMileage
+                : 1m;
+
+            var adjustment = mileageRatio switch
+            {
+                <= 0.50m => 8,
+                <= 0.70m => 6,
+                <= 0.85m => 4,
+                <= 1.00m => 2,
+                <= 1.15m => 0,
+                <= 1.35m => -3,
+                <= 1.60m => -6,
+                _ => -8
+            };
+
+            var averageAnnualMileage =
+                input.Mileage / (decimal)vehicleAge;
+
+            var explanation =
+                $"The vehicle averages approximately " +
+                $"{Math.Round(averageAnnualMileage):N0} miles " +
+                $"per year compared with a 12,000-mile " +
+                $"annual benchmark.";
+
+            return CreateAdjustment(
+                "Mileage vs Age",
+                adjustment,
+                MileageMaximum,
+                explanation);
+        }
+
+        private static BuyScoreAdjustment ScoreTitleStatus(
+            BuyDecisionInput input)
+        {
+            var adjustment = input.TitleStatus switch
+            {
+                TitleStatus.Clean => 8,
+                TitleStatus.Rebuilt => -4,
+                TitleStatus.Salvage => -7,
+                TitleStatus.Flood => -8,
+                _ => 0
+            };
+
+            var explanation = input.TitleStatus switch
+            {
+                TitleStatus.Clean =>
+                    "The vehicle has a clean title.",
+
+                TitleStatus.Rebuilt =>
+                    "A rebuilt title can reduce resale value and limit financing or insurance options.",
+
+                TitleStatus.Salvage =>
+                    "A salvage title creates substantial safety, resale, insurance, and registration risk.",
+
+                TitleStatus.Flood =>
+                    "A flood title presents severe long-term electrical, corrosion, and reliability risk.",
+
+                _ =>
+                    "Title status was not provided."
+            };
+
+            return CreateAdjustment(
+                "Title Status",
+                adjustment,
+                TitleMaximum,
+                explanation);
+        }
+
+        private static BuyScoreAdjustment ScoreAccidentHistory(
+            BuyDecisionInput input)
+        {
+            var adjustment = input.AccidentHistory switch
+            {
+                AccidentHistory.None => 8,
+                AccidentHistory.Minor => 2,
+                AccidentHistory.Moderate => -3,
+                AccidentHistory.Major => -8,
+                _ => 0
+            };
+
+            var explanation = input.AccidentHistory switch
+            {
+                AccidentHistory.None =>
+                    "No known accident history was reported.",
+
+                AccidentHistory.Minor =>
+                    "Minor accident history has a limited effect when repairs are properly documented.",
+
+                AccidentHistory.Moderate =>
+                    "Moderate accident history may affect structural integrity, alignment, and resale value.",
+
+                AccidentHistory.Major =>
+                    "Major accident history creates significant structural, safety, and resale concerns.",
+
+                _ =>
+                    "Accident history was not provided."
+            };
+
+            return CreateAdjustment(
+                "Accident History",
+                adjustment,
+                AccidentMaximum,
+                explanation);
+        }
+
+        private static BuyScoreAdjustment ScoreIntendedUse(
+            BuyDecisionInput input)
+        {
+            var adjustment = input.IntendedUse switch
+            {
+                IntendedUse.DailyDriver => 2,
+                IntendedUse.WorkVehicle => 1,
+                IntendedUse.FamilyVehicle => 2,
+                IntendedUse.ProjectVehicle => 0,
+                IntendedUse.PerformanceBuild => -1,
+                _ => 0
+            };
+
+            if (input.IntendedUse is
+                IntendedUse.DailyDriver
+                or IntendedUse.WorkVehicle
+                or IntendedUse.FamilyVehicle)
+            {
+                if (input.MechanicalCondition ==
+                    MechanicalCondition.Excellent)
+                {
+                    adjustment += 2;
+                }
+                else if (input.MechanicalCondition ==
+                         MechanicalCondition.Poor)
+                {
+                    adjustment -= 3;
+                }
+                else if (input.MechanicalCondition ==
+                         MechanicalCondition.Severe)
+                {
+                    adjustment -= 4;
+                }
+            }
+
+            if (input.IntendedUse is
+                IntendedUse.ProjectVehicle
+                or IntendedUse.PerformanceBuild)
+            {
+                if (input.MarketValue > 0
+                    && input.AskingPrice
+                    + input.EstimatedRepairCost
+                    <= input.MarketValue * 0.80m)
+                {
+                    adjustment += 2;
+                }
+            }
+
+            adjustment = Math.Clamp(
+                adjustment,
+                -IntendedUseMaximum,
+                IntendedUseMaximum);
+
+            var explanation =
+                $"The vehicle is being evaluated as a " +
+                $"{FormatEnum(input.IntendedUse)}.";
+
+            return CreateAdjustment(
+                "Intended Use",
+                adjustment,
+                IntendedUseMaximum,
+                explanation);
+        }
+
+        private static int CalculateRiskScore(
+            BuyDecisionInput input)
+        {
+            var risk = 0;
+
+            risk += input.MechanicalCondition switch
+            {
+                MechanicalCondition.Excellent => 2,
+                MechanicalCondition.Good => 6,
+                MechanicalCondition.Fair => 14,
+                MechanicalCondition.Poor => 24,
+                MechanicalCondition.Severe => 32,
+                _ => 12
+            };
+
+            risk += input.TitleStatus switch
+            {
+                TitleStatus.Clean => 0,
+                TitleStatus.Rebuilt => 12,
+                TitleStatus.Salvage => 22,
+                TitleStatus.Flood => 28,
+                _ => 10
+            };
+
+            risk += input.AccidentHistory switch
+            {
+                AccidentHistory.None => 0,
+                AccidentHistory.Minor => 5,
+                AccidentHistory.Moderate => 13,
+                AccidentHistory.Major => 22,
+                _ => 8
+            };
+
+            if (input.MarketValue > 0)
+            {
+                var repairRatio =
+                    input.EstimatedRepairCost
+                    / input.MarketValue;
+
+                risk += repairRatio switch
+                {
+                    <= 0.05m => 0,
+                    <= 0.10m => 4,
+                    <= 0.20m => 9,
+                    <= 0.35m => 14,
+                    _ => 18
+                };
+
+                var totalCostRatio =
+                    (input.AskingPrice
+                     + input.EstimatedRepairCost)
+                    / input.MarketValue;
+
+                risk += totalCostRatio switch
+                {
+                    <= 0.80m => 0,
+                    <= 0.95m => 3,
+                    <= 1.05m => 7,
+                    <= 1.20m => 12,
+                    _ => 16
+                };
+            }
+
+            return Math.Clamp(risk, 0, 100);
+        }
+
+        private static int CalculateConfidenceScore(
+            BuyDecisionInput input)
+        {
+            var confidence = 40;
+
+            if (!string.IsNullOrWhiteSpace(input.Vin))
+            {
+                confidence += 15;
+            }
+
+            if (!string.IsNullOrWhiteSpace(input.Trim))
+            {
+                confidence += 5;
+            }
+
+            if (!string.IsNullOrWhiteSpace(input.Engine))
+            {
+                confidence += 5;
+            }
+
+            if (!string.IsNullOrWhiteSpace(input.Transmission))
+            {
+                confidence += 5;
+            }
+
+            if (!string.IsNullOrWhiteSpace(input.Drivetrain))
+            {
+                confidence += 5;
+            }
+
+            if (input.MechanicalCondition !=
+                MechanicalCondition.NotProvided)
+            {
+                confidence += 8;
+            }
+
+            if (input.TitleStatus !=
+                TitleStatus.NotProvided)
+            {
+                confidence += 6;
+            }
+
+            if (input.AccidentHistory !=
+                AccidentHistory.NotProvided)
+            {
+                confidence += 6;
+            }
+
+            if (input.IntendedUse !=
+                IntendedUse.NotProvided)
+            {
+                confidence += 5;
+            }
+
+            return Math.Clamp(confidence, 0, 100);
+        }
+
+        private static decimal CalculateMaximumRecommendedPrice(
+            BuyDecisionInput input)
+        {
+            var titleReserve = input.TitleStatus switch
+            {
+                TitleStatus.Clean => 0m,
+
+                TitleStatus.Rebuilt =>
+                    input.MarketValue * 0.12m,
+
+                TitleStatus.Salvage =>
+                    input.MarketValue * 0.25m,
+
+                TitleStatus.Flood =>
+                    input.MarketValue * 0.35m,
+
+                _ =>
+                    input.MarketValue * 0.05m
+            };
+
+            var accidentReserve =
+                input.AccidentHistory switch
+                {
+                    AccidentHistory.None => 0m,
+
+                    AccidentHistory.Minor =>
+                        input.MarketValue * 0.03m,
+
+                    AccidentHistory.Moderate =>
+                        input.MarketValue * 0.08m,
+
+                    AccidentHistory.Major =>
+                        input.MarketValue * 0.18m,
+
+                    _ =>
+                        input.MarketValue * 0.04m
+                };
+
+            var contingencyReserve =
+                Math.Max(
+                    500m,
+                    input.EstimatedRepairCost * 0.20m);
+
+            return Math.Max(
+                0m,
+                input.MarketValue
+                - input.EstimatedRepairCost
+                - contingencyReserve
+                - titleReserve
+                - accidentReserve);
+        }
+
+        private static decimal CalculateFairPurchasePrice(
+            BuyDecisionInput input,
+            decimal maximumRecommendedPrice)
+        {
+            var negotiationReserve =
+                Math.Max(
+                    500m,
+                    input.MarketValue * 0.05m);
+
+            return Math.Max(
+                0m,
+                Math.Min(
+                    maximumRecommendedPrice,
+                    input.MarketValue
+                    - input.EstimatedRepairCost
+                    - negotiationReserve));
+        }
+
+        private static decimal CalculateSuggestedFirstOffer(
+            BuyDecisionInput input,
+            decimal fairPurchasePrice)
+        {
+            var openingDiscount =
+                Math.Max(
+                    500m,
+                    fairPurchasePrice * 0.08m);
+
+            var firstOffer =
+                Math.Max(
+                    0m,
+                    fairPurchasePrice - openingDiscount);
+
+            return Math.Min(
+                firstOffer,
+                input.AskingPrice);
+        }
+
+        private static string DetermineRecommendation(int score)
+        {
+            return score switch
+            {
+                >= PonyUpThreshold => "PONY UP",
+                >= CautionThreshold => "PROCEED WITH CAUTION",
+                _ => "STOP"
+            };
+        }
+
+        private static string DetermineRiskLevel(int riskScore)
+        {
+            return riskScore switch
+            {
+                <= 24 => "Low",
+                <= 49 => "Moderate",
+                <= 74 => "High",
+                _ => "Severe"
+            };
+        }
+
+        private static string BuildFinancialImpact(
+            decimal totalAcquisitionCost,
+            decimal estimatedEquity)
+        {
+            if (estimatedEquity > 0)
+            {
+                return
+                    $"Estimated acquisition cost is " +
+                    $"{totalAcquisitionCost:C0}, leaving approximately " +
+                    $"{estimatedEquity:C0} in potential equity.";
+            }
+
+            if (estimatedEquity < 0)
+            {
+                return
+                    $"Estimated acquisition cost is " +
+                    $"{totalAcquisitionCost:C0}, which exceeds market value " +
+                    $"by approximately {Math.Abs(estimatedEquity):C0}.";
+            }
+
+            return
+                $"Estimated acquisition cost is " +
+                $"{totalAcquisitionCost:C0}, approximately equal to " +
+                $"the estimated market value.";
+        }
+
+        private static List<string> BuildNextSteps(
+            BuyDecisionInput input,
+            int score,
+            string riskLevel)
+        {
+            var nextSteps = new List<string>();
+
+            if (score < CautionThreshold)
+            {
+                nextSteps.Add(
+                    "Do not proceed unless the price or verified condition changes materially.");
+
+                nextSteps.Add(
+                    "Compare this vehicle with cleaner alternatives before reconsidering.");
+            }
+            else
+            {
+                nextSteps.Add(
+                    "Schedule an independent pre-purchase inspection.");
+
+                nextSteps.Add(
+                    "Verify the VIN, title, ownership history, accident history, and service records.");
+
+                nextSteps.Add(
+                    "Confirm the repair estimate with a qualified repair facility.");
+            }
+
+            if (riskLevel is "High" or "Severe")
+            {
+                nextSteps.Add(
+                    "Do not exchange funds until all high-risk findings are independently verified.");
+            }
+
+            if (input.TitleStatus != TitleStatus.Clean)
+            {
+                nextSteps.Add(
+                    "Confirm insurability, registration eligibility, and resale restrictions before purchase.");
+            }
+
+            return nextSteps
+                .Distinct()
+                .ToList();
+        }
+
+        private static string BuildReasoning(
+            int score,
+            string recommendation,
+            IEnumerable<BuyScoreAdjustment> adjustments,
+            decimal totalAcquisitionCost,
+            decimal estimatedEquity)
+        {
+            var strongestPositive = adjustments
+                .Where(adjustment =>
+                    adjustment.Adjustment > 0)
+                .OrderByDescending(adjustment =>
+                    adjustment.Adjustment)
+                .FirstOrDefault();
+
+            var strongestNegative = adjustments
+                .Where(adjustment =>
+                    adjustment.Adjustment < 0)
+                .OrderBy(adjustment =>
+                    adjustment.Adjustment)
+                .FirstOrDefault();
+
+            var reasoning =
+                $"The decision score is {score}/100, producing a " +
+                $"{recommendation} recommendation. " +
+                $"Estimated total acquisition cost is " +
+                $"{totalAcquisitionCost:C0}, with estimated equity " +
+                $"of {estimatedEquity:C0}.";
+
+            if (strongestPositive is not null)
+            {
+                reasoning +=
+                    $" The strongest positive factor is " +
+                    $"{strongestPositive.Influencer.ToLowerInvariant()} " +
+                    $"({FormatSignedNumber(strongestPositive.Adjustment)} points).";
+            }
+
+            if (strongestNegative is not null)
+            {
+                reasoning +=
+                    $" The strongest concern is " +
+                    $"{strongestNegative.Influencer.ToLowerInvariant()} " +
+                    $"({FormatSignedNumber(strongestNegative.Adjustment)} points).";
+            }
+
+            return reasoning;
+        }
+
+        private static BuyScoreAdjustment CreateAdjustment(
+            string influencer,
+            int adjustment,
+            int maximumAdjustment,
+            string explanation)
+        {
+            return new BuyScoreAdjustment
+            {
+                Influencer = influencer,
+                Adjustment = adjustment,
+                MaximumAdjustment = maximumAdjustment,
+                Explanation = explanation
+            };
+        }
+
+        private static decimal RoundCurrency(decimal value)
+        {
+            return Math.Round(
+                value,
+                2,
+                MidpointRounding.AwayFromZero);
+        }
+
+        private static string FormatSignedNumber(int value)
+        {
+            return value > 0
+                ? $"+{value}"
+                : value.ToString();
+        }
+
+        private static string FormatEnum<TEnum>(TEnum value)
+            where TEnum : struct, Enum
+        {
+            var text = value.ToString();
+            var characters = new List<char>();
+
+            for (var index = 0;
+                 index < text.Length;
+                 index++)
+            {
+                if (index > 0
+                    && char.IsUpper(text[index])
+                    && !char.IsUpper(text[index - 1]))
+                {
+                    characters.Add(' ');
+                }
+
+                characters.Add(text[index]);
+            }
+
+            return new string(characters.ToArray());
+        }
     }
 }
