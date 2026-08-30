@@ -33,8 +33,7 @@ namespace PonyUpPerformance.Web.Services.Scoring
                 ScoreIntendedUse(input)
             };
 
-            var totalAdjustment = adjustments
-                .Sum(adjustment => adjustment.Adjustment);
+            var totalAdjustment = adjustments.Sum(x => x.Adjustment);
 
             var score = Math.Clamp(
                 BaseScore + totalAdjustment,
@@ -48,11 +47,23 @@ namespace PonyUpPerformance.Web.Services.Scoring
 
             var confidenceScore = CalculateConfidenceScore(input);
 
-            var totalAcquisitionCost =
-                input.AskingPrice + input.EstimatedRepairCost;
+            decimal? knownAcquisitionCost = null;
+            decimal? estimatedEquity = null;
 
-            var estimatedEquity =
-                input.MarketValue - totalAcquisitionCost;
+            if (input.AskingPrice.HasValue)
+            {
+                knownAcquisitionCost =
+                    input.AskingPrice.Value +
+                    (input.EstimatedRepairCost ?? 0m);
+
+                if (input.MarketValue.HasValue &&
+                    input.MarketValue.Value > 0)
+                {
+                    estimatedEquity =
+                        input.MarketValue.Value -
+                        knownAcquisitionCost.Value;
+                }
+            }
 
             var maximumRecommendedPrice =
                 CalculateMaximumRecommendedPrice(input);
@@ -75,14 +86,16 @@ namespace PonyUpPerformance.Web.Services.Scoring
                 RiskLevel = riskLevel,
 
                 FinancialImpact = BuildFinancialImpact(
-                    totalAcquisitionCost,
+                    input,
+                    knownAcquisitionCost,
                     estimatedEquity),
 
                 Reasoning = BuildReasoning(
                     score,
                     recommendation,
                     adjustments,
-                    totalAcquisitionCost,
+                    input,
+                    knownAcquisitionCost,
                     estimatedEquity),
 
                 NextSteps = BuildNextSteps(
@@ -104,12 +117,13 @@ namespace PonyUpPerformance.Web.Services.Scoring
         private static BuyScoreAdjustment ScoreMechanicalCondition(
             BuyDecisionInput input)
         {
-            var repairRatio = input.MarketValue > 0
-                ? input.EstimatedRepairCost / input.MarketValue
-                : 1m;
+            var adjustment = 0;
+            var explanationParts = new List<string>();
 
-            var conditionAdjustment =
-                input.MechanicalCondition switch
+            if (input.MechanicalCondition !=
+                MechanicalCondition.NotProvided)
+            {
+                adjustment += input.MechanicalCondition switch
                 {
                     MechanicalCondition.Excellent => 8,
                     MechanicalCondition.Good => 5,
@@ -119,49 +133,82 @@ namespace PonyUpPerformance.Web.Services.Scoring
                     _ => 0
                 };
 
-            var repairAdjustment = repairRatio switch
+                explanationParts.Add(
+                    $"Mechanical condition is " +
+                    $"{FormatEnum(input.MechanicalCondition)}.");
+            }
+            else
             {
-                <= 0.02m => 4,
-                <= 0.05m => 2,
-                <= 0.10m => 0,
-                <= 0.20m => -4,
-                <= 0.35m => -8,
-                _ => -12
-            };
+                explanationParts.Add(
+                    "Mechanical condition was not provided.");
+            }
 
-            var adjustment = Math.Clamp(
-                conditionAdjustment + repairAdjustment,
+            if (input.EstimatedRepairCost.HasValue &&
+                input.MarketValue.HasValue &&
+                input.MarketValue.Value > 0)
+            {
+                var repairRatio =
+                    input.EstimatedRepairCost.Value /
+                    input.MarketValue.Value;
+
+                adjustment += repairRatio switch
+                {
+                    <= 0.02m => 4,
+                    <= 0.05m => 2,
+                    <= 0.10m => 0,
+                    <= 0.20m => -4,
+                    <= 0.35m => -8,
+                    _ => -12
+                };
+
+                explanationParts.Add(
+                    $"Known estimated repairs equal " +
+                    $"{repairRatio:P0} of market value.");
+            }
+            else if (input.EstimatedRepairCost.HasValue)
+            {
+                explanationParts.Add(
+                    "A repair cost was provided, but market value was unavailable for comparison.");
+            }
+            else
+            {
+                explanationParts.Add(
+                    "Repair cost was not provided, so no repair-cost adjustment was applied.");
+            }
+
+            adjustment = Math.Clamp(
+                adjustment,
                 -MechanicalMaximum,
                 MechanicalMaximum);
-
-            var explanation =
-                $"Mechanical condition is " +
-                $"{FormatEnum(input.MechanicalCondition)}. " +
-                $"Estimated repairs equal " +
-                $"{repairRatio:P0} of market value.";
 
             return CreateAdjustment(
                 "Mechanical Condition vs Needed Repairs",
                 adjustment,
                 MechanicalMaximum,
-                explanation);
+                string.Join(" ", explanationParts));
         }
 
         private static BuyScoreAdjustment ScoreAskingPrice(
             BuyDecisionInput input)
         {
-            if (input.MarketValue <= 0)
+            if (!input.AskingPrice.HasValue ||
+                input.AskingPrice.Value <= 0 ||
+                !input.MarketValue.HasValue ||
+                input.MarketValue.Value <= 0)
             {
                 return CreateAdjustment(
                     "Asking Price vs Market",
                     0,
                     AskingPriceMaximum,
-                    "Market value was unavailable, so price position could not be scored.");
+                    "Asking price and market value were not both available, so price position was not scored.");
             }
 
+            var marketValue = input.MarketValue.Value;
+            var askingPrice = input.AskingPrice.Value;
+
             var priceDifferenceRatio =
-                (input.MarketValue - input.AskingPrice)
-                / input.MarketValue;
+                (marketValue - askingPrice) /
+                marketValue;
 
             var adjustment = priceDifferenceRatio switch
             {
@@ -176,13 +223,12 @@ namespace PonyUpPerformance.Web.Services.Scoring
                 _ => -10
             };
 
-            var explanation = priceDifferenceRatio >= 0
-                ? $"The asking price is " +
-                  $"{priceDifferenceRatio:P0} below " +
-                  $"estimated market value."
-                : $"The asking price is " +
-                  $"{Math.Abs(priceDifferenceRatio):P0} above " +
-                  $"estimated market value.";
+            var explanation =
+                priceDifferenceRatio >= 0
+                    ? $"The asking price is " +
+                      $"{priceDifferenceRatio:P0} below estimated market value."
+                    : $"The asking price is " +
+                      $"{Math.Abs(priceDifferenceRatio):P0} above estimated market value.";
 
             return CreateAdjustment(
                 "Asking Price vs Market",
@@ -194,18 +240,28 @@ namespace PonyUpPerformance.Web.Services.Scoring
         private static BuyScoreAdjustment ScoreMileageForAge(
             BuyDecisionInput input)
         {
+            if (!input.Year.HasValue ||
+                !input.Mileage.HasValue)
+            {
+                return CreateAdjustment(
+                    "Mileage vs Age",
+                    0,
+                    MileageMaximum,
+                    "Mileage was not provided, so mileage versus age was not scored.");
+            }
+
             var currentYear = DateTime.UtcNow.Year;
 
             var vehicleAge = Math.Max(
                 1,
-                currentYear - input.Year);
+                currentYear - input.Year.Value);
 
             var expectedMileage =
                 vehicleAge * 12_000m;
 
-            var mileageRatio = expectedMileage > 0
-                ? input.Mileage / expectedMileage
-                : 1m;
+            var mileageRatio =
+                input.Mileage.Value /
+                expectedMileage;
 
             var adjustment = mileageRatio switch
             {
@@ -220,13 +276,13 @@ namespace PonyUpPerformance.Web.Services.Scoring
             };
 
             var averageAnnualMileage =
-                input.Mileage / (decimal)vehicleAge;
+                input.Mileage.Value /
+                (decimal)vehicleAge;
 
             var explanation =
                 $"The vehicle averages approximately " +
-                $"{Math.Round(averageAnnualMileage):N0} miles " +
-                $"per year compared with a 12,000-mile " +
-                $"annual benchmark.";
+                $"{Math.Round(averageAnnualMileage):N0} miles per year " +
+                $"compared with a 12,000-mile annual benchmark.";
 
             return CreateAdjustment(
                 "Mileage vs Age",
@@ -253,7 +309,7 @@ namespace PonyUpPerformance.Web.Services.Scoring
                     "The vehicle has a clean title.",
 
                 TitleStatus.Rebuilt =>
-                    "A rebuilt title can reduce resale value and limit financing or insurance options.",
+                    "A rebuilt title can reduce resale value and may limit insurance or financing options.",
 
                 TitleStatus.Salvage =>
                     "A salvage title creates substantial safety, resale, insurance, and registration risk.",
@@ -348,12 +404,19 @@ namespace PonyUpPerformance.Web.Services.Scoring
                 IntendedUse.ProjectVehicle
                 or IntendedUse.PerformanceBuild)
             {
-                if (input.MarketValue > 0
-                    && input.AskingPrice
-                    + input.EstimatedRepairCost
-                    <= input.MarketValue * 0.80m)
+                if (input.MarketValue.HasValue &&
+                    input.MarketValue.Value > 0 &&
+                    input.AskingPrice.HasValue)
                 {
-                    adjustment += 2;
+                    var knownRepairCost =
+                        input.EstimatedRepairCost ?? 0m;
+
+                    if (input.AskingPrice.Value +
+                        knownRepairCost <=
+                        input.MarketValue.Value * 0.80m)
+                    {
+                        adjustment += 2;
+                    }
                 }
             }
 
@@ -363,8 +426,10 @@ namespace PonyUpPerformance.Web.Services.Scoring
                 IntendedUseMaximum);
 
             var explanation =
-                $"The vehicle is being evaluated as a " +
-                $"{FormatEnum(input.IntendedUse)}.";
+                input.IntendedUse == IntendedUse.NotProvided
+                    ? "Intended use was not provided."
+                    : $"The vehicle is being evaluated as a " +
+                      $"{FormatEnum(input.IntendedUse)}.";
 
             return CreateAdjustment(
                 "Intended Use",
@@ -385,7 +450,7 @@ namespace PonyUpPerformance.Web.Services.Scoring
                 MechanicalCondition.Fair => 14,
                 MechanicalCondition.Poor => 24,
                 MechanicalCondition.Severe => 32,
-                _ => 12
+                _ => 0
             };
 
             risk += input.TitleStatus switch
@@ -394,7 +459,7 @@ namespace PonyUpPerformance.Web.Services.Scoring
                 TitleStatus.Rebuilt => 12,
                 TitleStatus.Salvage => 22,
                 TitleStatus.Flood => 28,
-                _ => 10
+                _ => 0
             };
 
             risk += input.AccidentHistory switch
@@ -403,147 +468,181 @@ namespace PonyUpPerformance.Web.Services.Scoring
                 AccidentHistory.Minor => 5,
                 AccidentHistory.Moderate => 13,
                 AccidentHistory.Major => 22,
-                _ => 8
+                _ => 0
             };
 
-            if (input.MarketValue > 0)
+            if (input.MarketValue.HasValue &&
+                input.MarketValue.Value > 0)
             {
-                var repairRatio =
-                    input.EstimatedRepairCost
-                    / input.MarketValue;
+                var marketValue =
+                    input.MarketValue.Value;
 
-                risk += repairRatio switch
+                if (input.EstimatedRepairCost.HasValue)
                 {
-                    <= 0.05m => 0,
-                    <= 0.10m => 4,
-                    <= 0.20m => 9,
-                    <= 0.35m => 14,
-                    _ => 18
-                };
+                    var repairRatio =
+                        input.EstimatedRepairCost.Value /
+                        marketValue;
 
-                var totalCostRatio =
-                    (input.AskingPrice
-                     + input.EstimatedRepairCost)
-                    / input.MarketValue;
+                    risk += repairRatio switch
+                    {
+                        <= 0.05m => 0,
+                        <= 0.10m => 4,
+                        <= 0.20m => 9,
+                        <= 0.35m => 14,
+                        _ => 18
+                    };
+                }
 
-                risk += totalCostRatio switch
+                if (input.AskingPrice.HasValue)
                 {
-                    <= 0.80m => 0,
-                    <= 0.95m => 3,
-                    <= 1.05m => 7,
-                    <= 1.20m => 12,
-                    _ => 16
-                };
+                    var knownRepairCost =
+                        input.EstimatedRepairCost ?? 0m;
+
+                    var totalCostRatio =
+                        (input.AskingPrice.Value +
+                         knownRepairCost) /
+                        marketValue;
+
+                    risk += totalCostRatio switch
+                    {
+                        <= 0.80m => 0,
+                        <= 0.95m => 3,
+                        <= 1.05m => 7,
+                        <= 1.20m => 12,
+                        _ => 16
+                    };
+                }
             }
 
-            return Math.Clamp(risk, 0, 100);
+            return Math.Clamp(
+                risk,
+                0,
+                100);
         }
 
         private static int CalculateConfidenceScore(
             BuyDecisionInput input)
         {
-            var confidence = 40;
+            var confidence = 35;
 
             if (!string.IsNullOrWhiteSpace(input.Vin))
-            {
-                confidence += 15;
-            }
+                confidence += 12;
+
+            if (input.Year.HasValue)
+                confidence += 5;
+
+            if (!string.IsNullOrWhiteSpace(input.Make))
+                confidence += 5;
+
+            if (!string.IsNullOrWhiteSpace(input.Model))
+                confidence += 5;
+
+            if (input.Mileage.HasValue)
+                confidence += 7;
 
             if (!string.IsNullOrWhiteSpace(input.Trim))
-            {
-                confidence += 5;
-            }
+                confidence += 3;
 
             if (!string.IsNullOrWhiteSpace(input.Engine))
-            {
-                confidence += 5;
-            }
+                confidence += 4;
 
             if (!string.IsNullOrWhiteSpace(input.Transmission))
-            {
-                confidence += 5;
-            }
+                confidence += 4;
 
             if (!string.IsNullOrWhiteSpace(input.Drivetrain))
-            {
-                confidence += 5;
-            }
+                confidence += 4;
+
+            if (!string.IsNullOrWhiteSpace(input.BodyStyle))
+                confidence += 3;
+
+            if (!string.IsNullOrWhiteSpace(input.FuelType))
+                confidence += 3;
+
+            if (input.AskingPrice.HasValue)
+                confidence += 7;
+
+            if (input.MarketValue.HasValue)
+                confidence += 8;
+
+            if (input.EstimatedRepairCost.HasValue)
+                confidence += 4;
 
             if (input.MechanicalCondition !=
                 MechanicalCondition.NotProvided)
             {
-                confidence += 8;
+                confidence += 5;
             }
 
             if (input.TitleStatus !=
                 TitleStatus.NotProvided)
             {
-                confidence += 6;
+                confidence += 5;
             }
 
             if (input.AccidentHistory !=
                 AccidentHistory.NotProvided)
             {
-                confidence += 6;
+                confidence += 4;
             }
 
             if (input.IntendedUse !=
                 IntendedUse.NotProvided)
             {
-                confidence += 5;
+                confidence += 4;
             }
 
-            return Math.Clamp(confidence, 0, 100);
+            return Math.Clamp(
+                confidence,
+                0,
+                100);
         }
 
         private static decimal CalculateMaximumRecommendedPrice(
             BuyDecisionInput input)
         {
+            if (!input.MarketValue.HasValue ||
+                input.MarketValue.Value <= 0)
+            {
+                return 0m;
+            }
+
+            var marketValue =
+                input.MarketValue.Value;
+
+            var knownRepairCost =
+                input.EstimatedRepairCost ?? 0m;
+
             var titleReserve = input.TitleStatus switch
             {
                 TitleStatus.Clean => 0m,
-
-                TitleStatus.Rebuilt =>
-                    input.MarketValue * 0.12m,
-
-                TitleStatus.Salvage =>
-                    input.MarketValue * 0.25m,
-
-                TitleStatus.Flood =>
-                    input.MarketValue * 0.35m,
-
-                _ =>
-                    input.MarketValue * 0.05m
+                TitleStatus.Rebuilt => marketValue * 0.12m,
+                TitleStatus.Salvage => marketValue * 0.25m,
+                TitleStatus.Flood => marketValue * 0.35m,
+                _ => 0m
             };
 
             var accidentReserve =
                 input.AccidentHistory switch
                 {
                     AccidentHistory.None => 0m,
-
-                    AccidentHistory.Minor =>
-                        input.MarketValue * 0.03m,
-
-                    AccidentHistory.Moderate =>
-                        input.MarketValue * 0.08m,
-
-                    AccidentHistory.Major =>
-                        input.MarketValue * 0.18m,
-
-                    _ =>
-                        input.MarketValue * 0.04m
+                    AccidentHistory.Minor => marketValue * 0.03m,
+                    AccidentHistory.Moderate => marketValue * 0.08m,
+                    AccidentHistory.Major => marketValue * 0.18m,
+                    _ => 0m
                 };
 
-            var contingencyReserve =
-                Math.Max(
-                    500m,
-                    input.EstimatedRepairCost * 0.20m);
+            var repairReserve =
+                input.EstimatedRepairCost.HasValue
+                    ? Math.Max(
+                        500m,
+                        knownRepairCost * 0.20m)
+                    : 0m;
 
             return Math.Max(
                 0m,
-                input.MarketValue
-                - input.EstimatedRepairCost
-                - contingencyReserve
+                marketValue
+                - knownRepairCost
+                - repairReserve
                 - titleReserve
                 - accidentReserve);
         }
@@ -552,17 +651,29 @@ namespace PonyUpPerformance.Web.Services.Scoring
             BuyDecisionInput input,
             decimal maximumRecommendedPrice)
         {
+            if (!input.MarketValue.HasValue ||
+                input.MarketValue.Value <= 0)
+            {
+                return 0m;
+            }
+
+            var marketValue =
+                input.MarketValue.Value;
+
+            var knownRepairCost =
+                input.EstimatedRepairCost ?? 0m;
+
             var negotiationReserve =
                 Math.Max(
                     500m,
-                    input.MarketValue * 0.05m);
+                    marketValue * 0.05m);
 
             return Math.Max(
                 0m,
                 Math.Min(
                     maximumRecommendedPrice,
-                    input.MarketValue
-                    - input.EstimatedRepairCost
+                    marketValue
+                    - knownRepairCost
                     - negotiationReserve));
         }
 
@@ -570,6 +681,11 @@ namespace PonyUpPerformance.Web.Services.Scoring
             BuyDecisionInput input,
             decimal fairPurchasePrice)
         {
+            if (fairPurchasePrice <= 0)
+            {
+                return 0m;
+            }
+
             var openingDiscount =
                 Math.Max(
                     500m,
@@ -578,14 +694,22 @@ namespace PonyUpPerformance.Web.Services.Scoring
             var firstOffer =
                 Math.Max(
                     0m,
-                    fairPurchasePrice - openingDiscount);
+                    fairPurchasePrice
+                    - openingDiscount);
 
-            return Math.Min(
-                firstOffer,
-                input.AskingPrice);
+            if (input.AskingPrice.HasValue &&
+                input.AskingPrice.Value > 0)
+            {
+                return Math.Min(
+                    firstOffer,
+                    input.AskingPrice.Value);
+            }
+
+            return firstOffer;
         }
 
-        private static string DetermineRecommendation(int score)
+        private static string DetermineRecommendation(
+            int score)
         {
             return score switch
             {
@@ -595,7 +719,8 @@ namespace PonyUpPerformance.Web.Services.Scoring
             };
         }
 
-        private static string DetermineRiskLevel(int riskScore)
+        private static string DetermineRiskLevel(
+            int riskScore)
         {
             return riskScore switch
             {
@@ -607,28 +732,73 @@ namespace PonyUpPerformance.Web.Services.Scoring
         }
 
         private static string BuildFinancialImpact(
-            decimal totalAcquisitionCost,
-            decimal estimatedEquity)
+            BuyDecisionInput input,
+            decimal? knownAcquisitionCost,
+            decimal? estimatedEquity)
         {
-            if (estimatedEquity > 0)
+            if (!input.AskingPrice.HasValue)
             {
                 return
-                    $"Estimated acquisition cost is " +
-                    $"{totalAcquisitionCost:C0}, leaving approximately " +
-                    $"{estimatedEquity:C0} in potential equity.";
+                    "Asking price was not available, so acquisition cost could not be calculated.";
             }
 
-            if (estimatedEquity < 0)
+            if (!knownAcquisitionCost.HasValue)
+            {
+                return
+                    "Known acquisition cost could not be calculated.";
+            }
+
+            if (!input.MarketValue.HasValue)
+            {
+                return
+                    $"Known acquisition cost is approximately " +
+                    $"{knownAcquisitionCost.Value:C0}. " +
+                    $"Market value was not available for an equity comparison.";
+            }
+
+            if (!input.EstimatedRepairCost.HasValue)
+            {
+                if (estimatedEquity.HasValue)
+                {
+                    return
+                        $"Purchase price is approximately " +
+                        $"{input.AskingPrice.Value:C0}. " +
+                        $"Based on the available market value, estimated equity before any unknown repairs is " +
+                        $"{estimatedEquity.Value:C0}.";
+                }
+
+                return
+                    $"Purchase price is approximately " +
+                    $"{input.AskingPrice.Value:C0}. " +
+                    $"Repair cost was not provided.";
+            }
+
+            if (!estimatedEquity.HasValue)
+            {
+                return
+                    $"Known acquisition cost is approximately " +
+                    $"{knownAcquisitionCost.Value:C0}.";
+            }
+
+            if (estimatedEquity.Value > 0)
             {
                 return
                     $"Estimated acquisition cost is " +
-                    $"{totalAcquisitionCost:C0}, which exceeds market value " +
-                    $"by approximately {Math.Abs(estimatedEquity):C0}.";
+                    $"{knownAcquisitionCost.Value:C0}, leaving approximately " +
+                    $"{estimatedEquity.Value:C0} in potential equity.";
+            }
+
+            if (estimatedEquity.Value < 0)
+            {
+                return
+                    $"Estimated acquisition cost is " +
+                    $"{knownAcquisitionCost.Value:C0}, which exceeds market value " +
+                    $"by approximately {Math.Abs(estimatedEquity.Value):C0}.";
             }
 
             return
                 $"Estimated acquisition cost is " +
-                $"{totalAcquisitionCost:C0}, approximately equal to " +
+                $"{knownAcquisitionCost.Value:C0}, approximately equal to " +
                 $"the estimated market value.";
         }
 
@@ -655,8 +825,12 @@ namespace PonyUpPerformance.Web.Services.Scoring
                 nextSteps.Add(
                     "Verify the VIN, title, ownership history, accident history, and service records.");
 
-                nextSteps.Add(
-                    "Confirm the repair estimate with a qualified repair facility.");
+                if (input.EstimatedRepairCost.HasValue &&
+                    input.EstimatedRepairCost.Value > 0)
+                {
+                    nextSteps.Add(
+                        "Confirm the repair estimate with a qualified repair facility.");
+                }
             }
 
             if (riskLevel is "High" or "Severe")
@@ -665,7 +839,8 @@ namespace PonyUpPerformance.Web.Services.Scoring
                     "Do not exchange funds until all high-risk findings are independently verified.");
             }
 
-            if (input.TitleStatus != TitleStatus.Clean)
+            if (input.TitleStatus != TitleStatus.NotProvided &&
+                input.TitleStatus != TitleStatus.Clean)
             {
                 nextSteps.Add(
                     "Confirm insurability, registration eligibility, and resale restrictions before purchase.");
@@ -680,29 +855,46 @@ namespace PonyUpPerformance.Web.Services.Scoring
             int score,
             string recommendation,
             IEnumerable<BuyScoreAdjustment> adjustments,
-            decimal totalAcquisitionCost,
-            decimal estimatedEquity)
+            BuyDecisionInput input,
+            decimal? knownAcquisitionCost,
+            decimal? estimatedEquity)
         {
             var strongestPositive = adjustments
-                .Where(adjustment =>
-                    adjustment.Adjustment > 0)
-                .OrderByDescending(adjustment =>
-                    adjustment.Adjustment)
+                .Where(x => x.Adjustment > 0)
+                .OrderByDescending(x => x.Adjustment)
                 .FirstOrDefault();
 
             var strongestNegative = adjustments
-                .Where(adjustment =>
-                    adjustment.Adjustment < 0)
-                .OrderBy(adjustment =>
-                    adjustment.Adjustment)
+                .Where(x => x.Adjustment < 0)
+                .OrderBy(x => x.Adjustment)
                 .FirstOrDefault();
 
             var reasoning =
                 $"The decision score is {score}/100, producing a " +
-                $"{recommendation} recommendation. " +
-                $"Estimated total acquisition cost is " +
-                $"{totalAcquisitionCost:C0}, with estimated equity " +
-                $"of {estimatedEquity:C0}.";
+                $"{recommendation} recommendation.";
+
+            if (knownAcquisitionCost.HasValue)
+            {
+                reasoning +=
+                    $" Known acquisition cost is approximately " +
+                    $"{knownAcquisitionCost.Value:C0}.";
+            }
+
+            if (estimatedEquity.HasValue)
+            {
+                if (input.EstimatedRepairCost.HasValue)
+                {
+                    reasoning +=
+                        $" Estimated equity is " +
+                        $"{estimatedEquity.Value:C0}.";
+                }
+                else
+                {
+                    reasoning +=
+                        $" Estimated equity before unknown repair costs is " +
+                        $"{estimatedEquity.Value:C0}.";
+                }
+            }
 
             if (strongestPositive is not null)
             {
@@ -738,7 +930,8 @@ namespace PonyUpPerformance.Web.Services.Scoring
             };
         }
 
-        private static decimal RoundCurrency(decimal value)
+        private static decimal RoundCurrency(
+            decimal value)
         {
             return Math.Round(
                 value,
@@ -746,14 +939,16 @@ namespace PonyUpPerformance.Web.Services.Scoring
                 MidpointRounding.AwayFromZero);
         }
 
-        private static string FormatSignedNumber(int value)
+        private static string FormatSignedNumber(
+            int value)
         {
             return value > 0
                 ? $"+{value}"
                 : value.ToString();
         }
 
-        private static string FormatEnum<TEnum>(TEnum value)
+        private static string FormatEnum<TEnum>(
+            TEnum value)
             where TEnum : struct, Enum
         {
             var text = value.ToString();
@@ -763,9 +958,9 @@ namespace PonyUpPerformance.Web.Services.Scoring
                  index < text.Length;
                  index++)
             {
-                if (index > 0
-                    && char.IsUpper(text[index])
-                    && !char.IsUpper(text[index - 1]))
+                if (index > 0 &&
+                    char.IsUpper(text[index]) &&
+                    !char.IsUpper(text[index - 1]))
                 {
                     characters.Add(' ');
                 }
@@ -773,7 +968,8 @@ namespace PonyUpPerformance.Web.Services.Scoring
                 characters.Add(text[index]);
             }
 
-            return new string(characters.ToArray());
+            return new string(
+                characters.ToArray());
         }
     }
 }
