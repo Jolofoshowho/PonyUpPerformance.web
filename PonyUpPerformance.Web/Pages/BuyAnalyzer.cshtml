@@ -317,20 +317,26 @@
 
             <h3>PURCHASE NUMBERS</h3>
 
-            <p>
-                <strong>Asking Price:</strong>
-                @Model.Input.AskingPrice.ToString("C")
-            </p>
+<p>
+    <strong>Asking Price:</strong>
+    @(Model.Input.AskingPrice.HasValue
+        ? Model.Input.AskingPrice.Value.ToString("C")
+        : "Not provided")
+</p>
 
-            <p>
-                <strong>Estimated Repair Cost:</strong>
-                @Model.Input.EstimatedRepairCost.ToString("C")
-            </p>
+<p>
+    <strong>Estimated Repair Cost:</strong>
+    @(Model.Input.EstimatedRepairCost.HasValue
+        ? Model.Input.EstimatedRepairCost.Value.ToString("C")
+        : "Not provided")
+</p>
 
-            <p>
-                <strong>Estimated Market Value:</strong>
-                @Model.Input.MarketValue.ToString("C")
-            </p>
+<p>
+    <strong>Estimated Market Value:</strong>
+    @(Model.Input.MarketValue.HasValue
+        ? Model.Input.MarketValue.Value.ToString("C")
+        : "Not provided")
+</p>
 
             <p>
                 <strong>Maximum Recommended Price:</strong>
