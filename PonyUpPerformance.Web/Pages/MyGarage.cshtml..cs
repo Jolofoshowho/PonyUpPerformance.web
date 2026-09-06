@@ -13,39 +13,44 @@ namespace PonyUpPerformance.Web.Pages
         private readonly ApplicationDbContext _dbContext;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly VehiclePaintPaletteService _paintPaletteService;
-        private readonly VehicleRenderService _vehicleRenderService;
-        private readonly NhtsaVehicleService _nhtsaVehicleService;
+        private readonly IVinDecoderService _vinDecoderService;
 
         public MyGarageModel(
-    ApplicationDbContext dbContext,
-    UserManager<ApplicationUser> userManager,
-    VehiclePaintPaletteService paintPaletteService,
-    NhtsaVehicleService nhtsaVehicleService)
+            ApplicationDbContext dbContext,
+            UserManager<ApplicationUser> userManager,
+            VehiclePaintPaletteService paintPaletteService,
+            IVinDecoderService vinDecoderService)
         {
             _dbContext = dbContext;
             _userManager = userManager;
             _paintPaletteService = paintPaletteService;
-            _nhtsaVehicleService = nhtsaVehicleService;
+            _vinDecoderService = vinDecoderService;
         }
 
         [BindProperty]
         public GarageVehicle NewVehicle { get; set; } = new GarageVehicle();
 
-        public List<GarageVehicle> Vehicles { get; set; } = new List<GarageVehicle>();
+        public List<GarageVehicle> Vehicles { get; set; } = new();
         public GarageVehicle? SelectedVehicle { get; set; }
-        public List<VehiclePaintColor> PaintColors { get; set; } = new List<VehiclePaintColor>();
-        public List<AnalysisHistory> RecentAnalyses { get; set; } = new List<AnalysisHistory>();
+
+        public List<VehiclePaintColor> PaintColors { get; set; } = new();
+        public List<AnalysisHistory> RecentAnalyses { get; set; } = new();
+
         public string SelectedVehicleSvg { get; set; } = "";
+
         public int? PreviousVehicleId { get; set; }
         public int? NextVehicleId { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int? vehicleId)
         {
-            ApplicationUser? user = await _userManager.GetUserAsync(User);
+            ApplicationUser? user =
+                await _userManager.GetUserAsync(User);
 
             if (user == null)
             {
-                return RedirectToPage("/Account/Login", new { area = "Identity" });
+                return RedirectToPage(
+                    "/Account/Login",
+                    new { area = "Identity" });
             }
 
             Vehicles = await _dbContext.GarageVehicles
@@ -54,91 +59,153 @@ namespace PonyUpPerformance.Web.Pages
                 .ToListAsync();
 
             SelectedVehicle = vehicleId.HasValue
-                ? Vehicles.FirstOrDefault(x => x.Id == vehicleId.Value)
+                ? Vehicles.FirstOrDefault(
+                    x => x.Id == vehicleId.Value)
                 : Vehicles.FirstOrDefault();
 
             SetPreviousAndNextVehicleIds();
 
             if (SelectedVehicle != null)
             {
-                PaintColors = _paintPaletteService.GetPaletteForMake(SelectedVehicle.Make);
+                PaintColors =
+                    _paintPaletteService.GetPaletteForMake(
+                        SelectedVehicle.Make);
 
-                RecentAnalyses = await _dbContext.AnalysisHistories
-                    .Where(x =>
-                        x.UserId == user.Id &&
-                        x.VehicleYear == SelectedVehicle.Year &&
-                        x.VehicleMake == SelectedVehicle.Make &&
-                        x.VehicleModel == SelectedVehicle.Model)
-                    .OrderByDescending(x => x.CreatedOn)
-                    .Take(5)
-                    .ToListAsync();
+                RecentAnalyses =
+                    await _dbContext.AnalysisHistories
+                        .Where(x =>
+                            x.UserId == user.Id &&
+                            x.VehicleYear == SelectedVehicle.Year &&
+                            x.VehicleMake == SelectedVehicle.Make &&
+                            x.VehicleModel == SelectedVehicle.Model)
+                        .OrderByDescending(x => x.CreatedOn)
+                        .Take(5)
+                        .ToListAsync();
             }
 
             return Page();
         }
+
         public async Task<IActionResult> OnPostDecodeVinAsync()
         {
-            var decoded = await _nhtsaVehicleService.DecodeVinAsync(NewVehicle.Vin);
+            VehicleProfile decoded =
+                await _vinDecoderService.DecodeAsync(
+                    NewVehicle.Vin);
 
-            if (decoded.Success)
+            if (decoded.DecodeSuccessful)
             {
                 NewVehicle.Vin = decoded.Vin;
-                NewVehicle.Year = decoded.Year;
+
+                if (decoded.Year.HasValue)
+                {
+                    NewVehicle.Year = decoded.Year.Value;
+                }
+
                 NewVehicle.Make = decoded.Make;
                 NewVehicle.Model = decoded.Model;
                 NewVehicle.Trim = decoded.Trim;
-                NewVehicle.BodyStyle = decoded.BodyStyle;
-                NewVehicle.Drivetrain = decoded.Drivetrain;
-                NewVehicle.FuelType = decoded.FuelType;
-                NewVehicle.Engine = decoded.Engine;
-                NewVehicle.SelectedPaintHex = "#b8b8b8";
+
+                NewVehicle.BodyStyle =
+                    decoded.BodyStyle;
+
+                NewVehicle.Drivetrain =
+                    decoded.Drivetrain;
+
+                NewVehicle.FuelType =
+                    decoded.FuelType;
+
+                NewVehicle.Engine =
+                    decoded.Engine;
+
+                NewVehicle.SelectedPaintHex =
+                    "#b8b8b8";
+            }
+            else
+            {
+                string warning =
+                    decoded.DecodeWarnings.FirstOrDefault()
+                    ?? "The VIN could not be decoded.";
+
+                ModelState.AddModelError(
+                    "NewVehicle.Vin",
+                    warning);
             }
 
             return await OnGetAsync(null);
         }
+
         public async Task<IActionResult> OnPostAddVehicleAsync()
         {
-            ApplicationUser? user = await _userManager.GetUserAsync(User);
+            ApplicationUser? user =
+                await _userManager.GetUserAsync(User);
 
             if (user == null)
             {
-                return RedirectToPage("/Account/Login", new { area = "Identity" });
+                return RedirectToPage(
+                    "/Account/Login",
+                    new { area = "Identity" });
             }
 
             NewVehicle.UserId = user.Id;
             NewVehicle.CreatedOn = DateTime.UtcNow;
 
-            if (string.IsNullOrWhiteSpace(NewVehicle.SelectedPaintHex))
+            if (string.IsNullOrWhiteSpace(
+                NewVehicle.SelectedPaintHex))
             {
-                NewVehicle.SelectedPaintHex = "#b8b8b8";
+                NewVehicle.SelectedPaintHex =
+                    "#b8b8b8";
             }
 
-            if (string.IsNullOrWhiteSpace(NewVehicle.BodyStyle))
+            if (string.IsNullOrWhiteSpace(
+                NewVehicle.BodyStyle))
             {
-                NewVehicle.BodyStyle = "Sedan";
+                NewVehicle.BodyStyle =
+                    "Sedan";
             }
 
-            if (string.IsNullOrWhiteSpace(NewVehicle.FuelType))
+            if (string.IsNullOrWhiteSpace(
+                NewVehicle.FuelType))
             {
-                NewVehicle.FuelType = "Gasoline";
+                NewVehicle.FuelType =
+                    "Gasoline";
             }
 
-            if (string.IsNullOrWhiteSpace(NewVehicle.Engine))
-                NewVehicle.Engine = "Unknown";
+            if (string.IsNullOrWhiteSpace(
+                NewVehicle.Engine))
+            {
+                NewVehicle.Engine =
+                    "Unknown";
+            }
 
-            if (string.IsNullOrWhiteSpace(NewVehicle.Trim))
-                NewVehicle.Trim = "Base";
+            if (string.IsNullOrWhiteSpace(
+                NewVehicle.Trim))
+            {
+                NewVehicle.Trim =
+                    "Base";
+            }
 
-            if (string.IsNullOrWhiteSpace(NewVehicle.SelectedPaintName))
-                NewVehicle.SelectedPaintName = "Unselected Color";
+            if (string.IsNullOrWhiteSpace(
+                NewVehicle.SelectedPaintName))
+            {
+                NewVehicle.SelectedPaintName =
+                    "Unselected Color";
+            }
 
-            if (string.IsNullOrWhiteSpace(NewVehicle.SelectedPaintCode))
-                NewVehicle.SelectedPaintCode = "";
+            if (string.IsNullOrWhiteSpace(
+                NewVehicle.SelectedPaintCode))
+            {
+                NewVehicle.SelectedPaintCode =
+                    "";
+            }
 
-            _dbContext.GarageVehicles.Add(NewVehicle);
+            _dbContext.GarageVehicles.Add(
+                NewVehicle);
+
             await _dbContext.SaveChangesAsync();
 
-            return RedirectToPage("/MyGarage", new { vehicleId = NewVehicle.Id });
+            return RedirectToPage(
+                "/MyGarage",
+                new { vehicleId = NewVehicle.Id });
         }
 
         public async Task<IActionResult> OnPostSelectPaintAsync(
@@ -147,40 +214,58 @@ namespace PonyUpPerformance.Web.Pages
             string paintCode,
             string paintHex)
         {
-            ApplicationUser? user = await _userManager.GetUserAsync(User);
+            ApplicationUser? user =
+                await _userManager.GetUserAsync(User);
 
             if (user == null)
             {
-                return RedirectToPage("/Account/Login", new { area = "Identity" });
+                return RedirectToPage(
+                    "/Account/Login",
+                    new { area = "Identity" });
             }
 
-            GarageVehicle? vehicle = await _dbContext.GarageVehicles
-                .FirstOrDefaultAsync(x => x.Id == vehicleId && x.UserId == user.Id);
+            GarageVehicle? vehicle =
+                await _dbContext.GarageVehicles
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id == vehicleId &&
+                            x.UserId == user.Id);
 
             if (vehicle == null)
             {
-                return RedirectToPage("/MyGarage");
+                return RedirectToPage(
+                    "/MyGarage");
             }
 
-            vehicle.SelectedPaintName = paintName ?? "";
-            vehicle.SelectedPaintCode = paintCode ?? "";
-            vehicle.SelectedPaintHex = paintHex ?? "#b8b8b8";
+            vehicle.SelectedPaintName =
+                paintName ?? "";
+
+            vehicle.SelectedPaintCode =
+                paintCode ?? "";
+
+            vehicle.SelectedPaintHex =
+                paintHex ?? "#b8b8b8";
 
             await _dbContext.SaveChangesAsync();
 
-            return RedirectToPage("/MyGarage", new { vehicleId = vehicle.Id });
+            return RedirectToPage(
+                "/MyGarage",
+                new { vehicleId = vehicle.Id });
         }
 
         private void SetPreviousAndNextVehicleIds()
         {
-            if (SelectedVehicle == null || Vehicles.Count == 0)
+            if (SelectedVehicle == null ||
+                Vehicles.Count == 0)
             {
                 PreviousVehicleId = null;
                 NextVehicleId = null;
                 return;
             }
 
-            int index = Vehicles.FindIndex(x => x.Id == SelectedVehicle.Id);
+            int index =
+                Vehicles.FindIndex(
+                    x => x.Id == SelectedVehicle.Id);
 
             if (index < 0)
             {
@@ -189,11 +274,21 @@ namespace PonyUpPerformance.Web.Pages
                 return;
             }
 
-            int previousIndex = index <= 0 ? Vehicles.Count - 1 : index - 1;
-            int nextIndex = index >= Vehicles.Count - 1 ? 0 : index + 1;
+            int previousIndex =
+                index <= 0
+                    ? Vehicles.Count - 1
+                    : index - 1;
 
-            PreviousVehicleId = Vehicles[previousIndex].Id;
-            NextVehicleId = Vehicles[nextIndex].Id;
+            int nextIndex =
+                index >= Vehicles.Count - 1
+                    ? 0
+                    : index + 1;
+
+            PreviousVehicleId =
+                Vehicles[previousIndex].Id;
+
+            NextVehicleId =
+                Vehicles[nextIndex].Id;
         }
     }
 }
