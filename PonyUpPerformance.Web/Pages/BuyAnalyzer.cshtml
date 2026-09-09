@@ -20,7 +20,7 @@
             HasResult = Model.Result != null,
             AnalysisType = "BUY DECISION",
             Recommendation = recommendation,
-            ConfidenceScore = score,
+            ConfidenceScore = Model.Result?.ConfidenceScore ?? 0,
             Reasoning = reasoning
         };
 }
@@ -56,6 +56,22 @@
                       class="text-danger">
                 </span>
             </div>
+
+            <div class="form-actions"
+                 style="margin-top:10px;margin-bottom:20px;">
+                <button class="btn-red"
+                        type="submit"
+                        asp-page-handler="DecodeVin">
+                    DECODE VIN
+                </button>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.VinDecodeMessage))
+            {
+                <p style="font-weight:700;">
+                    @Model.VinDecodeMessage
+                </p>
+            }
 
             <div class="form-row">
                 <label asp-for="Input.Year">Year</label>
@@ -317,26 +333,26 @@
 
             <h3>PURCHASE NUMBERS</h3>
 
-<p>
-    <strong>Asking Price:</strong>
-    @(Model.Input.AskingPrice.HasValue
-        ? Model.Input.AskingPrice.Value.ToString("C")
-        : "Not provided")
-</p>
+            <p>
+                <strong>Asking Price:</strong>
+                @(Model.Input.AskingPrice.HasValue
+                    ? Model.Input.AskingPrice.Value.ToString("C")
+                    : "Not provided")
+            </p>
 
-<p>
-    <strong>Estimated Repair Cost:</strong>
-    @(Model.Input.EstimatedRepairCost.HasValue
-        ? Model.Input.EstimatedRepairCost.Value.ToString("C")
-        : "Not provided")
-</p>
+            <p>
+                <strong>Estimated Repair Cost:</strong>
+                @(Model.Input.EstimatedRepairCost.HasValue
+                    ? Model.Input.EstimatedRepairCost.Value.ToString("C")
+                    : "Not provided")
+            </p>
 
-<p>
-    <strong>Estimated Market Value:</strong>
-    @(Model.Input.MarketValue.HasValue
-        ? Model.Input.MarketValue.Value.ToString("C")
-        : "Not provided")
-</p>
+            <p>
+                <strong>Estimated Market Value:</strong>
+                @(Model.Input.MarketValue.HasValue
+                    ? Model.Input.MarketValue.Value.ToString("C")
+                    : "Not provided")
+            </p>
 
             <p>
                 <strong>Maximum Recommended Price:</strong>
@@ -360,7 +376,7 @@
             <p>@Model.Result.Reasoning</p>
 
             @if (Model.Result.NextSteps != null &&
-     Model.Result.NextSteps.Count > 0)
+                 Model.Result.NextSteps.Count > 0)
             {
                 <h3>NEXT STEPS</h3>
 
