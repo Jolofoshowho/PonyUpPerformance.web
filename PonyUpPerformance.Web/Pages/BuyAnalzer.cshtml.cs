@@ -81,6 +81,12 @@ namespace PonyUpPerformance.Web.Pages
                 return Page();
             }
 
+            /*
+             * NHTSA handles the primary VIN decode.
+             * FuelEconomy.gov then fills missing factory
+             * specifications without replacing valid
+             * decoded values.
+             */
             decoded =
                 await _vehicleSpecEnrichmentService.EnrichAsync(
                     decoded,
@@ -88,9 +94,17 @@ namespace PonyUpPerformance.Web.Pages
 
             ApplyDecodedVehicle(decoded);
 
+            /*
+             * Request a market-value suggestion after
+             * vehicle identity/specification enrichment.
+             */
             await ApplyMarketSuggestionsAsync(
                 cancellationToken);
 
+            /*
+             * Clear the submitted binding state so Razor
+             * displays the decoded and enriched values.
+             */
             ModelState.Clear();
 
             VinDecodeMessage =
@@ -110,13 +124,12 @@ namespace PonyUpPerformance.Web.Pages
             }
 
             /*
-             * Re-run the valuation before scoring.
+             * Request market value only when one of the
+             * relevant fields still needs a suggestion.
              *
-             * If the customer has entered their own market
-             * value or asking price, PonyUp will not replace it.
-             *
-             * If either field remains blank and sufficient
-             * evidence exists, the modeled suggestion is used.
+             * If VIN decoding already populated both the
+             * market value and asking price, this method
+             * will not consume another Vehicles.dev call.
              */
             await ApplyMarketSuggestionsAsync(
                 cancellationToken);
@@ -130,6 +143,18 @@ namespace PonyUpPerformance.Web.Pages
         private async Task ApplyMarketSuggestionsAsync(
             CancellationToken cancellationToken)
         {
+            /*
+             * Protect the Vehicles.dev free-call allowance.
+             *
+             * If both values are already present, there is
+             * nothing left for the market service to supply.
+             */
+            if (Input.MarketValue.HasValue &&
+                Input.AskingPrice.HasValue)
+            {
+                return;
+            }
+
             VehicleProfile profile =
                 BuildVehicleProfileFromInput();
 
@@ -143,6 +168,10 @@ namespace PonyUpPerformance.Web.Pages
                 return;
             }
 
+            /*
+             * Never overwrite a value the user already
+             * supplied.
+             */
             if (!Input.MarketValue.HasValue)
             {
                 Input.MarketValue =
