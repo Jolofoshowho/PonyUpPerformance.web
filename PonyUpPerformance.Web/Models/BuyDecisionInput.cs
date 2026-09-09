@@ -10,7 +10,10 @@ namespace PonyUpPerformance.Web.Models
             ErrorMessage = "Enter a valid 17-character VIN.")]
         public string? Vin { get; set; } = string.Empty;
 
-        [Range(1886, 2100, ErrorMessage = "Enter a valid vehicle year.")]
+        [Range(
+            1886,
+            2100,
+            ErrorMessage = "Enter a valid vehicle year.")]
         public int? Year { get; set; }
 
         [StringLength(50)]
@@ -39,7 +42,16 @@ namespace PonyUpPerformance.Web.Models
         [StringLength(50)]
         public string? FuelType { get; set; } = string.Empty;
 
-        [Range(0, 2_000_000, ErrorMessage = "Enter valid mileage.")]
+        /*
+         * Internal valuation anchor.
+         * This is not displayed as a normal Buy input.
+         */
+        public decimal? BaseMsrp { get; set; }
+
+        [Range(
+            0,
+            2_000_000,
+            ErrorMessage = "Enter valid mileage.")]
         public int? Mileage { get; set; }
 
         [Display(Name = "Asking Price")]
