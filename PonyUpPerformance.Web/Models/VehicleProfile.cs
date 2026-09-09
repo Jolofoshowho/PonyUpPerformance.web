@@ -42,6 +42,22 @@ namespace PonyUpPerformance.Web.Models
 
         public decimal? BaseMsrp { get; set; }
 
+        /*
+         * Current vehicle evidence used by PonyUp valuation.
+         * These values are not VIN-decoded unless a future
+         * authoritative source supplies them.
+         */
+        public int? CurrentMileage { get; set; }
+
+        public MechanicalCondition MechanicalCondition { get; set; }
+            = MechanicalCondition.NotProvided;
+
+        public TitleStatus TitleStatus { get; set; }
+            = TitleStatus.NotProvided;
+
+        public AccidentHistory AccidentHistory { get; set; }
+            = AccidentHistory.NotProvided;
+
         public string ReliabilityTrend { get; set; } = "";
 
         public int? ReliabilityScore { get; set; }
@@ -83,7 +99,8 @@ namespace PonyUpPerformance.Web.Models
                         Model,
                         Trim
                     }
-                    .Where(value => !string.IsNullOrWhiteSpace(value)));
+                    .Where(value =>
+                        !string.IsNullOrWhiteSpace(value)));
             }
         }
     }
