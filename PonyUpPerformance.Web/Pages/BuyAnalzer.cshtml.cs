@@ -11,15 +11,19 @@ namespace PonyUpPerformance.Web.Pages
         private readonly IBuyScoringService _buyScoringService;
         private readonly IVinDecoderService _vinDecoderService;
         private readonly IVehicleSpecEnrichmentService _vehicleSpecEnrichmentService;
+        private readonly IMarketValueService _marketValueService;
 
         public BuyAnalyzerModel(
             IBuyScoringService buyScoringService,
             IVinDecoderService vinDecoderService,
-            IVehicleSpecEnrichmentService vehicleSpecEnrichmentService)
+            IVehicleSpecEnrichmentService vehicleSpecEnrichmentService,
+            IMarketValueService marketValueService)
         {
             _buyScoringService = buyScoringService;
             _vinDecoderService = vinDecoderService;
-            _vehicleSpecEnrichmentService = vehicleSpecEnrichmentService;
+            _vehicleSpecEnrichmentService =
+                vehicleSpecEnrichmentService;
+            _marketValueService = marketValueService;
         }
 
         [BindProperty]
@@ -27,7 +31,17 @@ namespace PonyUpPerformance.Web.Pages
 
         public BuyDecisionResult? Result { get; private set; }
 
-        public string VinDecodeMessage { get; private set; } = string.Empty;
+        public MarketValueResult? MarketValueSuggestion
+        {
+            get;
+            private set;
+        }
+
+        public string VinDecodeMessage
+        {
+            get;
+            private set;
+        } = string.Empty;
 
         public void OnGet()
         {
@@ -67,16 +81,6 @@ namespace PonyUpPerformance.Web.Pages
                 return Page();
             }
 
-            /*
-             * NHTSA is the primary VIN source.
-             *
-             * FuelEconomy.gov enrichment runs second and may
-             * fill factory specification fields that NHTSA
-             * did not return.
-             *
-             * The enrichment service must never overwrite
-             * valid NHTSA information.
-             */
             decoded =
                 await _vehicleSpecEnrichmentService.EnrichAsync(
                     decoded,
@@ -84,11 +88,9 @@ namespace PonyUpPerformance.Web.Pages
 
             ApplyDecodedVehicle(decoded);
 
-            /*
-             * Clear model-binding validation state created
-             * from the original submitted form so Razor
-             * renders the newly decoded/enriched values.
-             */
+            await ApplyMarketSuggestionsAsync(
+                cancellationToken);
+
             ModelState.Clear();
 
             VinDecodeMessage =
@@ -99,24 +101,132 @@ namespace PonyUpPerformance.Web.Pages
             return Page();
         }
 
-        public IActionResult OnPost()
+        public async Task<IActionResult> OnPostAsync(
+            CancellationToken cancellationToken)
         {
-            /*
-             * Optional fields are allowed to remain blank.
-             *
-             * ModelState only blocks genuinely invalid
-             * supplied values, such as an invalid VIN format,
-             * out-of-range year, mileage, or monetary value.
-             */
             if (!ModelState.IsValid)
             {
                 return Page();
             }
 
+            /*
+             * Re-run the valuation before scoring.
+             *
+             * If the customer has entered their own market
+             * value or asking price, PonyUp will not replace it.
+             *
+             * If either field remains blank and sufficient
+             * evidence exists, the modeled suggestion is used.
+             */
+            await ApplyMarketSuggestionsAsync(
+                cancellationToken);
+
             Result =
                 _buyScoringService.Analyze(Input);
 
             return Page();
+        }
+
+        private async Task ApplyMarketSuggestionsAsync(
+            CancellationToken cancellationToken)
+        {
+            VehicleProfile profile =
+                BuildVehicleProfileFromInput();
+
+            MarketValueSuggestion =
+                await _marketValueService.AnalyzeAsync(
+                    profile,
+                    cancellationToken);
+
+            if (!MarketValueSuggestion.HasEstimate)
+            {
+                return;
+            }
+
+            if (!Input.MarketValue.HasValue)
+            {
+                Input.MarketValue =
+                    MarketValueSuggestion
+                        .EstimatedMarketValue;
+            }
+
+            if (!Input.AskingPrice.HasValue)
+            {
+                Input.AskingPrice =
+                    MarketValueSuggestion
+                        .SuggestedAskingPrice;
+            }
+        }
+
+        private VehicleProfile BuildVehicleProfileFromInput()
+        {
+            return new VehicleProfile
+            {
+                Vin =
+                    Input.Vin
+                    ?? string.Empty,
+
+                Year =
+                    Input.Year,
+
+                Make =
+                    Input.Make
+                    ?? string.Empty,
+
+                Model =
+                    Input.Model
+                    ?? string.Empty,
+
+                Trim =
+                    Input.Trim
+                    ?? string.Empty,
+
+                Engine =
+                    Input.Engine
+                    ?? string.Empty,
+
+                Transmission =
+                    Input.Transmission
+                    ?? string.Empty,
+
+                TransmissionStyle =
+                    Input.Transmission
+                    ?? string.Empty,
+
+                Drivetrain =
+                    Input.Drivetrain
+                    ?? string.Empty,
+
+                BodyStyle =
+                    Input.BodyStyle
+                    ?? string.Empty,
+
+                FuelType =
+                    Input.FuelType
+                    ?? string.Empty,
+
+                BaseMsrp =
+                    Input.BaseMsrp,
+
+                CurrentMileage =
+                    Input.Mileage,
+
+                MechanicalCondition =
+                    Input.MechanicalCondition,
+
+                TitleStatus =
+                    Input.TitleStatus,
+
+                AccidentHistory =
+                    Input.AccidentHistory,
+
+                DecodeSuccessful =
+                    Input.Year.HasValue &&
+                    !string.IsNullOrWhiteSpace(
+                        Input.Make) &&
+                    !string.IsNullOrWhiteSpace(
+                        Input.Model)
+            };
         }
 
         private void ApplyDecodedVehicle(
@@ -152,24 +262,39 @@ namespace PonyUpPerformance.Web.Pages
                 Input.Engine = decoded.Engine;
             }
 
-            if (!string.IsNullOrWhiteSpace(decoded.Transmission))
+            if (!string.IsNullOrWhiteSpace(
+                    decoded.Transmission))
             {
-                Input.Transmission = decoded.Transmission;
+                Input.Transmission =
+                    decoded.Transmission;
             }
 
-            if (!string.IsNullOrWhiteSpace(decoded.Drivetrain))
+            if (!string.IsNullOrWhiteSpace(
+                    decoded.Drivetrain))
             {
-                Input.Drivetrain = decoded.Drivetrain;
+                Input.Drivetrain =
+                    decoded.Drivetrain;
             }
 
-            if (!string.IsNullOrWhiteSpace(decoded.BodyStyle))
+            if (!string.IsNullOrWhiteSpace(
+                    decoded.BodyStyle))
             {
-                Input.BodyStyle = decoded.BodyStyle;
+                Input.BodyStyle =
+                    decoded.BodyStyle;
             }
 
-            if (!string.IsNullOrWhiteSpace(decoded.FuelType))
+            if (!string.IsNullOrWhiteSpace(
+                    decoded.FuelType))
             {
-                Input.FuelType = decoded.FuelType;
+                Input.FuelType =
+                    decoded.FuelType;
+            }
+
+            if (decoded.BaseMsrp.HasValue &&
+                decoded.BaseMsrp.Value > 0)
+            {
+                Input.BaseMsrp =
+                    decoded.BaseMsrp.Value;
             }
         }
     }
