@@ -79,7 +79,10 @@ builder.Services.AddScoped<VehiclePaintPaletteService>();
 builder.Services.AddScoped<VehicleRenderService>();
 builder.Services.AddHttpClient<IVinDecoderService, NhtsaVehicleService>();
 builder.Services.AddHttpClient<IVehicleSpecEnrichmentService, FuelEconomyVehicleSpecService>();
-builder.Services.AddScoped<IMarketValueService, MarketValueService>();
+builder.Services.AddHttpClient<IMarketValueService, MarketValueService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
 builder.Services.AddScoped<StripeCheckoutService>();
 builder.Services.AddScoped<UsageCreditService>();
 builder.Services.AddScoped<IBuyScoringService, BuyScoringService>();
