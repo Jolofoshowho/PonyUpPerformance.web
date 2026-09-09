@@ -2,7 +2,17 @@ namespace PonyUpPerformance.Web.Models
 {
     public class MarketValueResult
     {
+        public bool HasEstimate { get; set; }
+
+        public int ConfidenceScore { get; set; }
+
+        public bool UsesLiveMarketData { get; set; }
+
+        public string EstimateMethod { get; set; } = "";
+
         public decimal EstimatedMarketValue { get; set; }
+
+        public decimal SuggestedAskingPrice { get; set; }
 
         public decimal LowRetailValue { get; set; }
 
