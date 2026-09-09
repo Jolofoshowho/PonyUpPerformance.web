@@ -10,13 +10,16 @@ namespace PonyUpPerformance.Web.Pages
     {
         private readonly IBuyScoringService _buyScoringService;
         private readonly IVinDecoderService _vinDecoderService;
+        private readonly IVehicleSpecEnrichmentService _vehicleSpecEnrichmentService;
 
         public BuyAnalyzerModel(
             IBuyScoringService buyScoringService,
-            IVinDecoderService vinDecoderService)
+            IVinDecoderService vinDecoderService,
+            IVehicleSpecEnrichmentService vehicleSpecEnrichmentService)
         {
             _buyScoringService = buyScoringService;
             _vinDecoderService = vinDecoderService;
+            _vehicleSpecEnrichmentService = vehicleSpecEnrichmentService;
         }
 
         [BindProperty]
@@ -53,7 +56,7 @@ namespace PonyUpPerformance.Web.Pages
             {
                 ModelState.Clear();
 
-                var warning =
+                string warning =
                     decoded.DecodeWarnings.FirstOrDefault()
                     ?? "The VIN could not be decoded.";
 
@@ -65,14 +68,64 @@ namespace PonyUpPerformance.Web.Pages
             }
 
             /*
-             * VIN-decoded information takes priority when
-             * NHTSA actually returned a value.
+             * NHTSA is the primary VIN source.
              *
-             * Empty NHTSA values do NOT erase information
-             * already entered by the user.
+             * FuelEconomy.gov enrichment runs second and may
+             * fill factory specification fields that NHTSA
+             * did not return.
+             *
+             * The enrichment service must never overwrite
+             * valid NHTSA information.
              */
+            decoded =
+                await _vehicleSpecEnrichmentService.EnrichAsync(
+                    decoded,
+                    cancellationToken);
 
-            Input.Vin = decoded.Vin;
+            ApplyDecodedVehicle(decoded);
+
+            /*
+             * Clear model-binding validation state created
+             * from the original submitted form so Razor
+             * renders the newly decoded/enriched values.
+             */
+            ModelState.Clear();
+
+            VinDecodeMessage =
+                string.IsNullOrWhiteSpace(decoded.DisplayName)
+                    ? "VIN decoded successfully."
+                    : $"VIN decoded: {decoded.DisplayName}";
+
+            return Page();
+        }
+
+        public IActionResult OnPost()
+        {
+            /*
+             * Optional fields are allowed to remain blank.
+             *
+             * ModelState only blocks genuinely invalid
+             * supplied values, such as an invalid VIN format,
+             * out-of-range year, mileage, or monetary value.
+             */
+            if (!ModelState.IsValid)
+            {
+                return Page();
+            }
+
+            Result =
+                _buyScoringService.Analyze(Input);
+
+            return Page();
+        }
+
+        private void ApplyDecodedVehicle(
+            VehicleProfile decoded)
+        {
+            if (!string.IsNullOrWhiteSpace(decoded.Vin))
+            {
+                Input.Vin = decoded.Vin;
+            }
 
             if (decoded.Year.HasValue)
             {
@@ -118,30 +171,6 @@ namespace PonyUpPerformance.Web.Pages
             {
                 Input.FuelType = decoded.FuelType;
             }
-
-            /*
-             * Clear the validation state created from the
-             * pre-decode form so Razor displays the newly
-             * decoded values instead.
-             */
-            ModelState.Clear();
-
-            VinDecodeMessage =
-                $"VIN decoded: {decoded.DisplayName}";
-
-            return Page();
-        }
-
-        public IActionResult OnPost()
-        {
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
-
-            Result = _buyScoringService.Analyze(Input);
-
-            return Page();
         }
     }
 }
