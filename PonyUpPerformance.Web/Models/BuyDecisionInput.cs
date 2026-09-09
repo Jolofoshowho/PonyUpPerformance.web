@@ -8,39 +8,36 @@ namespace PonyUpPerformance.Web.Models
         [RegularExpression(
             @"^$|(?i)^[A-HJ-NPR-Z0-9]{17}$",
             ErrorMessage = "Enter a valid 17-character VIN.")]
-        public string Vin { get; set; } = string.Empty;
+        public string? Vin { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Year is required.")]
         [Range(1886, 2100, ErrorMessage = "Enter a valid vehicle year.")]
         public int? Year { get; set; }
 
-        [Required(ErrorMessage = "Make is required.")]
         [StringLength(50)]
-        public string Make { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Model is required.")]
-        [StringLength(80)]
-        public string Model { get; set; } = string.Empty;
+        public string? Make { get; set; } = string.Empty;
 
         [StringLength(80)]
-        public string Trim { get; set; } = string.Empty;
+        public string? Model { get; set; } = string.Empty;
+
+        [StringLength(80)]
+        public string? Trim { get; set; } = string.Empty;
 
         [StringLength(120)]
-        public string Engine { get; set; } = string.Empty;
+        public string? Engine { get; set; } = string.Empty;
 
         [StringLength(80)]
-        public string Transmission { get; set; } = string.Empty;
+        public string? Transmission { get; set; } = string.Empty;
 
         [StringLength(80)]
-        public string Drivetrain { get; set; } = string.Empty;
+        public string? Drivetrain { get; set; } = string.Empty;
 
         [Display(Name = "Body Style")]
         [StringLength(80)]
-        public string BodyStyle { get; set; } = string.Empty;
+        public string? BodyStyle { get; set; } = string.Empty;
 
         [Display(Name = "Fuel Type")]
         [StringLength(50)]
-        public string FuelType { get; set; } = string.Empty;
+        public string? FuelType { get; set; } = string.Empty;
 
         [Range(0, 2_000_000, ErrorMessage = "Enter valid mileage.")]
         public int? Mileage { get; set; }
