@@ -1,199 +1,643 @@
+using System.Globalization;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 using PonyUpPerformance.Web.Models;
 
 namespace PonyUpPerformance.Web.Services
 {
-    public sealed class MarketValueService
-        : IMarketValueService
+    public sealed class MarketValueService : IMarketValueService
     {
-        public Task<MarketValueResult> AnalyzeAsync(
+        private const string Endpoint =
+            "https://api.vehicles.dev/v1/vehicles/market-value";
+
+        private readonly HttpClient _httpClient;
+        private readonly string _apiKey;
+
+        public MarketValueService(
+            HttpClient httpClient,
+            IConfiguration configuration)
+        {
+            _httpClient = httpClient;
+
+            _apiKey =
+                configuration["Vehicles:ApiKey"]
+                ?? string.Empty;
+        }
+
+        public async Task<MarketValueResult> AnalyzeAsync(
             VehicleProfile vehicle,
             CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(vehicle);
 
-            cancellationToken.ThrowIfCancellationRequested();
-
             if (!HasVehicleIdentity(vehicle))
             {
-                return Task.FromResult(
-                    BuildUnavailableResult(
-                        "Vehicle identity is incomplete, so PonyUp cannot produce a responsible market-value estimate."));
+                return BuildUnavailableResult(
+                    "Year, make, and model are needed before PonyUp can request a market-value estimate.");
             }
 
-            /*
-             * For this first $0 valuation engine, PonyUp
-             * requires a usable original MSRP anchor.
-             *
-             * We deliberately refuse to invent a dollar
-             * value when no defensible price anchor exists.
-             *
-             * Later, live comparable-market data can become
-             * another IMarketValueService implementation
-             * without changing the Buy Analyzer architecture.
-             */
-            if (!vehicle.BaseMsrp.HasValue ||
-                vehicle.BaseMsrp.Value <= 0)
+            if (string.IsNullOrWhiteSpace(_apiKey))
             {
-                return Task.FromResult(
-                    BuildUnavailableResult(
-                        "PonyUp decoded the vehicle, but no usable original MSRP was available. " +
-                        "A modeled market value was not invented."));
+                return BuildUnavailableResult(
+                    "The live market-value service is not configured.");
             }
 
-            int currentYear =
-                DateTime.UtcNow.Year;
+            string requestUri =
+                BuildRequestUri(vehicle);
 
-            int vehicleAge =
-                Math.Clamp(
-                    currentYear -
-                    vehicle.Year!.Value,
-                    0,
-                    60);
+            using var request =
+                new HttpRequestMessage(
+                    HttpMethod.Get,
+                    requestUri);
 
-            decimal fiveYearRetention =
-                DetermineFiveYearRetention(vehicle);
+            request.Headers.Authorization =
+                new AuthenticationHeaderValue(
+                    "Bearer",
+                    _apiKey);
 
-            decimal longTermFloor =
-                DetermineLongTermRetentionFloor(vehicle);
+            request.Headers.Accept.Add(
+                new MediaTypeWithQualityHeaderValue(
+                    "application/json"));
 
-            decimal ageRetention =
-                CalculateAgeRetention(
-                    vehicleAge,
-                    fiveYearRetention,
-                    longTermFloor);
+            HttpResponseMessage response;
 
-            decimal mileageMultiplier =
-                CalculateMileageMultiplier(
-                    vehicleAge,
-                    vehicle.CurrentMileage);
+            try
+            {
+                response =
+                    await _httpClient.SendAsync(
+                        request,
+                        HttpCompletionOption.ResponseHeadersRead,
+                        cancellationToken);
+            }
+            catch (OperationCanceledException)
+                when (!cancellationToken.IsCancellationRequested)
+            {
+                return BuildUnavailableResult(
+                    "The live valuation service timed out. PonyUp left the market value blank rather than guessing.");
+            }
+            catch (HttpRequestException)
+            {
+                return BuildUnavailableResult(
+                    "The live valuation service could not be reached. PonyUp left the market value blank rather than guessing.");
+            }
 
-            decimal conditionMultiplier =
-                CalculateConditionMultiplier(
-                    vehicle.MechanicalCondition);
-
-            decimal titleMultiplier =
-                CalculateTitleMultiplier(
-                    vehicle.TitleStatus);
-
-            decimal accidentMultiplier =
-                CalculateAccidentMultiplier(
-                    vehicle.AccidentHistory);
-
-            decimal modeledValue =
-                vehicle.BaseMsrp.Value *
-                ageRetention *
-                mileageMultiplier *
-                conditionMultiplier *
-                titleMultiplier *
-                accidentMultiplier;
-
-            modeledValue =
-                Math.Max(
-                    0m,
-                    modeledValue);
-
-            int confidence =
-                CalculateConfidence(
-                    vehicle,
-                    vehicleAge);
-
-            decimal rangePercent =
-                confidence switch
+            using (response)
+            {
+                if (response.StatusCode ==
+                    HttpStatusCode.PaymentRequired)
                 {
-                    >= 70 => 0.10m,
-                    >= 55 => 0.15m,
-                    _ => 0.20m
-                };
+                    return BuildUnavailableResult(
+                        "The Vehicles.dev free-call allowance is currently unavailable or exhausted. PonyUp left the market value blank.");
+                }
 
-            decimal estimatedMarketValue =
-                RoundMarketValue(
-                    modeledValue);
+                if (response.StatusCode ==
+                    HttpStatusCode.Unauthorized)
+                {
+                    return BuildUnavailableResult(
+                        "The Vehicles.dev API key was rejected.");
+                }
 
-            decimal privatePartyValue =
-                estimatedMarketValue;
+                if (!response.IsSuccessStatusCode)
+                {
+                    return BuildUnavailableResult(
+                        $"Live market valuation was unavailable ({(int)response.StatusCode}).");
+                }
 
-            decimal suggestedAskingPrice =
-                privatePartyValue;
+                string json;
 
-            decimal lowRetailValue =
-                RoundMarketValue(
-                    estimatedMarketValue *
-                    (1m - rangePercent));
+                try
+                {
+                    json =
+                        await response.Content.ReadAsStringAsync(
+                            cancellationToken);
+                }
+                catch
+                {
+                    return BuildUnavailableResult(
+                        "The valuation response could not be read.");
+                }
 
-            decimal highRetailValue =
-                RoundMarketValue(
-                    estimatedMarketValue *
-                    (1m + rangePercent));
-
-            decimal tradeInValue =
-                RoundMarketValue(
-                    estimatedMarketValue * 0.80m);
-
-            decimal wholesaleValue =
-                RoundMarketValue(
-                    estimatedMarketValue * 0.72m);
-
-            decimal auctionValue =
-                RoundMarketValue(
-                    estimatedMarketValue * 0.66m);
-
-            var sources =
-                BuildSources(vehicle);
-
-            string summary =
-                BuildSummary(
+                return ParseResponse(
                     vehicle,
-                    vehicleAge,
-                    confidence,
-                    estimatedMarketValue,
-                    lowRetailValue,
-                    highRetailValue);
+                    json);
+            }
+        }
 
-            return Task.FromResult(
-                new MarketValueResult
+        private static MarketValueResult ParseResponse(
+            VehicleProfile vehicle,
+            string json)
+        {
+            try
+            {
+                using JsonDocument document =
+                    JsonDocument.Parse(json);
+
+                JsonElement root =
+                    document.RootElement;
+
+                if (!root.TryGetProperty(
+                        "estimateUsd",
+                        out JsonElement estimateElement) ||
+                    !estimateElement.TryGetDecimal(
+                        out decimal estimate) ||
+                    estimate <= 0)
+                {
+                    return BuildUnavailableResult(
+                        "The live valuation service returned no usable market-value estimate.");
+                }
+
+                decimal medianApePct = 0m;
+
+                if (root.TryGetProperty(
+                        "medianApePct",
+                        out JsonElement errorElement))
+                {
+                    errorElement.TryGetDecimal(
+                        out medianApePct);
+                }
+
+                string source =
+                    "Vehicles.dev";
+
+                if (root.TryGetProperty(
+                        "source",
+                        out JsonElement sourceElement) &&
+                    sourceElement.ValueKind ==
+                        JsonValueKind.String)
+                {
+                    string? returnedSource =
+                        sourceElement.GetString();
+
+                    if (!string.IsNullOrWhiteSpace(
+                            returnedSource))
+                    {
+                        source =
+                            returnedSource;
+                    }
+                }
+
+                decimal marketValue =
+                    RoundCurrency(estimate);
+
+                int evidenceConfidence =
+                    CalculateEvidenceConfidence(
+                        vehicle);
+
+                var sources =
+                    new List<string>
+                    {
+                        "Vehicles.dev live US dealer-listing valuation model"
+                    };
+
+                if (!string.IsNullOrWhiteSpace(
+                        vehicle.DecodeSource))
+                {
+                    sources.Add(
+                        vehicle.DecodeSource);
+                }
+
+                string summary =
+                    $"Current modeled dealer asking-market value is approximately " +
+                    $"{marketValue:C0}.";
+
+                if (medianApePct > 0)
+                {
+                    summary +=
+                        $" Vehicles.dev reports a model-wide median absolute " +
+                        $"percentage error of {medianApePct:0.#}%.";
+                }
+
+                summary +=
+                    " This is an asking-price estimate based on dealer-market data, " +
+                    "not a guaranteed transaction price.";
+
+                return new MarketValueResult
                 {
                     HasEstimate = true,
 
-                    ConfidenceScore = confidence,
+                    ConfidenceScore =
+                        evidenceConfidence,
 
-                    UsesLiveMarketData = false,
+                    UsesLiveMarketData = true,
 
                     EstimateMethod =
-                        "PonyUp modeled valuation",
+                        "Live dealer-market valuation",
 
                     EstimatedMarketValue =
-                        estimatedMarketValue,
+                        marketValue,
 
+                    /*
+                     * PonyUp's fair asking-price suggestion
+                     * is derived directly from current
+                     * estimated market value.
+                     */
                     SuggestedAskingPrice =
-                        suggestedAskingPrice,
+                        marketValue,
 
-                    LowRetailValue =
-                        lowRetailValue,
-
-                    HighRetailValue =
-                        highRetailValue,
-
-                    TradeInValue =
-                        tradeInValue,
-
-                    WholesaleValue =
-                        wholesaleValue,
-
-                    PrivatePartyValue =
-                        privatePartyValue,
-
-                    EstimatedAuctionValue =
-                        auctionValue,
+                    /*
+                     * Vehicles.dev Market Value does not
+                     * directly provide these categories.
+                     *
+                     * Leave them unset rather than inventing
+                     * unsupported trade, wholesale, auction,
+                     * or private-party numbers.
+                     */
+                    LowRetailValue = 0m,
+                    HighRetailValue = 0m,
+                    TradeInValue = 0m,
+                    WholesaleValue = 0m,
+                    PrivatePartyValue = 0m,
+                    EstimatedAuctionValue = 0m,
 
                     MarketStrength =
-                        "Not measured — live market not checked",
+                        "Live dealer asking-price model",
 
                     DaysOnMarket = 0,
 
-                    Summary = summary,
+                    Summary =
+                        summary,
 
-                    Sources = sources
-                });
+                    Sources =
+                        sources
+                            .Distinct(
+                                StringComparer.OrdinalIgnoreCase)
+                            .ToList()
+                };
+            }
+            catch (JsonException)
+            {
+                return BuildUnavailableResult(
+                    "The live valuation service returned an unreadable response.");
+            }
+        }
+
+        private static string BuildRequestUri(
+            VehicleProfile vehicle)
+        {
+            var parameters =
+                new List<string>();
+
+            AddParameter(
+                parameters,
+                "make",
+                vehicle.Make.Trim());
+
+            AddParameter(
+                parameters,
+                "model",
+                vehicle.Model.Trim());
+
+            AddParameter(
+                parameters,
+                "year",
+                vehicle.Year!.Value.ToString(
+                    CultureInfo.InvariantCulture));
+
+            if (vehicle.CurrentMileage.HasValue &&
+                vehicle.CurrentMileage.Value >= 0)
+            {
+                AddParameter(
+                    parameters,
+                    "miles",
+                    vehicle.CurrentMileage.Value.ToString(
+                        CultureInfo.InvariantCulture));
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                    vehicle.Trim))
+            {
+                AddParameter(
+                    parameters,
+                    "trim",
+                    vehicle.Trim.Trim());
+            }
+
+            string drivetrain =
+                NormalizeDrivetrain(
+                    vehicle.Drivetrain);
+
+            if (!string.IsNullOrWhiteSpace(
+                    drivetrain))
+            {
+                AddParameter(
+                    parameters,
+                    "drivetrain",
+                    drivetrain);
+            }
+
+            string fuel =
+                NormalizeFuel(
+                    vehicle.FuelType);
+
+            if (!string.IsNullOrWhiteSpace(
+                    fuel))
+            {
+                AddParameter(
+                    parameters,
+                    "fuel",
+                    fuel);
+            }
+
+            string transmission =
+                NormalizeTransmission(
+                    vehicle.Transmission);
+
+            if (!string.IsNullOrWhiteSpace(
+                    transmission))
+            {
+                AddParameter(
+                    parameters,
+                    "transmission",
+                    transmission);
+            }
+
+            string bodyStyle =
+                NormalizeBodyStyle(
+                    vehicle.BodyStyle);
+
+            if (!string.IsNullOrWhiteSpace(
+                    bodyStyle))
+            {
+                AddParameter(
+                    parameters,
+                    "body_style",
+                    bodyStyle);
+            }
+
+            if (vehicle.BaseMsrp.HasValue &&
+                vehicle.BaseMsrp.Value > 0)
+            {
+                AddParameter(
+                    parameters,
+                    "base_msrp",
+                    Math.Round(
+                            vehicle.BaseMsrp.Value,
+                            0,
+                            MidpointRounding.AwayFromZero)
+                        .ToString(
+                            "0",
+                            CultureInfo.InvariantCulture));
+            }
+
+            return
+                $"{Endpoint}?{string.Join("&", parameters)}";
+        }
+
+        private static void AddParameter(
+            ICollection<string> parameters,
+            string name,
+            string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return;
+            }
+
+            parameters.Add(
+                $"{Uri.EscapeDataString(name)}=" +
+                $"{Uri.EscapeDataString(value)}");
+        }
+
+        private static string NormalizeTransmission(
+            string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            string text =
+                value.Trim()
+                    .ToUpperInvariant();
+
+            if (text.Contains("CVT"))
+            {
+                return "cvt";
+            }
+
+            if (text.Contains("MANUAL"))
+            {
+                return "manual";
+            }
+
+            if (text.Contains("AUTO"))
+            {
+                return "automatic";
+            }
+
+            return value.Trim()
+                .ToLowerInvariant();
+        }
+
+        private static string NormalizeDrivetrain(
+            string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            string text =
+                value.Trim()
+                    .ToUpperInvariant();
+
+            if (text.Contains("ALL-WHEEL") ||
+                text.Contains("ALL WHEEL") ||
+                text.Contains("AWD"))
+            {
+                return "awd";
+            }
+
+            if (text.Contains("FRONT") ||
+                text.Contains("FWD"))
+            {
+                return "fwd";
+            }
+
+            if (text.Contains("REAR") ||
+                text.Contains("RWD"))
+            {
+                return "rwd";
+            }
+
+            if (text.Contains("4-WHEEL") ||
+                text.Contains("4 WHEEL") ||
+                text.Contains("4WD") ||
+                text.Contains("4X4"))
+            {
+                return "4wd";
+            }
+
+            return value.Trim()
+                .ToLowerInvariant();
+        }
+
+        private static string NormalizeFuel(
+            string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            string text =
+                value.Trim()
+                    .ToUpperInvariant();
+
+            if (text.Contains("HYBRID"))
+            {
+                return "hybrid";
+            }
+
+            if (text.Contains("ELECTRIC"))
+            {
+                return "electric";
+            }
+
+            if (text.Contains("DIESEL"))
+            {
+                return "diesel";
+            }
+
+            if (text.Contains("E85") ||
+                text.Contains("FLEX"))
+            {
+                return "e85";
+            }
+
+            if (text.Contains("GASOLINE") ||
+                text == "GAS")
+            {
+                return "gasoline";
+            }
+
+            return value.Trim()
+                .ToLowerInvariant();
+        }
+
+        private static string NormalizeBodyStyle(
+            string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            string text =
+                value.Trim()
+                    .ToUpperInvariant();
+
+            if (text.Contains("SPORT UTILITY") ||
+                text.Contains("SUV"))
+            {
+                return "suv";
+            }
+
+            if (text.Contains("PICKUP") ||
+                text.Contains("TRUCK"))
+            {
+                return "pickup";
+            }
+
+            if (text.Contains("SEDAN"))
+            {
+                return "sedan";
+            }
+
+            if (text.Contains("COUPE"))
+            {
+                return "coupe";
+            }
+
+            if (text.Contains("HATCHBACK"))
+            {
+                return "hatchback";
+            }
+
+            if (text.Contains("WAGON"))
+            {
+                return "wagon";
+            }
+
+            if (text.Contains("CONVERTIBLE"))
+            {
+                return "convertible";
+            }
+
+            if (text.Contains("MINIVAN"))
+            {
+                return "minivan";
+            }
+
+            if (text.Contains("VAN"))
+            {
+                return "van";
+            }
+
+            return value.Trim()
+                .ToLowerInvariant();
+        }
+
+        private static int CalculateEvidenceConfidence(
+            VehicleProfile vehicle)
+        {
+            /*
+             * This measures PonyUp input/evidence
+             * completeness.
+             *
+             * It is NOT Vehicles.dev's prediction
+             * confidence. Their medianApePct is a
+             * model-wide accuracy metric.
+             */
+            int confidence = 50;
+
+            if (!string.IsNullOrWhiteSpace(
+                    vehicle.Vin))
+            {
+                confidence += 10;
+            }
+
+            if (vehicle.CurrentMileage.HasValue)
+            {
+                confidence += 15;
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                    vehicle.Trim))
+            {
+                confidence += 5;
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                    vehicle.Drivetrain))
+            {
+                confidence += 5;
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                    vehicle.Transmission))
+            {
+                confidence += 5;
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                    vehicle.BodyStyle))
+            {
+                confidence += 5;
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                    vehicle.FuelType))
+            {
+                confidence += 5;
+            }
+
+            return Math.Clamp(
+                confidence,
+                0,
+                100);
         }
 
         private static bool HasVehicleIdentity(
@@ -201,370 +645,12 @@ namespace PonyUpPerformance.Web.Services
         {
             return
                 vehicle.Year.HasValue &&
-                !string.IsNullOrWhiteSpace(vehicle.Make) &&
-                !string.IsNullOrWhiteSpace(vehicle.Model);
-        }
-
-        /*
-         * Current segment-level five-year retention anchors.
-         *
-         * These are intentionally broad market patterns,
-         * not make/model-specific valuations.
-         */
-        private static decimal DetermineFiveYearRetention(
-            VehicleProfile vehicle)
-        {
-            string fuel =
-                vehicle.FuelType
-                    .Trim()
-                    .ToUpperInvariant();
-
-            string body =
-                $"{vehicle.BodyStyle} {vehicle.VehicleType}"
-                    .Trim()
-                    .ToUpperInvariant();
-
-            if (fuel.Contains("ELECTRIC") &&
-                !fuel.Contains("HYBRID"))
-            {
-                return 0.428m;
-            }
-
-            if (fuel.Contains("HYBRID"))
-            {
-                return 0.646m;
-            }
-
-            if (body.Contains("PICKUP") ||
-                body.Contains("TRUCK"))
-            {
-                return 0.658m;
-            }
-
-            if (body.Contains("SUV") ||
-                body.Contains("SPORT UTILITY"))
-            {
-                return 0.551m;
-            }
-
-            return 0.582m;
-        }
-
-        private static decimal DetermineLongTermRetentionFloor(
-            VehicleProfile vehicle)
-        {
-            string fuel =
-                vehicle.FuelType
-                    .Trim()
-                    .ToUpperInvariant();
-
-            string body =
-                $"{vehicle.BodyStyle} {vehicle.VehicleType}"
-                    .Trim()
-                    .ToUpperInvariant();
-
-            if (fuel.Contains("ELECTRIC") &&
-                !fuel.Contains("HYBRID"))
-            {
-                return 0.06m;
-            }
-
-            if (body.Contains("PICKUP") ||
-                body.Contains("TRUCK"))
-            {
-                return 0.15m;
-            }
-
-            return 0.12m;
-        }
-
-        private static decimal CalculateAgeRetention(
-            int age,
-            decimal fiveYearRetention,
-            decimal longTermFloor)
-        {
-            /*
-             * Current-model-year used vehicle:
-             * assume some immediate used-market depreciation.
-             */
-            if (age <= 0)
-            {
-                return 0.90m;
-            }
-
-            /*
-             * First year contains the steepest normal
-             * depreciation step.
-             */
-            if (age == 1)
-            {
-                return 0.80m;
-            }
-
-            /*
-             * Years 2-5 transition smoothly from the
-             * first-year residual to the five-year
-             * segment retention anchor.
-             */
-            if (age <= 5)
-            {
-                double progress =
-                    (age - 1) / 4.0;
-
-                double ratio =
-                    (double)(
-                        fiveYearRetention /
-                        0.80m);
-
-                decimal retention =
-                    0.80m *
-                    (decimal)Math.Pow(
-                        ratio,
-                        progress);
-
-                return Math.Max(
-                    longTermFloor,
-                    retention);
-            }
-
-            /*
-             * After year five, use gradual depreciation
-             * until the long-term residual floor is reached.
-             *
-             * This is deliberately conservative for older
-             * vehicles because collector/special-interest
-             * pricing cannot be inferred safely from VIN
-             * specifications alone.
-             */
-            decimal laterRetention =
-                fiveYearRetention *
-                (decimal)Math.Pow(
-                    0.90,
-                    age - 5);
-
-            return Math.Max(
-                longTermFloor,
-                laterRetention);
-        }
-
-        private static decimal CalculateMileageMultiplier(
-            int vehicleAge,
-            int? mileage)
-        {
-            if (!mileage.HasValue ||
-                mileage.Value < 0)
-            {
-                return 1m;
-            }
-
-            decimal expectedMileage =
-                Math.Max(
-                    12_000m,
-                    Math.Max(
-                        1,
-                        vehicleAge) *
-                    12_000m);
-
-            decimal mileageRatio =
-                mileage.Value /
-                expectedMileage;
-
-            return mileageRatio switch
-            {
-                <= 0.50m => 1.20m,
-                <= 0.75m => 1.12m,
-                <= 0.90m => 1.06m,
-                <= 1.10m => 1.00m,
-                <= 1.25m => 0.94m,
-                <= 1.50m => 0.88m,
-                <= 2.00m => 0.80m,
-                _ => 0.70m
-            };
-        }
-
-        private static decimal CalculateConditionMultiplier(
-            MechanicalCondition condition)
-        {
-            return condition switch
-            {
-                MechanicalCondition.Excellent => 1.12m,
-                MechanicalCondition.Good => 1.05m,
-                MechanicalCondition.Fair => 0.90m,
-                MechanicalCondition.Poor => 0.70m,
-                MechanicalCondition.Severe => 0.45m,
-                _ => 1.00m
-            };
-        }
-
-        private static decimal CalculateTitleMultiplier(
-            TitleStatus titleStatus)
-        {
-            return titleStatus switch
-            {
-                TitleStatus.Clean => 1.00m,
-                TitleStatus.Rebuilt => 0.75m,
-                TitleStatus.Salvage => 0.60m,
-                TitleStatus.Flood => 0.50m,
-                _ => 1.00m
-            };
-        }
-
-        private static decimal CalculateAccidentMultiplier(
-            AccidentHistory accidentHistory)
-        {
-            return accidentHistory switch
-            {
-                AccidentHistory.None => 1.00m,
-                AccidentHistory.Minor => 0.95m,
-                AccidentHistory.Moderate => 0.85m,
-                AccidentHistory.Major => 0.70m,
-                _ => 1.00m
-            };
-        }
-
-        private static int CalculateConfidence(
-            VehicleProfile vehicle,
-            int vehicleAge)
-        {
-            int confidence = 25;
-
-            if (vehicle.BaseMsrp.HasValue &&
-                vehicle.BaseMsrp.Value > 0)
-            {
-                confidence += 25;
-            }
-
-            if (!string.IsNullOrWhiteSpace(vehicle.Vin))
-            {
-                confidence += 5;
-            }
-
-            if (!string.IsNullOrWhiteSpace(vehicle.Trim))
-            {
-                confidence += 5;
-            }
-
-            if (!string.IsNullOrWhiteSpace(vehicle.Engine))
-            {
-                confidence += 5;
-            }
-
-            if (vehicle.CurrentMileage.HasValue)
-            {
-                confidence += 10;
-            }
-
-            if (vehicle.MechanicalCondition !=
-                MechanicalCondition.NotProvided)
-            {
-                confidence += 10;
-            }
-
-            if (vehicle.TitleStatus !=
-                TitleStatus.NotProvided)
-            {
-                confidence += 5;
-            }
-
-            if (vehicle.AccidentHistory !=
-                AccidentHistory.NotProvided)
-            {
-                confidence += 5;
-            }
-
-            /*
-             * Older vehicles increasingly diverge because
-             * collectibility, regional rust, preservation,
-             * modifications and rarity matter more.
-             */
-            if (vehicleAge > 25)
-            {
-                confidence -= 20;
-            }
-            else if (vehicleAge > 15)
-            {
-                confidence -= 10;
-            }
-
-            /*
-             * No live comparable listings are being used,
-             * so this model intentionally cannot claim
-             * very-high market-data confidence.
-             */
-            return Math.Clamp(
-                confidence,
-                0,
-                80);
-        }
-
-        private static List<string> BuildSources(
-            VehicleProfile vehicle)
-        {
-            var sources =
-                new List<string>();
-
-            if (!string.IsNullOrWhiteSpace(
-                    vehicle.DecodeSource))
-            {
-                sources.Add(
-                    vehicle.DecodeSource);
-            }
-
-            sources.Add(
-                "PonyUp modeled depreciation and condition analysis");
-
-            sources.Add(
-                "2026 segment-level used-vehicle retention calibration");
-
-            return sources
-                .Distinct(
-                    StringComparer.OrdinalIgnoreCase)
-                .ToList();
-        }
-
-        private static string BuildSummary(
-            VehicleProfile vehicle,
-            int vehicleAge,
-            int confidence,
-            decimal marketValue,
-            decimal lowValue,
-            decimal highValue)
-        {
-            string vehicleName =
-                string.IsNullOrWhiteSpace(
-                    vehicle.DisplayName)
-                    ? "vehicle"
-                    : vehicle.DisplayName;
-
-            string summary =
-                $"PonyUp estimates the {vehicleName} at approximately " +
-                $"{marketValue:C0}, with a modeled range of " +
-                $"{lowValue:C0} to {highValue:C0}. " +
-                $"Estimate confidence is {confidence}/100.";
-
-            if (!vehicle.CurrentMileage.HasValue)
-            {
-                summary +=
-                    " Mileage was not provided, so no mileage adjustment was applied.";
-            }
-
-            if (vehicle.MechanicalCondition ==
-                MechanicalCondition.NotProvided)
-            {
-                summary +=
-                    " Mechanical condition was not provided.";
-            }
-
-            if (vehicleAge > 20)
-            {
-                summary +=
-                    " Older and special-interest vehicles can vary materially because preservation, rarity, modifications and collector demand are not captured by this model.";
-            }
-
-            summary +=
-                " This is a PonyUp modeled estimate and does not yet use live comparable listings.";
-
-            return summary;
+                vehicle.Year.Value >= 1900 &&
+                vehicle.Year.Value <= 2100 &&
+                !string.IsNullOrWhiteSpace(
+                    vehicle.Make) &&
+                !string.IsNullOrWhiteSpace(
+                    vehicle.Model);
         }
 
         private static MarketValueResult BuildUnavailableResult(
@@ -579,36 +665,29 @@ namespace PonyUpPerformance.Web.Services
                 UsesLiveMarketData = false,
 
                 EstimateMethod =
-                    "Insufficient valuation evidence",
+                    "Live valuation unavailable",
 
                 MarketStrength =
-                    "Not measured",
+                    "Not available",
 
-                Summary = reason,
+                Summary =
+                    reason,
 
-                Sources = new List<string>
-                {
-                    "PonyUp valuation guardrail"
-                }
+                Sources =
+                    new List<string>
+                    {
+                        "PonyUp valuation guardrail"
+                    }
             };
         }
 
-        private static decimal RoundMarketValue(
+        private static decimal RoundCurrency(
             decimal value)
         {
-            if (value <= 0)
-            {
-                return 0m;
-            }
-
-            /*
-             * Modeled estimates should not imply false
-             * penny-level precision.
-             */
             return Math.Round(
-                value / 50m,
+                value,
                 0,
-                MidpointRounding.AwayFromZero) * 50m;
+                MidpointRounding.AwayFromZero);
         }
     }
 }
