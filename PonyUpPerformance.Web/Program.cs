@@ -78,6 +78,7 @@ builder.Services.AddScoped<RepairCostEstimatorService>();
 builder.Services.AddScoped<VehiclePaintPaletteService>();
 builder.Services.AddScoped<VehicleRenderService>();
 builder.Services.AddHttpClient<IVinDecoderService, NhtsaVehicleService>();
+builder.Services.AddHttpClient<IVehicleSpecEnrichmentService, FuelEconomyVehicleSpecService>();
 builder.Services.AddScoped<StripeCheckoutService>();
 builder.Services.AddScoped<UsageCreditService>();
 builder.Services.AddScoped<IBuyScoringService, BuyScoringService>();
