@@ -84,7 +84,7 @@ namespace PonyUpPerformance.Web.Pages
             return Page();
         }
 
-        public IActionResult OnPost()
+        public IActionResult OnPostAnalyze()
         {
             if (!ModelState.IsValid)
             {
