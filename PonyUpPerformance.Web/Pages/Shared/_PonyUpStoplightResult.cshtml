@@ -13,7 +13,10 @@
         state == "red" ? "~/images/ponyup-stoplight-red.png" :
         "~/images/ponyup-stoplight-off.png";
 
-    string scoreText = Model.HasResult ? $"{Model.ConfidenceScore}%" : "---";
+    string scoreText =
+        Model.HasResult
+            ? $"{Model.ConfidenceScore}%"
+            : "---";
 
     string confidence =
         !Model.HasResult ? "---" :
@@ -28,24 +31,49 @@
         "HIGH";
 }
 
+@if (Model.HasResult)
+{
+    <img src="~/images/ponyup-stoplight-banner.png"
+         alt="PonyUp Stoplight"
+         style="
+            display:block;
+            width:100%;
+            max-width:1200px;
+            height:auto;
+            margin:0 auto 18px auto;
+            border-radius:12px;" />
+}
+
 <div class="ponyup-stoplight-panel @state">
+
     <div class="ponyup-stoplight-left">
+
         <img src="@Url.Content(stoplightImage)"
              class="ponyup-stoplight-art"
              alt="PonyUp Stoplight" />
+
     </div>
 
     <div class="ponyup-stoplight-center">
+
         <div class="ponyup-analysis-label">
-            @(Model.HasResult ? "ANALYSIS COMPLETE" : Model.AnalysisType)
+            @(Model.HasResult
+                ? "ANALYSIS COMPLETE"
+                : Model.AnalysisType)
         </div>
 
         <h2>@Model.Recommendation</h2>
 
-        <div class="ponyup-score-label">OVERALL SCORE</div>
-        <div class="ponyup-score">@scoreText</div>
+        <div class="ponyup-score-label">
+            OVERALL SCORE
+        </div>
+
+        <div class="ponyup-score">
+            @scoreText
+        </div>
 
         <div class="ponyup-meta-row">
+
             <div>
                 <span>CONFIDENCE:</span>
                 <strong>@confidence</strong>
@@ -55,6 +83,7 @@
                 <span>RISK LEVEL:</span>
                 <strong>@risk</strong>
             </div>
+
         </div>
 
         <div class="ponyup-reasoning-title">
@@ -64,9 +93,11 @@
         <p class="ponyup-result-reasoning">
             @Model.Reasoning
         </p>
+
     </div>
 
     <div class="ponyup-stoplight-legend">
+
         <h3>WHAT YOUR SCORE MEANS</h3>
 
         <div class="ponyup-legend-card red">
@@ -86,5 +117,7 @@
             <span>75 - 100%</span>
             <p>Low Risk / Strong Value</p>
         </div>
+
     </div>
+
 </div>
