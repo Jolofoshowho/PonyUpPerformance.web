@@ -38,7 +38,7 @@
 
         <form method="post" class="analyzer-form">
 
-          <input asp-for="Input.BaseMsrp" type="hidden" />
+            <input asp-for="Input.BaseMsrp" type="hidden" />
 
             <div asp-validation-summary="ModelOnly"
                  class="text-danger">
@@ -63,7 +63,8 @@
                  style="margin-top:10px;margin-bottom:20px;">
                 <button class="btn-red"
                         type="submit"
-                        asp-page-handler="DecodeVin"formnovalidate>
+                        asp-page-handler="DecodeVin"
+                        formnovalidate>
                     DECODE VIN
                 </button>
             </div>
@@ -297,7 +298,8 @@
 
             <div class="form-actions">
                 <button class="btn-red"
-                        type="submit">
+                        type="submit"
+                        asp-page-handler="Analyze">
                     ANALYZE PURCHASE
                 </button>
             </div>
