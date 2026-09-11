@@ -4,8 +4,6 @@
 @{
     ViewData["Title"] = "Buy Analyzer";
 
-    int score = Model.Result?.Score ?? 0;
-
     string recommendation =
         Model.Result?.Recommendation
         ?? "READY";
@@ -14,40 +12,58 @@
         Model.Result?.Reasoning
         ?? "Enter the vehicle and purchase details, then run the analysis.";
 
+    string inputPanelStyle =
+        Model.Result != null
+            ? "max-width:900px;margin:0 auto;display:none;"
+            : "max-width:900px;margin:0 auto;";
+
     var stoplight =
         new PonyUpPerformance.Web.Models.PonyUpStoplightResultViewModel
         {
             HasResult = Model.Result != null,
             AnalysisType = "BUY DECISION",
+            Score = Model.Result?.Score,
             Recommendation = recommendation,
             ConfidenceScore = Model.Result?.ConfidenceScore ?? 0,
+            RiskLevel = Model.Result?.RiskLevel ?? string.Empty,
             Reasoning = reasoning
         };
 }
 
 <section class="page-section analyzer-page buy-bg">
-    <h1 class="section-title">BUY ANALYZER</h1>
+
+    <h1 class="section-title">
+        BUY ANALYZER
+    </h1>
 
     <p class="section-subtitle">
-        Know before you buy. Evaluate the price, condition, history, risk,
-        and expected ownership value.
+        Know before you buy. Evaluate the price, condition,
+        history, risk, and expected ownership value.
     </p>
 
-    <div class="price-card analyzer-card"
-         style="max-width:900px;margin:0 auto;">
+    <div id="buy-input-panel"
+         class="price-card analyzer-card"
+         style="@inputPanelStyle">
 
-        <form method="post" class="analyzer-form">
+        <form method="post"
+              class="analyzer-form">
 
-            <input asp-for="Input.BaseMsrp" type="hidden" />
+            <input asp-for="Input.BaseMsrp"
+                   type="hidden" />
 
             <div asp-validation-summary="ModelOnly"
                  class="text-danger">
             </div>
 
-            <h2>VEHICLE INFORMATION</h2>
+            <h2>
+                VEHICLE INFORMATION
+            </h2>
 
             <div class="form-row">
-                <label asp-for="Input.Vin">VIN</label>
+
+                <label asp-for="Input.Vin">
+                    VIN
+                </label>
 
                 <input asp-for="Input.Vin"
                        maxlength="17"
@@ -57,16 +73,21 @@
                 <span asp-validation-for="Input.Vin"
                       class="text-danger">
                 </span>
+
             </div>
 
             <div class="form-actions"
                  style="margin-top:10px;margin-bottom:20px;">
+
                 <button class="btn-red"
                         type="submit"
                         asp-page-handler="DecodeVin"
                         formnovalidate>
+
                     DECODE VIN
+
                 </button>
+
             </div>
 
             @if (!string.IsNullOrWhiteSpace(Model.VinDecodeMessage))
@@ -77,51 +98,77 @@
             }
 
             <div class="form-row">
-                <label asp-for="Input.Year">Year</label>
+
+                <label asp-for="Input.Year">
+                    Year
+                </label>
+
                 <input asp-for="Input.Year" />
 
                 <span asp-validation-for="Input.Year"
                       class="text-danger">
                 </span>
+
             </div>
 
             <div class="form-row">
-                <label asp-for="Input.Make">Make</label>
+
+                <label asp-for="Input.Make">
+                    Make
+                </label>
+
                 <input asp-for="Input.Make" />
 
                 <span asp-validation-for="Input.Make"
                       class="text-danger">
                 </span>
+
             </div>
 
             <div class="form-row">
-                <label asp-for="Input.Model">Model</label>
+
+                <label asp-for="Input.Model">
+                    Model
+                </label>
+
                 <input asp-for="Input.Model" />
 
                 <span asp-validation-for="Input.Model"
                       class="text-danger">
                 </span>
+
             </div>
 
             <div class="form-row">
-                <label asp-for="Input.Trim">Trim</label>
+
+                <label asp-for="Input.Trim">
+                    Trim
+                </label>
+
                 <input asp-for="Input.Trim" />
 
                 <span asp-validation-for="Input.Trim"
                       class="text-danger">
                 </span>
+
             </div>
 
             <div class="form-row">
-                <label asp-for="Input.Engine">Engine</label>
+
+                <label asp-for="Input.Engine">
+                    Engine
+                </label>
+
                 <input asp-for="Input.Engine" />
 
                 <span asp-validation-for="Input.Engine"
                       class="text-danger">
                 </span>
+
             </div>
 
             <div class="form-row">
+
                 <label asp-for="Input.Transmission">
                     Transmission
                 </label>
@@ -131,9 +178,11 @@
                 <span asp-validation-for="Input.Transmission"
                       class="text-danger">
                 </span>
+
             </div>
 
             <div class="form-row">
+
                 <label asp-for="Input.Drivetrain">
                     Drivetrain
                 </label>
@@ -143,9 +192,11 @@
                 <span asp-validation-for="Input.Drivetrain"
                       class="text-danger">
                 </span>
+
             </div>
 
             <div class="form-row">
+
                 <label asp-for="Input.BodyStyle">
                     Body Style
                 </label>
@@ -155,9 +206,11 @@
                 <span asp-validation-for="Input.BodyStyle"
                       class="text-danger">
                 </span>
+
             </div>
 
             <div class="form-row">
+
                 <label asp-for="Input.FuelType">
                     Fuel Type
                 </label>
@@ -167,22 +220,32 @@
                 <span asp-validation-for="Input.FuelType"
                       class="text-danger">
                 </span>
+
             </div>
 
             <div class="form-row">
-                <label asp-for="Input.Mileage">Mileage</label>
+
+                <label asp-for="Input.Mileage">
+                    Mileage
+                </label>
+
                 <input asp-for="Input.Mileage" />
 
                 <span asp-validation-for="Input.Mileage"
                       class="text-danger">
                 </span>
+
             </div>
 
-            <div class="analyzer-section-divider"></div>
+            <div class="analyzer-section-divider">
+            </div>
 
-            <h2>PURCHASE INFORMATION</h2>
+            <h2>
+                PURCHASE INFORMATION
+            </h2>
 
             <div class="form-row">
+
                 <label asp-for="Input.AskingPrice">
                     Asking Price
                 </label>
@@ -192,9 +255,11 @@
                 <span asp-validation-for="Input.AskingPrice"
                       class="text-danger">
                 </span>
+
             </div>
 
             <div class="form-row">
+
                 <label asp-for="Input.MarketValue">
                     Estimated Market Value
                 </label>
@@ -204,9 +269,11 @@
                 <span asp-validation-for="Input.MarketValue"
                       class="text-danger">
                 </span>
+
             </div>
 
             <div class="form-row">
+
                 <label asp-for="Input.EstimatedRepairCost">
                     Estimated Repair Cost
                 </label>
@@ -216,188 +283,300 @@
                 <span asp-validation-for="Input.EstimatedRepairCost"
                       class="text-danger">
                 </span>
+
             </div>
 
-            <div class="analyzer-section-divider"></div>
+            <div class="analyzer-section-divider">
+            </div>
 
-            <h2>DECISION FACTORS</h2>
+            <h2>
+                DECISION FACTORS
+            </h2>
 
             <div class="form-row">
+
                 <label asp-for="Input.MechanicalCondition">
                     Mechanical Condition
                 </label>
 
                 <select asp-for="Input.MechanicalCondition">
-                    <option value="-1">Select Condition</option>
-                    <option value="0">Excellent</option>
-                    <option value="1">Good</option>
-                    <option value="2">Fair</option>
-                    <option value="3">Poor</option>
-                    <option value="4">Severe</option>
+                    <option value="-1">
+                        Select Condition
+                    </option>
+                    <option value="0">
+                        Excellent
+                    </option>
+                    <option value="1">
+                        Good
+                    </option>
+                    <option value="2">
+                        Fair
+                    </option>
+                    <option value="3">
+                        Poor
+                    </option>
+                    <option value="4">
+                        Severe
+                    </option>
                 </select>
 
                 <span asp-validation-for="Input.MechanicalCondition"
                       class="text-danger">
                 </span>
+
             </div>
 
             <div class="form-row">
+
                 <label asp-for="Input.TitleStatus">
                     Title Status
                 </label>
 
                 <select asp-for="Input.TitleStatus">
-                    <option value="-1">Select Title Status</option>
-                    <option value="0">Clean</option>
-                    <option value="1">Rebuilt</option>
-                    <option value="2">Salvage</option>
-                    <option value="3">Flood</option>
+                    <option value="-1">
+                        Select Title Status
+                    </option>
+                    <option value="0">
+                        Clean
+                    </option>
+                    <option value="1">
+                        Rebuilt
+                    </option>
+                    <option value="2">
+                        Salvage
+                    </option>
+                    <option value="3">
+                        Flood
+                    </option>
                 </select>
 
                 <span asp-validation-for="Input.TitleStatus"
                       class="text-danger">
                 </span>
+
             </div>
 
             <div class="form-row">
+
                 <label asp-for="Input.AccidentHistory">
                     Accident History
                 </label>
 
                 <select asp-for="Input.AccidentHistory">
-                    <option value="-1">Select Accident History</option>
-                    <option value="0">None</option>
-                    <option value="1">Minor</option>
-                    <option value="2">Moderate</option>
-                    <option value="3">Major</option>
+                    <option value="-1">
+                        Select Accident History
+                    </option>
+                    <option value="0">
+                        None
+                    </option>
+                    <option value="1">
+                        Minor
+                    </option>
+                    <option value="2">
+                        Moderate
+                    </option>
+                    <option value="3">
+                        Major
+                    </option>
                 </select>
 
                 <span asp-validation-for="Input.AccidentHistory"
                       class="text-danger">
                 </span>
+
             </div>
 
             <div class="form-row">
+
                 <label asp-for="Input.IntendedUse">
                     Intended Use
                 </label>
 
                 <select asp-for="Input.IntendedUse">
-                    <option value="-1">Select Intended Use</option>
-                    <option value="0">Daily Driver</option>
-                    <option value="1">Work Vehicle</option>
-                    <option value="2">Family Vehicle</option>
-                    <option value="3">Project Vehicle</option>
-                    <option value="4">Performance Build</option>
+                    <option value="-1">
+                        Select Intended Use
+                    </option>
+                    <option value="0">
+                        Daily Driver
+                    </option>
+                    <option value="1">
+                        Work Vehicle
+                    </option>
+                    <option value="2">
+                        Family Vehicle
+                    </option>
+                    <option value="3">
+                        Project Vehicle
+                    </option>
+                    <option value="4">
+                        Performance Build
+                    </option>
                 </select>
 
                 <span asp-validation-for="Input.IntendedUse"
                       class="text-danger">
                 </span>
+
             </div>
 
             <div class="form-actions">
+
                 <button class="btn-red"
                         type="submit"
                         asp-page-handler="Analyze">
+
                     ANALYZE PURCHASE
+
                 </button>
+
             </div>
+
         </form>
+
     </div>
 
     @if (Model.Result != null)
     {
-        <div class="price-card featured"
-             style="max-width:900px;margin:24px auto 0;">
+        <div id="buy-result-panel">
 
-            <h2>BUY ANALYSIS</h2>
+            <partial name="_PonyUpStoplightResult"
+                     model="stoplight" />
 
-            <p>
-                <strong>Decision Score:</strong>
-                @Model.Result.Score / 100
-            </p>
+            <div class="form-actions"
+                 style="max-width:900px;margin:20px auto;">
 
-            <p>
-                <strong>Confidence Score:</strong>
-                @Model.Result.ConfidenceScore / 100
-            </p>
+                <button type="button"
+                        class="btn-dark"
+                        onclick="editBuyAnalysis()">
 
-            <p>
-                <strong>Recommendation:</strong>
-                @Model.Result.Recommendation
-            </p>
+                    EDIT ANALYSIS
 
-            <p>
-                <strong>Risk Level:</strong>
-                @Model.Result.RiskLevel
-            </p>
+                </button>
 
-            <div class="analyzer-section-divider"></div>
+            </div>
 
-            <h3>PURCHASE NUMBERS</h3>
+            <div class="price-card featured"
+                 style="max-width:900px;margin:0 auto;">
 
-            <p>
-                <strong>Asking Price:</strong>
-                @(Model.Input.AskingPrice.HasValue
-                    ? Model.Input.AskingPrice.Value.ToString("C")
-                    : "Not provided")
-            </p>
+                <h2>
+                    PURCHASE NUMBERS
+                </h2>
 
-            <p>
-                <strong>Estimated Repair Cost:</strong>
-                @(Model.Input.EstimatedRepairCost.HasValue
-                    ? Model.Input.EstimatedRepairCost.Value.ToString("C")
-                    : "Not provided")
-            </p>
+                <p>
+                    <strong>Asking Price:</strong>
 
-            <p>
-                <strong>Estimated Market Value:</strong>
-                @(Model.Input.MarketValue.HasValue
-                    ? Model.Input.MarketValue.Value.ToString("C")
-                    : "Not provided")
-            </p>
+                    @(Model.Input.AskingPrice.HasValue
+                        ? Model.Input.AskingPrice.Value.ToString("C")
+                        : "Not provided")
+                </p>
 
-            <p>
-                <strong>Maximum Recommended Price:</strong>
-                @Model.Result.MaximumRecommendedPrice.ToString("C")
-            </p>
+                <p>
+                    <strong>Estimated Repair Cost:</strong>
 
-            <p>
-                <strong>Fair Purchase Price:</strong>
-                @Model.Result.FairPurchasePrice.ToString("C")
-            </p>
+                    @(Model.Input.EstimatedRepairCost.HasValue
+                        ? Model.Input.EstimatedRepairCost.Value.ToString("C")
+                        : "Not provided")
+                </p>
 
-            <p>
-                <strong>Suggested First Offer:</strong>
-                @Model.Result.SuggestedFirstOffer.ToString("C")
-            </p>
+                <p>
+                    <strong>Estimated Market Value:</strong>
 
-            <div class="analyzer-section-divider"></div>
+                    @(Model.Input.MarketValue.HasValue
+                        ? Model.Input.MarketValue.Value.ToString("C")
+                        : "Not provided")
+                </p>
 
-            <h3>WHY WE RECOMMEND THIS</h3>
+                <div class="analyzer-section-divider">
+                </div>
 
-            <p>@Model.Result.Reasoning</p>
+                <p>
+                    <strong>Maximum Recommended Price:</strong>
+                    @Model.Result.MaximumRecommendedPrice.ToString("C")
+                </p>
 
-            @if (Model.Result.NextSteps != null &&
-                 Model.Result.NextSteps.Count > 0)
-            {
-                <h3>NEXT STEPS</h3>
+                <p>
+                    <strong>Fair Purchase Price:</strong>
+                    @Model.Result.FairPurchasePrice.ToString("C")
+                </p>
 
-                <ul>
-                    @foreach (string nextStep in Model.Result.NextSteps)
-                    {
-                        <li>@nextStep</li>
-                    }
-                </ul>
-            }
+                <p>
+                    <strong>Suggested First Offer:</strong>
+                    @Model.Result.SuggestedFirstOffer.ToString("C")
+                </p>
+
+                @if (!string.IsNullOrWhiteSpace(
+                    Model.Result.FinancialImpact))
+                {
+                    <div class="analyzer-section-divider">
+                    </div>
+
+                    <h3>
+                        FINANCIAL IMPACT
+                    </h3>
+
+                    <p>
+                        @Model.Result.FinancialImpact
+                    </p>
+                }
+
+                @if (Model.Result.NextSteps != null &&
+                     Model.Result.NextSteps.Count > 0)
+                {
+                    <div class="analyzer-section-divider">
+                    </div>
+
+                    <h3>
+                        NEXT STEPS
+                    </h3>
+
+                    <ul>
+                        @foreach (string nextStep
+                            in Model.Result.NextSteps)
+                        {
+                            <li>
+                                @nextStep
+                            </li>
+                        }
+                    </ul>
+                }
+
+            </div>
+
         </div>
     }
 
-    <partial name="_PonyUpStoplightResult"
-             model="stoplight" />
 </section>
 
 @section Scripts {
+
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+
+        function editBuyAnalysis() {
+
+            const inputPanel =
+                document.getElementById(
+                    "buy-input-panel");
+
+            const resultPanel =
+                document.getElementById(
+                    "buy-result-panel");
+
+            if (resultPanel) {
+                resultPanel.style.display = "none";
+            }
+
+            if (inputPanel) {
+
+                inputPanel.style.display = "block";
+
+                inputPanel.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+            }
+        }
+
+    </script>
 }
