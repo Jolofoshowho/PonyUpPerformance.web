@@ -2,16 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - PonyUp Performance</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
 
-    <link rel="icon" type="image/jpeg" href="~/images/ponyup-logo.jpg" />
+    <title>
+        @ViewData["Title"] - PonyUp Performance
+    </title>
 
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/PonyUpPerformance.Web.styles.css" asp-append-version="true" />
+    <link rel="icon"
+          type="image/jpeg"
+          href="~/images/ponyup-logo.jpg" />
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/PonyUpPerformance.Web.styles.css"
+          asp-append-version="true" />
 
     <style>
+
         .ponyup-profile-dropdown {
             position: relative;
         }
@@ -19,83 +33,130 @@
         .ponyup-profile-button {
             min-width: 92px;
             padding: 7px 15px !important;
+
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+
             line-height: 1;
-            background: linear-gradient(180deg, #ff3131, #b91218) !important;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #ff3131,
+                    #b91218)
+                !important;
+
             border: 1px solid #ff4b4b !important;
             border-radius: 5px;
-            box-shadow: 0 0 16px rgba(255,49,49,.5);
+
+            box-shadow:
+                0 0 16px rgba(255,49,49,.5);
+
             cursor: pointer;
         }
 
         .ponyup-profile-button:hover,
         .ponyup-profile-button:focus {
-            box-shadow: 0 0 24px rgba(255,49,49,.8);
+            box-shadow:
+                0 0 24px rgba(255,49,49,.8);
         }
 
         .ponyup-profile-top {
             display: block;
+
             font-size: .68rem;
             font-weight: 1000;
             letter-spacing: .09rem;
+
             color: #ffffff;
         }
 
         .ponyup-profile-bottom {
             display: block;
+
             margin-top: 3px;
+
             font-size: .9rem;
             font-weight: 1000;
             letter-spacing: .04rem;
+
             color: #ffffff;
         }
 
         .ponyup-profile-menu {
             min-width: 225px;
+
             padding: 8px;
             margin-top: 8px !important;
+
             background:
                 linear-gradient(
                     180deg,
                     rgba(24,24,24,.99),
                     rgba(5,5,5,.99));
-            border: 1px solid rgba(255,255,255,.3);
-            border-top: 2px solid #ff3131;
+
+            border:
+                1px solid rgba(255,255,255,.3);
+
+            border-top:
+                2px solid #ff3131;
+
             border-radius: 7px;
+
             box-shadow:
                 0 16px 35px rgba(0,0,0,.85),
                 0 0 20px rgba(255,49,49,.25);
+
             max-height: 78vh;
             overflow-y: auto;
+
             z-index: 5000;
         }
 
         .ponyup-profile-menu .dropdown-item {
             display: block;
+
             width: 100%;
+
             padding: 10px 13px;
+
             color: #ffffff !important;
-            background: transparent !important;
+
+            background:
+                transparent !important;
+
             border: 0 !important;
             border-radius: 4px;
+
             text-align: left;
             text-decoration: none;
-            font-family: Arial, Helvetica, sans-serif;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
             font-size: .78rem;
             font-weight: 1000;
             letter-spacing: .055rem;
+
             text-transform: uppercase;
-            text-shadow: 0 0 8px rgba(255,255,255,.35);
+
+            text-shadow:
+                0 0 8px rgba(255,255,255,.35);
+
             cursor: pointer;
         }
 
         .ponyup-profile-menu .dropdown-item:hover,
         .ponyup-profile-menu .dropdown-item:focus {
             color: #ff3131 !important;
-            background: rgba(255,49,49,.10) !important;
+
+            background:
+                rgba(255,49,49,.10)
+                !important;
         }
 
         .ponyup-profile-menu .profile-pricing {
@@ -104,8 +165,11 @@
 
         .ponyup-profile-divider {
             height: 1px;
+
             margin: 7px 5px;
-            background: rgba(255,255,255,.18);
+
+            background:
+                rgba(255,255,255,.18);
         }
 
         .ponyup-profile-menu form {
@@ -115,30 +179,95 @@
         .ponyup-profile-menu .logout-item {
             color: #ff4b4b !important;
         }
+
+        .ponyup-footer-links {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            flex-wrap: wrap;
+
+            gap: 18px;
+
+            margin-top: 12px;
+        }
+
+        .ponyup-footer-links a {
+            color: #ffffff;
+
+            text-decoration: none;
+
+            font-size: .8rem;
+            font-weight: 900;
+
+            letter-spacing: .05rem;
+
+            text-transform: uppercase;
+        }
+
+        .ponyup-footer-links a:hover {
+            color: #ff3131;
+        }
+
     </style>
 </head>
 
 <body>
+
     <header class="ponyup-header">
+
         <nav class="ponyup-navbar">
 
-            <a class="ponyup-brand" asp-page="/Index">
+            <a class="ponyup-brand"
+               asp-page="/Index">
+
                 <img src="~/images/ponyup-logo.jpg"
                      alt="PonyUp Performance" />
+
             </a>
 
             <div class="ponyup-nav-links">
 
-                <a asp-page="/Index">HOME</a>
-                <a asp-page="/DecisionCenter">DECISION CENTER</a>
-                <a asp-page="/RepairAnalyzer">REPAIR</a>
-                <a asp-page="/BuyAnalyzer">BUY</a>
-                <a asp-page="/SellAnalyzer">SELL</a>
-                <a asp-page="/TradeAnalyzer">TRADE</a>
-                <a asp-page="/UpgradeAnalyzer">UPGRADE</a>
-                <a asp-page="/Resources">RESOURCES</a>
-                <a class="pricing-nav" asp-page="/Pricing">PRICING</a>
-                <a asp-page="/MyGarage">GARAGE</a>
+                <a asp-page="/Index">
+                    HOME
+                </a>
+
+                <a asp-page="/DecisionCenter">
+                    DECISION CENTER
+                </a>
+
+                <a asp-page="/RepairAnalyzer">
+                    REPAIR
+                </a>
+
+                <a asp-page="/BuyAnalyzer">
+                    BUY
+                </a>
+
+                <a asp-page="/SellAnalyzer">
+                    SELL
+                </a>
+
+                <a asp-page="/TradeAnalyzer">
+                    TRADE
+                </a>
+
+                <a asp-page="/UpgradeAnalyzer">
+                    UPGRADE
+                </a>
+
+                <a asp-page="/Resources">
+                    RESOURCES
+                </a>
+
+                <a class="pricing-nav"
+                   asp-page="/Pricing">
+                    PRICING
+                </a>
+
+                <a asp-page="/MyGarage">
+                    GARAGE
+                </a>
 
                 @if (User.Identity?.IsAuthenticated ?? false)
                 {
@@ -160,7 +289,10 @@
 
                         </button>
 
-                        <div class="dropdown-menu dropdown-menu-end ponyup-profile-menu">
+                        <div class="
+                            dropdown-menu
+                            dropdown-menu-end
+                            ponyup-profile-menu">
 
                             <a class="dropdown-item"
                                asp-page="/Index">
@@ -202,7 +334,9 @@
                                 RESOURCES
                             </a>
 
-                            <a class="dropdown-item profile-pricing"
+                            <a class="
+                                dropdown-item
+                                profile-pricing"
                                asp-page="/Pricing">
                                 PRICING
                             </a>
@@ -212,7 +346,8 @@
                                 GARAGE
                             </a>
 
-                            <div class="ponyup-profile-divider"></div>
+                            <div class="ponyup-profile-divider">
+                            </div>
 
                             <a class="dropdown-item"
                                asp-area="Identity"
@@ -221,11 +356,22 @@
                             </a>
 
                             <a class="dropdown-item"
-                               asp-page="/Privacy">
+                               asp-page="/Contact">
                                 CONTACT
                             </a>
 
-                            <div class="ponyup-profile-divider"></div>
+                            <a class="dropdown-item"
+                               asp-page="/Privacy">
+                                PRIVACY
+                            </a>
+
+                            <a class="dropdown-item"
+                               asp-page="/Terms">
+                                TERMS
+                            </a>
+
+                            <div class="ponyup-profile-divider">
+                            </div>
 
                             <form asp-area="Identity"
                                   asp-page="/Account/Logout"
@@ -233,13 +379,18 @@
                                   method="post">
 
                                 <button type="submit"
-                                        class="dropdown-item logout-item">
+                                        class="
+                                            dropdown-item
+                                            logout-item">
+
                                     LOGOUT
+
                                 </button>
 
                             </form>
 
                         </div>
+
                     </div>
                 }
                 else
@@ -247,25 +398,34 @@
                     <a class="ponyup-auth-link"
                        asp-area="Identity"
                        asp-page="/Account/Register">
+
                         REGISTER
+
                     </a>
 
                     <a class="ponyup-auth-button"
                        asp-area="Identity"
                        asp-page="/Account/Login">
+
                         LOGIN
+
                     </a>
                 }
 
             </div>
+
         </nav>
+
     </header>
 
     <main role="main">
+
         @RenderBody()
+
     </main>
 
     <footer class="ponyup-footer">
+
         <img src="~/images/ponyup-logo.jpg"
              alt="PonyUp Performance" />
 
@@ -273,12 +433,38 @@
             © 2026 PonyUp Performance.
             Vehicle decisions made smarter.
         </p>
+
+        <div class="ponyup-footer-links">
+
+            <a asp-page="/Contact">
+                CONTACT
+            </a>
+
+            <a asp-page="/Privacy">
+                PRIVACY
+            </a>
+
+            <a asp-page="/Terms">
+                TERMS
+            </a>
+
+        </div>
+
     </footer>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js">
+    </script>
 
-    @await RenderSectionAsync("Scripts", required: false)
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+    <script src="~/js/site.js"
+            asp-append-version="true">
+    </script>
+
+    @await RenderSectionAsync(
+        "Scripts",
+        required: false)
+
 </body>
 </html>
