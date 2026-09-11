@@ -38,11 +38,9 @@ public class RepairAnalyzerModel : PageModel
     [BindProperty]
     public bool EstimateCreditConsumed { get; set; }
 
-    /*
-     * Bind this so the completed estimate survives the
-     * next Analyze post and the workflow can move cleanly
-     * between Estimate -> Decision -> Result.
-     */
+    [BindProperty]
+    public int WorkflowStage { get; set; } = 1;
+
     [BindProperty]
     public RepairCostEstimateResult? EstimateResult { get; set; }
 
@@ -59,6 +57,11 @@ public class RepairAnalyzerModel : PageModel
 
     public async Task OnGetAsync()
     {
+        /*
+         * A fresh page always begins at Stage 1.
+         */
+        WorkflowStage = 1;
+
         RepairTypes =
             _repairCostEstimatorService.GetRepairTypes();
 
@@ -69,6 +72,13 @@ public class RepairAnalyzerModel : PageModel
     public async Task<IActionResult> OnPostDecodeVinAsync(
         CancellationToken cancellationToken)
     {
+        /*
+         * DECODE VIN never advances the workflow.
+         *
+         * It only populates vehicle information.
+         */
+        WorkflowStage = 1;
+
         RepairTypes =
             _repairCostEstimatorService.GetRepairTypes();
 
@@ -113,6 +123,10 @@ public class RepairAnalyzerModel : PageModel
 
         ApplyDecodedVehicle(decoded);
 
+        /*
+         * Clear submitted field values so Razor displays
+         * the decoded vehicle values from Input.
+         */
         ModelState.Clear();
 
         VinDecodeMessage =
@@ -120,11 +134,24 @@ public class RepairAnalyzerModel : PageModel
                 ? "VIN decoded successfully."
                 : $"VIN decoded: {decoded.DisplayName}";
 
+        /*
+         * Explicitly remain on Stage 1.
+         */
+        WorkflowStage = 1;
+
         return Page();
     }
 
     public async Task<IActionResult> OnPostEstimateAsync()
     {
+        /*
+         * ESTIMATE button begins from Stage 1.
+         *
+         * It advances to Stage 2 ONLY after a successful
+         * repair estimate and successful credit use.
+         */
+        WorkflowStage = 1;
+
         RepairTypes =
             _repairCostEstimatorService.GetRepairTypes();
 
@@ -175,20 +202,25 @@ public class RepairAnalyzerModel : PageModel
 
             EstimateResult = null;
 
+            /*
+             * Estimate failed.
+             * Stay on Stage 1.
+             */
+            WorkflowStage = 1;
+
             return Page();
         }
 
         /*
-         * Expected repair estimate becomes the default
-         * Repair Cost for the actual decision analysis.
+         * PonyUp expected estimate becomes the default
+         * Repair Cost for the actual repair decision.
          */
         Input.RepairCost =
             EstimateResult.ExpectedEstimate;
 
         /*
-         * Explicit Razor binding key.
-         * Prevent stale submitted values from overriding
-         * the newly calculated expected estimate.
+         * Prevent the old posted RepairCost value from
+         * overriding the new expected estimate.
          */
         ModelState.Remove("Input.RepairCost");
 
@@ -197,11 +229,24 @@ public class RepairAnalyzerModel : PageModel
         CreditStatus =
             await _usageCreditService.GetStatusAsync(User);
 
+        /*
+         * ONLY the successful ESTIMATE button advances
+         * the page to Stage 2.
+         */
+        WorkflowStage = 2;
+
         return Page();
     }
 
     public async Task<IActionResult> OnPostAnalyzeAsync()
     {
+        /*
+         * ANALYZE REPAIR operates from Stage 2.
+         *
+         * Any failure leaves the customer on Stage 2.
+         */
+        WorkflowStage = 2;
+
         RepairTypes =
             _repairCostEstimatorService.GetRepairTypes();
 
@@ -255,6 +300,48 @@ public class RepairAnalyzerModel : PageModel
             _repairScoringService.Analyze(Input);
 
         EstimateCreditConsumed = false;
+
+        CreditStatus =
+            await _usageCreditService.GetStatusAsync(User);
+
+        /*
+         * ONLY a successful ANALYZE REPAIR button
+         * advances the workflow to Stage 3.
+         */
+        WorkflowStage = 3;
+
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostChangeEstimateAsync()
+    {
+        /*
+         * Explicit user action returns to Stage 1.
+         */
+        WorkflowStage = 1;
+
+        Result = null;
+
+        RepairTypes =
+            _repairCostEstimatorService.GetRepairTypes();
+
+        CreditStatus =
+            await _usageCreditService.GetStatusAsync(User);
+
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostEditAnalysisAsync()
+    {
+        /*
+         * Explicit user action returns to Stage 2.
+         */
+        WorkflowStage = 2;
+
+        Result = null;
+
+        RepairTypes =
+            _repairCostEstimatorService.GetRepairTypes();
 
         CreditStatus =
             await _usageCreditService.GetStatusAsync(User);
