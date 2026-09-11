@@ -38,6 +38,12 @@ public class RepairAnalyzerModel : PageModel
     [BindProperty]
     public bool EstimateCreditConsumed { get; set; }
 
+    /*
+     * Bind this so the completed estimate survives the
+     * next Analyze post and the workflow can move cleanly
+     * between Estimate -> Decision -> Result.
+     */
+    [BindProperty]
     public RepairCostEstimateResult? EstimateResult { get; set; }
 
     public DecisionResult? Result { get; set; }
@@ -107,10 +113,6 @@ public class RepairAnalyzerModel : PageModel
 
         ApplyDecodedVehicle(decoded);
 
-        /*
-         * Clear posted binding values so Razor displays
-         * the newly decoded vehicle information.
-         */
         ModelState.Clear();
 
         VinDecodeMessage =
@@ -176,15 +178,19 @@ public class RepairAnalyzerModel : PageModel
             return Page();
         }
 
+        /*
+         * Expected repair estimate becomes the default
+         * Repair Cost for the actual decision analysis.
+         */
         Input.RepairCost =
             EstimateResult.ExpectedEstimate;
 
         /*
-         * Force Razor to display the estimated repair
-         * value instead of the stale posted value.
+         * Explicit Razor binding key.
+         * Prevent stale submitted values from overriding
+         * the newly calculated expected estimate.
          */
-        ModelState.Remove(
-            nameof(Input.RepairCost));
+        ModelState.Remove("Input.RepairCost");
 
         EstimateCreditConsumed = true;
 
