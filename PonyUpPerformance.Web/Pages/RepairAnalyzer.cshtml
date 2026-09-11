@@ -51,6 +51,112 @@
         };
 }
 
+<style>
+
+    /*
+     * REPAIR ANALYZER FORM LAYOUT
+     *
+     * Overrides the site's global 220px label column
+     * only inside the Repair Analyzer.
+     */
+
+    .repair-bg .analyzer-form {
+        width: 100%;
+    }
+
+    .repair-bg .form-row {
+        display: grid;
+
+        grid-template-columns:
+            minmax(260px, 340px)
+            minmax(280px, 380px);
+
+        justify-content: center;
+        align-items: center;
+
+        width: min(760px, 100%);
+
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 16px;
+
+        gap: 14px;
+    }
+
+    .repair-bg .form-row > label {
+        width: 100%;
+
+        white-space: normal;
+
+        overflow: visible;
+
+        text-overflow: unset;
+
+        overflow-wrap: normal;
+
+        word-break: normal;
+
+        line-height: 1.15;
+
+        text-align: right;
+    }
+
+    .repair-bg .form-row > input,
+    .repair-bg .form-row > select {
+        width: 100%;
+        min-width: 0;
+    }
+
+    /*
+     * Give the complete-decision section enough usable
+     * width without changing the outer PonyUp card.
+     */
+
+    .repair-bg .analyzer-card {
+        overflow: visible;
+    }
+
+    /*
+     * Safety-critical checkbox gets its own centered row.
+     */
+
+    .repair-bg .single-check {
+        width: min(720px, 100%);
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+    }
+
+    /*
+     * Mobile/tablet:
+     * labels stack over their controls rather than
+     * squeezing or clipping.
+     */
+
+    @@media (max-width: 760px) {
+
+        .repair-bg .form-row {
+            grid-template-columns: 1fr;
+
+            width: 100%;
+
+            gap: 7px;
+        }
+
+        .repair-bg .form-row > label {
+            text-align: left;
+
+            white-space: normal;
+        }
+
+        .repair-bg .form-row > input,
+        .repair-bg .form-row > select {
+            width: 100%;
+        }
+    }
+
+</style>
+
 <section class="page-section analyzer-page repair-bg">
 
     <h1 class="section-title">
@@ -79,6 +185,10 @@
         ==================================================
         STAGE 1
         VEHICLE + REPAIR ESTIMATE INPUTS
+
+        Decode VIN stays on Stage 1.
+        Estimate Repair Cost is the only action that
+        advances successfully to Stage 2.
         ==================================================
     *@
 
@@ -307,9 +417,9 @@
     @*
         ==================================================
         STAGE 2
-        REPAIR ESTIMATE + DECISION INPUTS
+        ACTUAL REPAIR ESTIMATE + DECISION INPUTS
 
-        ONLY shown after Estimate button succeeds.
+        Appears ONLY after Estimate Repair Cost succeeds.
         ==================================================
     *@
 
@@ -436,12 +546,18 @@
                 </p>
 
                 <p>
-                    <strong>Repair:</strong>
+                    <strong>
+                        Repair:
+                    </strong>
+
                     @Model.EstimateResult.RepairType
                 </p>
 
                 <p>
-                    <strong>Location:</strong>
+                    <strong>
+                        Location:
+                    </strong>
+
                     @Model.EstimateResult.LocationUsed
                 </p>
 
@@ -449,8 +565,12 @@
                 </div>
 
                 <p>
-                    <strong>Low Estimate:</strong>
-                    @Money(Model.EstimateResult.LowEstimate)
+                    <strong>
+                        Low Estimate:
+                    </strong>
+
+                    @Money(
+                        Model.EstimateResult.LowEstimate)
                 </p>
 
                 <p style="font-size:1.2rem;">
@@ -465,7 +585,9 @@
                 </p>
 
                 <p>
-                    <strong>High Estimate:</strong>
+                    <strong>
+                        High Estimate:
+                    </strong>
 
                     @Money(
                         Model.EstimateResult.HighEstimate)
@@ -475,7 +597,9 @@
                 </div>
 
                 <p>
-                    <strong>Average Labor Rate:</strong>
+                    <strong>
+                        Average Labor Rate:
+                    </strong>
 
                     @Money(
                         Model.EstimateResult.LaborRateAverage)
@@ -484,7 +608,9 @@
                 </p>
 
                 <p>
-                    <strong>Average Labor Time:</strong>
+                    <strong>
+                        Average Labor Time:
+                    </strong>
 
                     @Hours(
                         Model.EstimateResult.LaborHoursAverage)
@@ -493,14 +619,18 @@
                 </p>
 
                 <p>
-                    <strong>Average Parts Cost:</strong>
+                    <strong>
+                        Average Parts Cost:
+                    </strong>
 
                     @Money(
                         Model.EstimateResult.PartsAverage)
                 </p>
 
                 <p>
-                    <strong>Average Shop Fee:</strong>
+                    <strong>
+                        Average Shop Fee:
+                    </strong>
 
                     @Money(
                         Model.EstimateResult.ShopFeeAverage)
@@ -509,7 +639,9 @@
                 @if (Model.EstimateResult.DiagnosticFee > 0)
                 {
                     <p>
-                        <strong>Diagnostic Fee:</strong>
+                        <strong>
+                            Diagnostic Fee:
+                        </strong>
 
                         @Money(
                             Model.EstimateResult.DiagnosticFee)
@@ -519,7 +651,9 @@
                 @if (Model.EstimateResult.TowFee > 0)
                 {
                     <p>
-                        <strong>Tow Fee:</strong>
+                        <strong>
+                            Tow Fee:
+                        </strong>
 
                         @Money(
                             Model.EstimateResult.TowFee)
@@ -656,9 +790,9 @@
     @*
         ==================================================
         STAGE 3
-        PONYUP STOPLIGHT
+        PONYUP STOPLIGHT RESULT
 
-        ONLY shown after Analyze Repair succeeds.
+        Appears ONLY after Analyze Repair succeeds.
         ==================================================
     *@
 
@@ -678,7 +812,9 @@
                 </h2>
 
                 <p>
-                    <strong>Financial Impact:</strong>
+                    <strong>
+                        Financial Impact:
+                    </strong>
 
                     @Model.Result.FinancialImpact
                 </p>
