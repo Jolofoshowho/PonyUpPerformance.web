@@ -31,7 +31,8 @@
                 Model.WorkflowStage == 3 &&
                 Model.Result != null,
 
-            AnalysisType = "REPAIR DECISION",
+            AnalysisType =
+                "REPAIR DECISION",
 
             Score =
                 Model.Result?.Score,
@@ -61,7 +62,8 @@
         this vehicle makes financial sense.
     </p>
 
-    @if (!string.IsNullOrWhiteSpace(Model.CreditMessage))
+    @if (!string.IsNullOrWhiteSpace(
+        Model.CreditMessage))
     {
         <div class="price-card featured"
              style="max-width:900px;margin:0 auto 24px;">
@@ -125,6 +127,7 @@
                     <input asp-for="Input.Vin"
                            maxlength="17"
                            autocomplete="off"
+                           data-vin-history="true"
                            style="text-transform:uppercase;" />
 
                     <span asp-validation-for="Input.Vin"
@@ -153,6 +156,18 @@
                     <p style="font-weight:700;">
                         @Model.VinDecodeMessage
                     </p>
+
+                    @if (!string.IsNullOrWhiteSpace(
+                        Model.Input.Vin))
+                    {
+                        <span hidden
+                              data-vin-history-record
+                              data-vin="@Model.Input.Vin"
+                              data-year="@Model.Input.VehicleYear"
+                              data-make="@Model.Input.VehicleMake"
+                              data-model="@Model.Input.VehicleModel">
+                        </span>
+                    }
                 }
 
                 <div class="form-row">
@@ -444,13 +459,16 @@
                         Expected Estimate:
                     </strong>
 
-                    @Money(Model.EstimateResult.ExpectedEstimate)
+                    @Money(
+                        Model.EstimateResult.ExpectedEstimate)
 
                 </p>
 
                 <p>
                     <strong>High Estimate:</strong>
-                    @Money(Model.EstimateResult.HighEstimate)
+
+                    @Money(
+                        Model.EstimateResult.HighEstimate)
                 </p>
 
                 <div class="analyzer-section-divider">
@@ -458,31 +476,43 @@
 
                 <p>
                     <strong>Average Labor Rate:</strong>
-                    @Money(Model.EstimateResult.LaborRateAverage)
+
+                    @Money(
+                        Model.EstimateResult.LaborRateAverage)
+
                     per hour
                 </p>
 
                 <p>
                     <strong>Average Labor Time:</strong>
-                    @Hours(Model.EstimateResult.LaborHoursAverage)
+
+                    @Hours(
+                        Model.EstimateResult.LaborHoursAverage)
+
                     hours
                 </p>
 
                 <p>
                     <strong>Average Parts Cost:</strong>
-                    @Money(Model.EstimateResult.PartsAverage)
+
+                    @Money(
+                        Model.EstimateResult.PartsAverage)
                 </p>
 
                 <p>
                     <strong>Average Shop Fee:</strong>
-                    @Money(Model.EstimateResult.ShopFeeAverage)
+
+                    @Money(
+                        Model.EstimateResult.ShopFeeAverage)
                 </p>
 
                 @if (Model.EstimateResult.DiagnosticFee > 0)
                 {
                     <p>
                         <strong>Diagnostic Fee:</strong>
-                        @Money(Model.EstimateResult.DiagnosticFee)
+
+                        @Money(
+                            Model.EstimateResult.DiagnosticFee)
                     </p>
                 }
 
@@ -490,7 +520,9 @@
                 {
                     <p>
                         <strong>Tow Fee:</strong>
-                        @Money(Model.EstimateResult.TowFee)
+
+                        @Money(
+                            Model.EstimateResult.TowFee)
                     </p>
                 }
 
@@ -647,6 +679,7 @@
 
                 <p>
                     <strong>Financial Impact:</strong>
+
                     @Model.Result.FinancialImpact
                 </p>
 
