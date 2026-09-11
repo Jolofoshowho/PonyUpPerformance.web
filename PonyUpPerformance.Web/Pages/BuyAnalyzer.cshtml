@@ -17,6 +17,28 @@
             ? "max-width:900px;margin:0 auto;display:none;"
             : "max-width:900px;margin:0 auto;";
 
+    string FormatMatrixPrice(decimal? value)
+    {
+        if (!value.HasValue)
+        {
+            return "Not available — add market value";
+        }
+
+        if (value.Value <= 0m)
+        {
+            return "No positive price supported";
+        }
+
+        return value.Value.ToString("C");
+    }
+
+    string FormatNegotiationMargin(decimal? value)
+    {
+        return value.HasValue
+            ? $"{value.Value:0.#}%"
+            : "Not available — add market value";
+    }
+
     var stoplight =
         new PonyUpPerformance.Web.Models.PonyUpStoplightResultViewModel
         {
@@ -303,18 +325,23 @@
                     <option value="-1">
                         Select Condition
                     </option>
+
                     <option value="0">
                         Excellent
                     </option>
+
                     <option value="1">
                         Good
                     </option>
+
                     <option value="2">
                         Fair
                     </option>
+
                     <option value="3">
                         Poor
                     </option>
+
                     <option value="4">
                         Severe
                     </option>
@@ -336,15 +363,19 @@
                     <option value="-1">
                         Select Title Status
                     </option>
+
                     <option value="0">
                         Clean
                     </option>
+
                     <option value="1">
                         Rebuilt
                     </option>
+
                     <option value="2">
                         Salvage
                     </option>
+
                     <option value="3">
                         Flood
                     </option>
@@ -366,15 +397,19 @@
                     <option value="-1">
                         Select Accident History
                     </option>
+
                     <option value="0">
                         None
                     </option>
+
                     <option value="1">
                         Minor
                     </option>
+
                     <option value="2">
                         Moderate
                     </option>
+
                     <option value="3">
                         Major
                     </option>
@@ -396,18 +431,23 @@
                     <option value="-1">
                         Select Intended Use
                     </option>
+
                     <option value="0">
                         Daily Driver
                     </option>
+
                     <option value="1">
                         Work Vehicle
                     </option>
+
                     <option value="2">
                         Family Vehicle
                     </option>
+
                     <option value="3">
                         Project Vehicle
                     </option>
+
                     <option value="4">
                         Performance Build
                     </option>
@@ -463,18 +503,10 @@
                 </h2>
 
                 <p>
-                    <strong>Asking Price:</strong>
+                    <strong>Seller Asking Price:</strong>
 
                     @(Model.Input.AskingPrice.HasValue
                         ? Model.Input.AskingPrice.Value.ToString("C")
-                        : "Not provided")
-                </p>
-
-                <p>
-                    <strong>Estimated Repair Cost:</strong>
-
-                    @(Model.Input.EstimatedRepairCost.HasValue
-                        ? Model.Input.EstimatedRepairCost.Value.ToString("C")
                         : "Not provided")
                 </p>
 
@@ -486,22 +518,49 @@
                         : "Not provided")
                 </p>
 
+                <p>
+                    <strong>Estimated Repair Cost:</strong>
+
+                    @(Model.Input.EstimatedRepairCost.HasValue
+                        ? Model.Input.EstimatedRepairCost.Value.ToString("C")
+                        : "Not provided")
+                </p>
+
                 <div class="analyzer-section-divider">
                 </div>
 
+                <h3>
+                    PONYUP PRICING MATRIX
+                </h3>
+
+                <p>
+                    <strong>PonyUp Fair Asking Price:</strong>
+                    @FormatMatrixPrice(
+                        Model.Result.FairAskingPrice)
+                </p>
+
+                <p>
+                    <strong>Buyer Negotiation Margin:</strong>
+                    @FormatNegotiationMargin(
+                        Model.Result.BuyerNegotiationMarginPercent)
+                </p>
+
                 <p>
                     <strong>Maximum Recommended Price:</strong>
-                    @Model.Result.MaximumRecommendedPrice.ToString("C")
+                    @FormatMatrixPrice(
+                        Model.Result.MaximumRecommendedPrice)
                 </p>
 
                 <p>
                     <strong>Fair Purchase Price:</strong>
-                    @Model.Result.FairPurchasePrice.ToString("C")
+                    @FormatMatrixPrice(
+                        Model.Result.FairPurchasePrice)
                 </p>
 
                 <p>
                     <strong>Suggested First Offer:</strong>
-                    @Model.Result.SuggestedFirstOffer.ToString("C")
+                    @FormatMatrixPrice(
+                        Model.Result.SuggestedFirstOffer)
                 </p>
 
                 @if (!string.IsNullOrWhiteSpace(
