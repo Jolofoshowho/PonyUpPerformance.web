@@ -1149,3 +1149,362 @@ body::before {
 .page-section.upgrade-bg {
     background-image: url('/images/ponyup-lavamare.png') !important;
 }
+
+/* =========================================================
+   PONYUP REPAIR ANALYZER — PERFORMANCE VISUAL PACKAGE
+   ========================================================= */
+
+/* -----------------------------
+   REPAIR ANALYZER TOP BANNER
+   ----------------------------- */
+
+.repair-bg > .section-title {
+    position: relative;
+    width: min(1180px, 96%);
+    margin: -18px auto 0;
+    padding: 20px 30px 18px;
+
+    color: #ff3131;
+
+    font-size: clamp(2.2rem, 5vw, 4.3rem);
+    font-weight: 1000;
+    font-style: italic;
+    line-height: 1;
+    letter-spacing: .08rem;
+    text-transform: uppercase;
+
+    -webkit-text-stroke: 1.4px #ffffff;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(36,36,36,.98) 0%,
+            rgba(10,10,10,.98) 42%,
+            rgba(2,2,2,.99) 100%
+        );
+
+    border-top: 2px solid #ff3131;
+    border-bottom: 3px solid #ff3131;
+
+    clip-path: polygon(
+        3% 0,
+        97% 0,
+        100% 50%,
+        97% 100%,
+        3% 100%,
+        0 50%
+    );
+
+    box-shadow:
+        inset 0 2px 0 rgba(255,255,255,.20),
+        inset 0 -8px 20px rgba(0,0,0,.95),
+        0 0 10px rgba(255,49,49,.85),
+        0 0 26px rgba(255,49,49,.48),
+        0 12px 30px rgba(0,0,0,.9);
+
+    text-shadow:
+        0 2px 0 #8d0d12,
+        0 4px 0 #52070a,
+        0 6px 0 #1a0102,
+        0 0 5px rgba(255,255,255,.95),
+        0 0 14px rgba(255,49,49,.95),
+        0 0 28px rgba(255,49,49,.72);
+}
+
+
+/* Red illuminated line through banner */
+
+.repair-bg > .section-title::after {
+    content: "";
+    position: absolute;
+
+    left: 4%;
+    right: 4%;
+    bottom: 3px;
+
+    height: 2px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            #ff3131 15%,
+            #ffffff 50%,
+            #ff3131 85%,
+            transparent
+        );
+
+    box-shadow:
+        0 0 8px #ff3131,
+        0 0 18px rgba(255,49,49,.85);
+}
+
+
+/* Subtitle becomes part of banner presentation */
+
+.repair-bg > .section-subtitle {
+    width: min(1050px, 92%);
+
+    margin:
+        10px auto
+        42px;
+
+    padding: 8px 15px;
+
+    color: #ffffff;
+
+    font-size: clamp(.82rem, 1.5vw, 1.05rem);
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: .09rem;
+    text-transform: uppercase;
+
+    text-shadow:
+        0 0 7px rgba(255,255,255,.72),
+        0 0 14px rgba(0,0,0,1);
+}
+
+
+/* -----------------------------
+   REPAIR CARDS
+   ----------------------------- */
+
+.repair-bg .analyzer-card {
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(255,49,49,.08),
+            transparent 28%
+        ),
+        linear-gradient(
+            180deg,
+            rgba(18,18,18,.94),
+            rgba(4,4,4,.97)
+        );
+
+    border:
+        1px solid
+        rgba(255,49,49,.70);
+
+    box-shadow:
+        inset 0 0 50px rgba(255,49,49,.035),
+        0 0 10px rgba(255,49,49,.26),
+        0 18px 40px rgba(0,0,0,.82);
+}
+
+
+/* -----------------------------
+   MAJOR HEADINGS
+
+   VEHICLE INFORMATION
+   REPAIR COST ESTIMATE
+   COMPLETE REPAIR DECISION
+   etc.
+   ----------------------------- */
+
+.repair-bg .analyzer-card h2,
+.repair-bg .featured h2,
+.repair-bg .featured h3 {
+    color: #ff3131;
+
+    font-size: clamp(1.45rem, 2.7vw, 2rem);
+    font-weight: 1000;
+    font-style: italic;
+    line-height: 1.05;
+    letter-spacing: .035rem;
+    text-transform: uppercase;
+
+    -webkit-text-stroke: .75px #ffffff;
+
+    text-shadow:
+        0 2px 0 #850b10,
+        0 4px 0 #480609,
+        0 5px 0 #140101,
+        0 0 5px rgba(255,255,255,.85),
+        0 0 12px rgba(255,49,49,.95),
+        0 0 22px rgba(255,49,49,.58);
+
+    margin:
+        8px 0
+        22px;
+}
+
+
+/* -----------------------------
+   ESTIMATE LABELS
+
+   REPAIR:
+   LOCATION:
+   LOW ESTIMATE:
+   EXPECTED ESTIMATE:
+   HIGH ESTIMATE:
+   LABOR RATE:
+   PARTS COST:
+   SHOP FEE:
+   etc.
+   ----------------------------- */
+
+.repair-bg .analyzer-card p > strong,
+.repair-bg .featured p > strong {
+    display: block;
+
+    color: #ff3131;
+
+    font-size: clamp(1.35rem, 2.4vw, 1.9rem);
+    font-weight: 1000;
+    font-style: italic;
+    line-height: 1.08;
+    letter-spacing: .02rem;
+    text-transform: uppercase;
+
+    -webkit-text-stroke: .55px rgba(255,255,255,.92);
+
+    text-shadow:
+        0 2px 0 #850b10,
+        0 3px 0 #430407,
+        0 0 4px rgba(255,255,255,.65),
+        0 0 11px rgba(255,49,49,.90),
+        0 0 20px rgba(255,49,49,.48);
+
+    margin-bottom: 7px;
+}
+
+
+/* -----------------------------
+   VALUES UNDER RED LABELS
+   ----------------------------- */
+
+.repair-bg .analyzer-card p,
+.repair-bg .featured p {
+    color: #ffffff;
+
+    font-weight: 800;
+
+    text-shadow:
+        0 0 7px rgba(255,255,255,.30),
+        0 0 10px rgba(0,0,0,.95);
+}
+
+
+/* Give each estimate item breathing room */
+
+.repair-bg .analyzer-card p {
+    margin-top: 18px;
+    margin-bottom: 18px;
+}
+
+
+/* -----------------------------
+   EXPECTED ESTIMATE EMPHASIS
+   ----------------------------- */
+
+.repair-bg .analyzer-card p[style*="font-size:1.2rem"] {
+    padding: 16px 10px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,49,49,.07),
+            rgba(255,49,49,.12),
+            rgba(255,49,49,.07),
+            transparent
+        );
+
+    border-top:
+        1px solid
+        rgba(255,49,49,.28);
+
+    border-bottom:
+        1px solid
+        rgba(255,49,49,.28);
+
+    box-shadow:
+        inset 0 0 18px rgba(255,49,49,.035);
+}
+
+
+/* -----------------------------
+   DIVIDERS
+   ----------------------------- */
+
+.repair-bg .analyzer-section-divider {
+    height: 1px;
+
+    margin: 28px 0;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,49,49,.9),
+            rgba(255,255,255,.45),
+            rgba(255,49,49,.9),
+            transparent
+        );
+
+    box-shadow:
+        0 0 7px rgba(255,49,49,.55);
+
+    border: 0;
+}
+
+
+/* -----------------------------
+   INPUT LABELS
+   ----------------------------- */
+
+.repair-bg .form-row > label {
+    color: #ff3131;
+
+    font-weight: 1000;
+
+    text-transform: uppercase;
+
+    text-shadow:
+        0 0 8px rgba(255,49,49,.45);
+}
+
+
+/* -----------------------------
+   MOBILE
+   ----------------------------- */
+
+@media (max-width: 700px) {
+
+    .repair-bg > .section-title {
+        width: 100%;
+
+        padding:
+            17px 18px
+            15px;
+
+        font-size:
+            clamp(
+                1.85rem,
+                10vw,
+                2.8rem
+            );
+
+        letter-spacing: 0;
+    }
+
+    .repair-bg > .section-subtitle {
+        font-size: .75rem;
+        letter-spacing: .045rem;
+        margin-bottom: 28px;
+    }
+
+    .repair-bg .analyzer-card h2,
+    .repair-bg .featured h2,
+    .repair-bg .featured h3,
+    .repair-bg .analyzer-card p > strong,
+    .repair-bg .featured p > strong {
+        font-size:
+            clamp(
+                1.25rem,
+                6vw,
+                1.7rem
+            );
+    }
+}
