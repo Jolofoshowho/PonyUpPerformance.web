@@ -1,7 +1,15 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace PonyUpPerformance.Web.Models;
 
 public class RepairDecisionInput
 {
+    [Display(Name = "VIN")]
+    [RegularExpression(
+        @"^$|(?i)^[A-HJ-NPR-Z0-9]{17}$",
+        ErrorMessage = "Enter a valid 17-character VIN.")]
+    public string? Vin { get; set; } = string.Empty;
+
     public int VehicleYear { get; set; }
 
     public string VehicleMake { get; set; } = string.Empty;
