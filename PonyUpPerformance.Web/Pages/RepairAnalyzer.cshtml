@@ -4,8 +4,8 @@
 @{
     ViewData["Title"] = "Repair Analyzer";
 
-    int decisionScore = Model.Result?.Score ?? 0;
-    int confidenceScore = Model.Result?.ConfidenceScore ?? 0;
+    int decisionScore =
+        Model.Result?.Score ?? 0;
 
     string recommendation =
         Model.Result?.Recommendation
@@ -20,101 +20,227 @@
         {
             HasResult = Model.Result != null,
             AnalysisType = "REPAIR DECISION",
+            Score = Model.Result?.Score,
             Recommendation = recommendation,
-            ConfidenceScore = decisionScore,
+            ConfidenceScore =
+                Model.Result?.ConfidenceScore ?? 0,
+            RiskLevel =
+                Model.Result?.RiskLevel ?? string.Empty,
             Reasoning = reasoning
         };
 }
 
 <section class="page-section analyzer-page repair-bg">
-    <h1 class="section-title">REPAIR ANALYZER</h1>
+
+    <h1 class="section-title">
+        REPAIR ANALYZER
+    </h1>
 
     <p class="section-subtitle">
-        Know before you spend. Determine whether repairing this vehicle makes financial sense.
+        Know before you spend. Determine whether repairing
+        this vehicle makes financial sense.
     </p>
 
     @if (!string.IsNullOrWhiteSpace(Model.CreditMessage))
     {
         <div class="price-card featured"
              style="max-width:900px;margin:0 auto 24px;">
-            <p>@Model.CreditMessage</p>
+
+            <p>
+                @Model.CreditMessage
+            </p>
+
         </div>
     }
 
     <div class="price-card analyzer-card"
          style="max-width:900px;margin:0 auto;">
 
-        <form method="post" class="analyzer-form">
-            <input asp-for="EstimateCreditConsumed" type="hidden" />
+        <form method="post"
+              class="analyzer-form">
+
+            <input asp-for="EstimateCreditConsumed"
+                   type="hidden" />
+
+            <h2>
+                VEHICLE INFORMATION
+            </h2>
 
             <div class="form-row">
-                <label asp-for="Input.VehicleYear">Year</label>
-                <input asp-for="Input.VehicleYear" />
+
+                <label asp-for="Input.Vin">
+                    VIN
+                </label>
+
+                <input asp-for="Input.Vin"
+                       maxlength="17"
+                       autocomplete="off"
+                       style="text-transform:uppercase;" />
+
+                <span asp-validation-for="Input.Vin"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+            <div class="form-actions"
+                 style="margin-top:10px;margin-bottom:20px;">
+
+                <button class="btn-red"
+                        type="submit"
+                        asp-page-handler="DecodeVin"
+                        formnovalidate>
+
+                    DECODE VIN
+
+                </button>
+
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(
+                Model.VinDecodeMessage))
+            {
+                <p style="font-weight:700;">
+                    @Model.VinDecodeMessage
+                </p>
+            }
+
+            <div class="form-row">
+
+                <label for="Input_VehicleYear">
+                    Year
+                </label>
+
+                <input id="Input_VehicleYear"
+                       name="Input.VehicleYear"
+                       type="number"
+                       min="1886"
+                       max="2100"
+                       placeholder="Year"
+                       value="@(Model.Input.VehicleYear > 0
+                           ? Model.Input.VehicleYear.ToString()
+                           : string.Empty)" />
+
             </div>
 
             <div class="form-row">
-                <label asp-for="Input.VehicleMake">Make</label>
+
+                <label asp-for="Input.VehicleMake">
+                    Make
+                </label>
+
                 <input asp-for="Input.VehicleMake" />
+
             </div>
 
             <div class="form-row">
-                <label asp-for="Input.VehicleModel">Model</label>
+
+                <label asp-for="Input.VehicleModel">
+                    Model
+                </label>
+
                 <input asp-for="Input.VehicleModel" />
+
             </div>
 
+            <div class="analyzer-section-divider">
+            </div>
+
+            <h2>
+                REPAIR COST ESTIMATE
+            </h2>
+
             <div class="form-row">
-                <label asp-for="EstimateInput.City">City</label>
+
+                <label asp-for="EstimateInput.City">
+                    City
+                </label>
+
                 <input asp-for="EstimateInput.City" />
+
             </div>
 
             <div class="form-row">
-                <label asp-for="EstimateInput.State">State</label>
+
+                <label asp-for="EstimateInput.State">
+                    State
+                </label>
+
                 <input asp-for="EstimateInput.State" />
+
             </div>
 
             <div class="form-row">
-                <label asp-for="EstimateInput.ZipCode">ZIP Code</label>
+
+                <label asp-for="EstimateInput.ZipCode">
+                    ZIP Code
+                </label>
+
                 <input asp-for="EstimateInput.ZipCode" />
+
             </div>
 
             <div class="form-row">
-                <label asp-for="EstimateInput.RepairType">Repair Type</label>
+
+                <label asp-for="EstimateInput.RepairType">
+                    Repair Type
+                </label>
 
                 <select asp-for="EstimateInput.RepairType">
-                    @foreach (string repairType in Model.RepairTypes)
+
+                    @foreach (
+                        string repairType
+                        in Model.RepairTypes)
                     {
                         <option value="@repairType">
                             @repairType
                         </option>
                     }
+
                 </select>
+
             </div>
 
             <div class="form-check-row">
+
                 <label>
+
                     <input asp-for="EstimateInput.IncludeDiagnosticFee" />
+
                     Include Diagnostic Fee
+
                 </label>
 
                 <label>
+
                     <input asp-for="EstimateInput.IncludeTowFee" />
+
                     Include Tow Fee
+
                 </label>
+
             </div>
 
             <div class="form-actions">
+
                 <button class="btn-red"
                         type="submit"
                         asp-page-handler="Estimate"
                         onclick="return confirm('Does all of the information look correct? Estimating the repair cost will use one analysis credit.');">
+
                     ESTIMATE REPAIR COST
+
                 </button>
+
             </div>
 
             @if (Model.EstimateResult != null)
             {
                 <div class="price-card featured estimate-result-card">
-                    <h2>REPAIR COST ESTIMATE</h2>
+
+                    <h2>
+                        REPAIR COST ESTIMATE
+                    </h2>
 
                     <p>
                         <strong>Repair:</strong>
@@ -181,72 +307,119 @@
                     <p>
                         @Model.EstimateResult.EstimateNote
                     </p>
+
                 </div>
             }
 
-            <div class="analyzer-section-divider"></div>
+            <div class="analyzer-section-divider">
+            </div>
+
+            <h2>
+                REPAIR DECISION
+            </h2>
 
             <div class="form-row">
-                <label asp-for="Input.RepairCost">Repair Cost</label>
+
+                <label asp-for="Input.RepairCost">
+                    Repair Cost
+                </label>
+
                 <input asp-for="Input.RepairCost" />
+
             </div>
 
             <div class="form-row">
-                <label asp-for="Input.Mileage">Mileage</label>
+
+                <label asp-for="Input.Mileage">
+                    Mileage
+                </label>
+
                 <input asp-for="Input.Mileage" />
+
             </div>
 
             <div class="form-row">
+
                 <label asp-for="Input.VehicleValue">
                     Estimated Vehicle Value
                 </label>
+
                 <input asp-for="Input.VehicleValue" />
+
             </div>
 
             <div class="form-row">
+
                 <label asp-for="Input.Condition">
                     Overall Vehicle Condition
                 </label>
 
                 <select asp-for="Input.Condition">
-                    <option value="Poor">Poor</option>
-                    <option value="Fair">Fair</option>
-                    <option value="Good">Good</option>
-                    <option value="Excellent">Excellent</option>
+                    <option value="Poor">
+                        Poor
+                    </option>
+
+                    <option value="Fair">
+                        Fair
+                    </option>
+
+                    <option value="Good">
+                        Good
+                    </option>
+
+                    <option value="Excellent">
+                        Excellent
+                    </option>
                 </select>
+
             </div>
 
             <div class="form-row">
+
                 <label asp-for="Input.OwnershipYears">
                     Years You Plan to Keep It
                 </label>
+
                 <input asp-for="Input.OwnershipYears" />
+
             </div>
 
             <div class="form-check-row single-check">
+
                 <label>
+
                     <input asp-for="Input.IsSafetyCritical" />
+
                     Safety-Critical Repair
+
                 </label>
+
             </div>
 
             <div class="form-actions">
-    <button class="btn-red"
-            type="submit"
-            asp-page-handler="Analyze">
-        ANALYZE REPAIR
-    </button>
-</div>
 
-</form>
-</div>
+                <button class="btn-red"
+                        type="submit"
+                        asp-page-handler="Analyze">
+
+                    ANALYZE REPAIR
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
 
     @if (Model.Result != null)
     {
         <div class="price-card featured"
              style="max-width:900px;margin:24px auto 0;">
 
-            <h2>REPAIR ANALYSIS</h2>
+            <h2>
+                REPAIR ANALYSIS
+            </h2>
 
             <p>
                 <strong>Decision Score:</strong>
@@ -273,26 +446,46 @@
                 @Model.Result.FinancialImpact
             </p>
 
-            <div class="analyzer-section-divider"></div>
+            <div class="analyzer-section-divider">
+            </div>
 
-            <h3>WHY WE RECOMMEND THIS</h3>
+            <h3>
+                WHY WE RECOMMEND THIS
+            </h3>
 
-            <p>@Model.Result.Reasoning</p>
+            <p>
+                @Model.Result.Reasoning
+            </p>
 
             @if (Model.Result.NextSteps.Count > 0)
             {
-                <h3>NEXT STEPS</h3>
+                <h3>
+                    NEXT STEPS
+                </h3>
 
                 <ul>
-                    @foreach (string nextStep in Model.Result.NextSteps)
+
+                    @foreach (
+                        string nextStep
+                        in Model.Result.NextSteps)
                     {
-                        <li>@nextStep</li>
+                        <li>
+                            @nextStep
+                        </li>
                     }
+
                 </ul>
             }
+
         </div>
     }
 
     <partial name="_PonyUpStoplightResult"
              model="stoplight" />
+
 </section>
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+}
