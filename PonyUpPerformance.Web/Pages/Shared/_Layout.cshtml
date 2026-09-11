@@ -10,6 +10,112 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/PonyUpPerformance.Web.styles.css" asp-append-version="true" />
+
+    <style>
+        .ponyup-profile-dropdown {
+            position: relative;
+        }
+
+        .ponyup-profile-button {
+            min-width: 92px;
+            padding: 7px 15px !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            background: linear-gradient(180deg, #ff3131, #b91218) !important;
+            border: 1px solid #ff4b4b !important;
+            border-radius: 5px;
+            box-shadow: 0 0 16px rgba(255,49,49,.5);
+            cursor: pointer;
+        }
+
+        .ponyup-profile-button:hover,
+        .ponyup-profile-button:focus {
+            box-shadow: 0 0 24px rgba(255,49,49,.8);
+        }
+
+        .ponyup-profile-top {
+            display: block;
+            font-size: .68rem;
+            font-weight: 1000;
+            letter-spacing: .09rem;
+            color: #ffffff;
+        }
+
+        .ponyup-profile-bottom {
+            display: block;
+            margin-top: 3px;
+            font-size: .9rem;
+            font-weight: 1000;
+            letter-spacing: .04rem;
+            color: #ffffff;
+        }
+
+        .ponyup-profile-menu {
+            min-width: 225px;
+            padding: 8px;
+            margin-top: 8px !important;
+            background:
+                linear-gradient(
+                    180deg,
+                    rgba(24,24,24,.99),
+                    rgba(5,5,5,.99));
+            border: 1px solid rgba(255,255,255,.3);
+            border-top: 2px solid #ff3131;
+            border-radius: 7px;
+            box-shadow:
+                0 16px 35px rgba(0,0,0,.85),
+                0 0 20px rgba(255,49,49,.25);
+            max-height: 78vh;
+            overflow-y: auto;
+            z-index: 5000;
+        }
+
+        .ponyup-profile-menu .dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 10px 13px;
+            color: #ffffff !important;
+            background: transparent !important;
+            border: 0 !important;
+            border-radius: 4px;
+            text-align: left;
+            text-decoration: none;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: .78rem;
+            font-weight: 1000;
+            letter-spacing: .055rem;
+            text-transform: uppercase;
+            text-shadow: 0 0 8px rgba(255,255,255,.35);
+            cursor: pointer;
+        }
+
+        .ponyup-profile-menu .dropdown-item:hover,
+        .ponyup-profile-menu .dropdown-item:focus {
+            color: #ff3131 !important;
+            background: rgba(255,49,49,.10) !important;
+        }
+
+        .ponyup-profile-menu .profile-pricing {
+            color: #ff3131 !important;
+        }
+
+        .ponyup-profile-divider {
+            height: 1px;
+            margin: 7px 5px;
+            background: rgba(255,255,255,.18);
+        }
+
+        .ponyup-profile-menu form {
+            margin: 0;
+        }
+
+        .ponyup-profile-menu .logout-item {
+            color: #ff4b4b !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -17,42 +123,141 @@
         <nav class="ponyup-navbar">
 
             <a class="ponyup-brand" asp-page="/Index">
-                <img src="~/images/ponyup-logo.jpg" alt="PonyUp Performance" />
+                <img src="~/images/ponyup-logo.jpg"
+                     alt="PonyUp Performance" />
             </a>
 
             <div class="ponyup-nav-links">
-    <a asp-page="/Index">HOME</a>
-    <a asp-page="/DecisionCenter">DECISION CENTER</a>
-    <a asp-page="/RepairAnalyzer">REPAIR</a>
-    <a asp-page="/BuyAnalyzer">BUY</a>
-    <a asp-page="/SellAnalyzer">SELL</a>
-    <a asp-page="/TradeAnalyzer">TRADE</a>
-    <a asp-page="/UpgradeAnalyzer">UPGRADE</a>
-    <a asp-page="/Resources">RESOURCES</a>
-    <a class="pricing-nav" asp-page="/Pricing">PRICING</a>
-    <a asp-page="/MyGarage">GARAGE</a>
 
-    @if (User.Identity?.IsAuthenticated ?? false)
-    {
-        <form asp-area="Identity"
-              asp-page="/Account/Logout"
-              asp-route-returnUrl="@Url.Page("/Index")"
-              method="post"
-              style="display:inline;">
-            <button type="submit" class="ponyup-auth-button">LOGOUT</button>
-        </form>
-    }
-    else
-    {
-        <a class="ponyup-auth-link"
-           asp-area="Identity"
-           asp-page="/Account/Register">REGISTER</a>
+                <a asp-page="/Index">HOME</a>
+                <a asp-page="/DecisionCenter">DECISION CENTER</a>
+                <a asp-page="/RepairAnalyzer">REPAIR</a>
+                <a asp-page="/BuyAnalyzer">BUY</a>
+                <a asp-page="/SellAnalyzer">SELL</a>
+                <a asp-page="/TradeAnalyzer">TRADE</a>
+                <a asp-page="/UpgradeAnalyzer">UPGRADE</a>
+                <a asp-page="/Resources">RESOURCES</a>
+                <a class="pricing-nav" asp-page="/Pricing">PRICING</a>
+                <a asp-page="/MyGarage">GARAGE</a>
 
-        <a class="ponyup-auth-button"
-           asp-area="Identity"
-           asp-page="/Account/Login">LOGIN</a>
-    }
-</div>
+                @if (User.Identity?.IsAuthenticated ?? false)
+                {
+                    <div class="dropdown ponyup-profile-dropdown">
+
+                        <button class="ponyup-profile-button"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                                aria-label="Open PonyUp Profile menu">
+
+                            <span class="ponyup-profile-top">
+                                PONYUP
+                            </span>
+
+                            <span class="ponyup-profile-bottom">
+                                PROFILE
+                            </span>
+
+                        </button>
+
+                        <div class="dropdown-menu dropdown-menu-end ponyup-profile-menu">
+
+                            <a class="dropdown-item"
+                               asp-page="/Index">
+                                HOME
+                            </a>
+
+                            <a class="dropdown-item"
+                               asp-page="/DecisionCenter">
+                                DECISION CENTER
+                            </a>
+
+                            <a class="dropdown-item"
+                               asp-page="/RepairAnalyzer">
+                                REPAIR
+                            </a>
+
+                            <a class="dropdown-item"
+                               asp-page="/BuyAnalyzer">
+                                BUY
+                            </a>
+
+                            <a class="dropdown-item"
+                               asp-page="/SellAnalyzer">
+                                SELL
+                            </a>
+
+                            <a class="dropdown-item"
+                               asp-page="/TradeAnalyzer">
+                                TRADE
+                            </a>
+
+                            <a class="dropdown-item"
+                               asp-page="/UpgradeAnalyzer">
+                                UPGRADE
+                            </a>
+
+                            <a class="dropdown-item"
+                               asp-page="/Resources">
+                                RESOURCES
+                            </a>
+
+                            <a class="dropdown-item profile-pricing"
+                               asp-page="/Pricing">
+                                PRICING
+                            </a>
+
+                            <a class="dropdown-item"
+                               asp-page="/MyGarage">
+                                GARAGE
+                            </a>
+
+                            <div class="ponyup-profile-divider"></div>
+
+                            <a class="dropdown-item"
+                               asp-area="Identity"
+                               asp-page="/Account/Manage/Index">
+                                MY ACCOUNT
+                            </a>
+
+                            <a class="dropdown-item"
+                               asp-page="/Privacy">
+                                CONTACT
+                            </a>
+
+                            <div class="ponyup-profile-divider"></div>
+
+                            <form asp-area="Identity"
+                                  asp-page="/Account/Logout"
+                                  asp-route-returnUrl="@Url.Page("/Index")"
+                                  method="post">
+
+                                <button type="submit"
+                                        class="dropdown-item logout-item">
+                                    LOGOUT
+                                </button>
+
+                            </form>
+
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <a class="ponyup-auth-link"
+                       asp-area="Identity"
+                       asp-page="/Account/Register">
+                        REGISTER
+                    </a>
+
+                    <a class="ponyup-auth-button"
+                       asp-area="Identity"
+                       asp-page="/Account/Login">
+                        LOGIN
+                    </a>
+                }
+
+            </div>
         </nav>
     </header>
 
@@ -61,8 +266,13 @@
     </main>
 
     <footer class="ponyup-footer">
-        <img src="~/images/ponyup-logo.jpg" alt="PonyUp Performance" />
-        <p>© 2026 PonyUp Performance. Vehicle decisions made smarter.</p>
+        <img src="~/images/ponyup-logo.jpg"
+             alt="PonyUp Performance" />
+
+        <p>
+            © 2026 PonyUp Performance.
+            Vehicle decisions made smarter.
+        </p>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
