@@ -12,6 +12,18 @@
         Model.Result?.Reasoning
         ?? "Enter the repair details and run the analysis.";
 
+    string Money(decimal value)
+    {
+        return value.ToString(
+            "C",
+            System.Globalization.CultureInfo.GetCultureInfo("en-US"));
+    }
+
+    string Hours(decimal value)
+    {
+        return value.ToString("0.##");
+    }
+
     var stoplight =
         new PonyUpPerformance.Web.Models.PonyUpStoplightResultViewModel
         {
@@ -65,12 +77,6 @@
         ==================================================
         STAGE 1
         VEHICLE + REPAIR ESTIMATE INPUTS
-
-        The page can ONLY reach Stage 1 from:
-        - initial GET
-        - Decode VIN
-        - Change Estimate
-        - a failed Estimate attempt
         ==================================================
     *@
 
@@ -87,11 +93,6 @@
 
                 <input asp-for="EstimateCreditConsumed"
                        type="hidden" />
-
-                @*
-                    Preserve any existing decision values
-                    if the customer came back from Stage 2.
-                *@
 
                 <input asp-for="Input.RepairCost"
                        type="hidden" />
@@ -291,10 +292,9 @@
     @*
         ==================================================
         STAGE 2
-        ACTUAL ESTIMATE + REPAIR DECISION INPUTS
+        REPAIR ESTIMATE + DECISION INPUTS
 
-        This stage appears ONLY after the
-        ESTIMATE REPAIR COST handler succeeds.
+        ONLY shown after Estimate button succeeds.
         ==================================================
     *@
 
@@ -313,10 +313,6 @@
                 <input asp-for="EstimateCreditConsumed"
                        type="hidden" />
 
-                @*
-                    Vehicle identity
-                *@
-
                 <input asp-for="Input.Vin"
                        type="hidden" />
 
@@ -328,10 +324,6 @@
 
                 <input asp-for="Input.VehicleModel"
                        type="hidden" />
-
-                @*
-                    Preserve original estimate-entry values.
-                *@
 
                 <input asp-for="EstimateInput.City"
                        type="hidden" />
@@ -350,10 +342,6 @@
 
                 <input asp-for="EstimateInput.IncludeTowFee"
                        type="hidden" />
-
-                @*
-                    Preserve completed estimate.
-                *@
 
                 <input asp-for="EstimateResult.RepairType"
                        type="hidden" />
@@ -447,7 +435,7 @@
 
                 <p>
                     <strong>Low Estimate:</strong>
-                    @Model.EstimateResult.LowEstimate.ToString("C")
+                    @Money(Model.EstimateResult.LowEstimate)
                 </p>
 
                 <p style="font-size:1.2rem;">
@@ -456,13 +444,13 @@
                         Expected Estimate:
                     </strong>
 
-                    @Model.EstimateResult.ExpectedEstimate.ToString("C")
+                    @Money(Model.EstimateResult.ExpectedEstimate)
 
                 </p>
 
                 <p>
                     <strong>High Estimate:</strong>
-                    @Model.EstimateResult.HighEstimate.ToString("C")
+                    @Money(Model.EstimateResult.HighEstimate)
                 </p>
 
                 <div class="analyzer-section-divider">
@@ -470,47 +458,31 @@
 
                 <p>
                     <strong>Average Labor Rate:</strong>
-
-                    @Model.EstimateResult
-                        .LaborRateAverage
-                        .ToString("C")
-
+                    @Money(Model.EstimateResult.LaborRateAverage)
                     per hour
                 </p>
 
                 <p>
                     <strong>Average Labor Time:</strong>
-
-                    @Model.EstimateResult
-                        .LaborHoursAverage
-
+                    @Hours(Model.EstimateResult.LaborHoursAverage)
                     hours
                 </p>
 
                 <p>
                     <strong>Average Parts Cost:</strong>
-
-                    @Model.EstimateResult
-                        .PartsAverage
-                        .ToString("C")
+                    @Money(Model.EstimateResult.PartsAverage)
                 </p>
 
                 <p>
                     <strong>Average Shop Fee:</strong>
-
-                    @Model.EstimateResult
-                        .ShopFeeAverage
-                        .ToString("C")
+                    @Money(Model.EstimateResult.ShopFeeAverage)
                 </p>
 
                 @if (Model.EstimateResult.DiagnosticFee > 0)
                 {
                     <p>
                         <strong>Diagnostic Fee:</strong>
-
-                        @Model.EstimateResult
-                            .DiagnosticFee
-                            .ToString("C")
+                        @Money(Model.EstimateResult.DiagnosticFee)
                     </p>
                 }
 
@@ -518,10 +490,7 @@
                 {
                     <p>
                         <strong>Tow Fee:</strong>
-
-                        @Model.EstimateResult
-                            .TowFee
-                            .ToString("C")
+                        @Money(Model.EstimateResult.TowFee)
                     </p>
                 }
 
@@ -655,10 +624,9 @@
     @*
         ==================================================
         STAGE 3
-        PONYUP STOPLIGHT RESULT
+        PONYUP STOPLIGHT
 
-        This stage appears ONLY after the
-        ANALYZE REPAIR handler succeeds.
+        ONLY shown after Analyze Repair succeeds.
         ==================================================
     *@
 
@@ -707,11 +675,6 @@
                 }
 
             </div>
-
-            @*
-                EDIT ANALYSIS posts the existing state back
-                to the server and explicitly returns to Stage 2.
-            *@
 
             <form method="post"
                   style="max-width:900px;margin:20px auto;">
