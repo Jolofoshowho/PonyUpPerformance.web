@@ -241,35 +241,63 @@
     </p>
 </section>
 
-
-
 <section class="page-section pricing-section">
     <h2 class="section-title">Pricing</h2>
-    <p class="section-subtitle">Start free. Upgrade only when PonyUp proves useful.</p>
+    <p class="section-subtitle">
+        Start free. Upgrade only when PonyUp proves useful.
+    </p>
 
     <div class="pricing-grid">
-        <div class="price-card">
+
+        <a class="price-card"
+           asp-page="/Pricing"
+           style="text-decoration:none;color:inherit;"
+           aria-label="View Free PonyUp pricing">
+
             <h3>Free</h3>
             <p>1 Full Analysis</p>
             <strong>$0</strong>
-        </div>
 
-        <div class="price-card featured">
+        </a>
+
+        <a class="price-card featured"
+           asp-page="/Pricing"
+           style="text-decoration:none;color:inherit;"
+           aria-label="View Quick Pack pricing">
+
             <h3>Quick Pack</h3>
             <p>5 Analyses</p>
             <strong>$5.99</strong>
-        </div>
 
-        <div class="price-card">
+        </a>
+
+        <a class="price-card"
+           asp-page="/Pricing"
+           style="text-decoration:none;color:inherit;"
+           aria-label="View Pro pricing">
+
             <h3>Pro</h3>
             <p>10 Analyses / Month</p>
-            <strong>$9.99<span>/mo</span></strong>
-        </div>
 
-        <div class="price-card">
+            <strong>
+                $9.99<span>/mo</span>
+            </strong>
+
+        </a>
+
+        <a class="price-card"
+           asp-page="/Pricing"
+           style="text-decoration:none;color:inherit;"
+           aria-label="View Unlimited pricing">
+
             <h3>Unlimited</h3>
             <p>Unlimited Analyses</p>
-            <strong>$19.99<span>/mo</span></strong>
-        </div>
+
+            <strong>
+                $19.99<span>/mo</span>
+            </strong>
+
+        </a>
+
     </div>
 </section>
