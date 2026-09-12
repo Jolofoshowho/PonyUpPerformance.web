@@ -739,13 +739,13 @@ public class SellScoringService : ISellScoringService
         }
 
         if (recommendation ==
-            "SELL NOW")
+             "GIDDY UP!")
         {
             steps.Add(
                 "Verify payment and title-transfer documentation before releasing the vehicle.");
         }
         else if (recommendation ==
-                 "REPAIR / PRICE STRATEGICALLY")
+                  "ON SECOND TROT")
         {
             steps.Add(
                 "Compare the likely sale-price improvement against any repair or preparation expense before spending more money.");
