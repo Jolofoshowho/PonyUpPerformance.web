@@ -2,11 +2,10 @@ namespace PonyUpPerformance.Web.Models;
 
 public class SellDecisionResult : DecisionResult
 {
-    public decimal? FairAskingPrice { get; set; }
+    public string WeightingProfile { get; set; }
+        = string.Empty;
 
-    public decimal? CurrentOfferGap { get; set; }
+    public decimal? SalePriceVsMarketPercent { get; set; }
 
-    public decimal? RepairBreakEvenSalePrice { get; set; }
-
-    public decimal? RepairCostToMarketPercent { get; set; }
+    public decimal? SalePriceVsMarketDifference { get; set; }
 }
