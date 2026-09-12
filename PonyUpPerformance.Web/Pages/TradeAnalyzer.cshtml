@@ -136,138 +136,32 @@
 
                     </div>
 
-                    @if (hasYourIdentity)
-                    {
-                        <div style="
-                            margin-top:2px;
-                            color:#ddd;
-                            font-size:.82rem;
-                            font-weight:850;
-                            line-height:1.1;
-                            text-align:center;">
+                    <div class="trade-name-line"
+     style="display:flex;justify-content:center;align-items:center;gap:4px;">
 
-                            @VehicleTopLine(
-                                Model.Input.YourYear,
-                                Model.Input.YourMake)
+    <input asp-for="Input.YourYear"
+           class="trade-year"
+           aria-label="Your vehicle year"
+           placeholder="Year"
+           style="width:6ch !important;flex:0 0 auto;" />
 
-                        </div>
+    <input asp-for="Input.YourMake"
+           class="trade-make"
+           aria-label="Your vehicle make"
+           placeholder="Make"
+           style="width:14ch !important;flex:0 0 auto;" />
 
-                        @if (!string.IsNullOrWhiteSpace(
-                            Model.Input.YourModel))
-                        {
-                            <div style="
-                                margin-top:1px;
-                                color:#fff;
-                                font-size:1.18rem;
-                                font-weight:1000;
-                                line-height:1.05;
-                                text-align:center;">
+</div>
 
-                                @Model.Input.YourModel
+<input asp-for="Input.YourModel"
+       class="trade-model"
+       aria-label="Your vehicle model"
+       placeholder="Model" />
 
-                            </div>
-                        }
-
-                        @if (!string.IsNullOrWhiteSpace(
-                            Model.Input.YourTrim))
-                        {
-                            <div style="
-                                margin-top:2px;
-                                color:#999;
-                                font-size:.66rem;
-                                font-weight:800;
-                                line-height:1;
-                                text-align:center;">
-
-                                @Model.Input.YourTrim
-
-                            </div>
-                        }
-
-                        <details class="trade-history">
-
-                            <summary>
-                                EDIT VEHICLE ›
-                            </summary>
-
-                            <div class="trade-history-panel">
-
-                                <div class="trade-history-field">
-
-                                    <label>
-                                        Year
-                                    </label>
-
-                                    <input asp-for="Input.YourYear"
-                                           placeholder="Year" />
-
-                                </div>
-
-                                <div class="trade-history-field">
-
-                                    <label>
-                                        Make
-                                    </label>
-
-                                    <input asp-for="Input.YourMake"
-                                           placeholder="Make" />
-
-                                </div>
-
-                                <div class="trade-history-field">
-
-                                    <label>
-                                        Model
-                                    </label>
-
-                                    <input asp-for="Input.YourModel"
-                                           placeholder="Model" />
-
-                                </div>
-
-                                <div class="trade-history-field">
-
-                                    <label>
-                                        Trim
-                                    </label>
-
-                                    <input asp-for="Input.YourTrim"
-                                           placeholder="Trim" />
-
-                                </div>
-
-                            </div>
-
-                        </details>
-                    }
-                    else
-                    {
-                        <div class="trade-name-line">
-
-                            <input asp-for="Input.YourYear"
-                                   class="trade-year"
-                                   aria-label="Your vehicle year"
-                                   placeholder="Year"
-                                   style="width:5ch !important;" />
-
-                            <input asp-for="Input.YourMake"
-                                   class="trade-make"
-                                   aria-label="Your vehicle make"
-                                   placeholder="Make"
-                                   style="width:12ch !important;" />
-
-                        </div>
-
-                        <input asp-for="Input.YourModel"
-                               class="trade-model"
-                               aria-label="Your vehicle model"
-                               placeholder="Model" />
-
-                        <input asp-for="Input.YourTrim"
-                               class="trade-trim"
-                               aria-label="Your vehicle trim"
-                               placeholder="Trim" />
-                    }
+<input asp-for="Input.YourTrim"
+       class="trade-trim"
+       aria-label="Your vehicle trim"
+       placeholder="Trim" />
 
                     <div class="trade-vin-row">
 
@@ -469,138 +363,32 @@
 
                     </div>
 
-                    @if (hasTheirIdentity)
-                    {
-                        <div style="
-                            margin-top:2px;
-                            color:#ddd;
-                            font-size:.82rem;
-                            font-weight:850;
-                            line-height:1.1;
-                            text-align:center;">
+                    <div class="trade-name-line"
+     style="display:flex;justify-content:center;align-items:center;gap:4px;">
 
-                            @VehicleTopLine(
-                                Model.Input.TheirYear,
-                                Model.Input.TheirMake)
+    <input asp-for="Input.TheirYear"
+           class="trade-year"
+           aria-label="Their vehicle year"
+           placeholder="Year"
+           style="width:6ch !important;flex:0 0 auto;" />
 
-                        </div>
+    <input asp-for="Input.TheirMake"
+           class="trade-make"
+           aria-label="Their vehicle make"
+           placeholder="Make"
+           style="width:14ch !important;flex:0 0 auto;" />
 
-                        @if (!string.IsNullOrWhiteSpace(
-                            Model.Input.TheirModel))
-                        {
-                            <div style="
-                                margin-top:1px;
-                                color:#fff;
-                                font-size:1.18rem;
-                                font-weight:1000;
-                                line-height:1.05;
-                                text-align:center;">
+</div>
 
-                                @Model.Input.TheirModel
+<input asp-for="Input.TheirModel"
+       class="trade-model"
+       aria-label="Their vehicle model"
+       placeholder="Model" />
 
-                            </div>
-                        }
-
-                        @if (!string.IsNullOrWhiteSpace(
-                            Model.Input.TheirTrim))
-                        {
-                            <div style="
-                                margin-top:2px;
-                                color:#999;
-                                font-size:.66rem;
-                                font-weight:800;
-                                line-height:1;
-                                text-align:center;">
-
-                                @Model.Input.TheirTrim
-
-                            </div>
-                        }
-
-                        <details class="trade-history">
-
-                            <summary>
-                                EDIT VEHICLE ›
-                            </summary>
-
-                            <div class="trade-history-panel">
-
-                                <div class="trade-history-field">
-
-                                    <label>
-                                        Year
-                                    </label>
-
-                                    <input asp-for="Input.TheirYear"
-                                           placeholder="Year" />
-
-                                </div>
-
-                                <div class="trade-history-field">
-
-                                    <label>
-                                        Make
-                                    </label>
-
-                                    <input asp-for="Input.TheirMake"
-                                           placeholder="Make" />
-
-                                </div>
-
-                                <div class="trade-history-field">
-
-                                    <label>
-                                        Model
-                                    </label>
-
-                                    <input asp-for="Input.TheirModel"
-                                           placeholder="Model" />
-
-                                </div>
-
-                                <div class="trade-history-field">
-
-                                    <label>
-                                        Trim
-                                    </label>
-
-                                    <input asp-for="Input.TheirTrim"
-                                           placeholder="Trim" />
-
-                                </div>
-
-                            </div>
-
-                        </details>
-                    }
-                    else
-                    {
-                        <div class="trade-name-line">
-
-                            <input asp-for="Input.TheirYear"
-                                   class="trade-year"
-                                   aria-label="Their vehicle year"
-                                   placeholder="Year"
-                                   style="width:5ch !important;" />
-
-                            <input asp-for="Input.TheirMake"
-                                   class="trade-make"
-                                   aria-label="Their vehicle make"
-                                   placeholder="Make"
-                                   style="width:12ch !important;" />
-
-                        </div>
-
-                        <input asp-for="Input.TheirModel"
-                               class="trade-model"
-                               aria-label="Their vehicle model"
-                               placeholder="Model" />
-
-                        <input asp-for="Input.TheirTrim"
-                               class="trade-trim"
-                               aria-label="Their vehicle trim"
-                               placeholder="Trim" />
-                    }
+<input asp-for="Input.TheirTrim"
+       class="trade-trim"
+       aria-label="Their vehicle trim"
+       placeholder="Trim" />
 
                     <div class="trade-vin-row">
 
