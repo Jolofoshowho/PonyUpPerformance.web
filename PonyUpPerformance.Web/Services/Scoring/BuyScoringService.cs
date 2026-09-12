@@ -9,8 +9,8 @@ namespace PonyUpPerformance.Web.Services.Scoring
     {
         private const int BaseScore = 50;
 
-        private const int PonyUpThreshold = 70;
-        private const int CautionThreshold = 45;
+        private const int PonyUpThreshold = 75;
+        private const int CautionThreshold = 50;
 
         private const int MechanicalMaximum = 12;
         private const int AskingPriceMaximum = 10;
