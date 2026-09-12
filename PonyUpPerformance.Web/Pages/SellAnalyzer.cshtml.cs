@@ -1,53 +1,134 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using PonyUpPerformance.Web.Models;
+using PonyUpPerformance.Web.Services;
+using PonyUpPerformance.Web.Services.Scoring;
 
 namespace PonyUpPerformance.Web.Pages;
 
 public class SellAnalyzerModel : PageModel
 {
+    private readonly ISellScoringService _sellScoringService;
+    private readonly IVinDecoderService _vinDecoderService;
+    private readonly IVehicleSpecEnrichmentService _vehicleSpecEnrichmentService;
+
+    public SellAnalyzerModel(
+        ISellScoringService sellScoringService,
+        IVinDecoderService vinDecoderService,
+        IVehicleSpecEnrichmentService vehicleSpecEnrichmentService)
+    {
+        _sellScoringService =
+            sellScoringService;
+
+        _vinDecoderService =
+            vinDecoderService;
+
+        _vehicleSpecEnrichmentService =
+            vehicleSpecEnrichmentService;
+    }
+
     [BindProperty]
     public SellDecisionInput Input { get; set; } = new();
 
-    public BuyDecisionResult? Result { get; set; }
+    public SellDecisionResult? Result { get; private set; }
+
+    public string VinDecodeMessage { get; private set; }
+        = string.Empty;
 
     public void OnGet()
     {
     }
 
-    public void OnPost()
+    public async Task<IActionResult> OnPostDecodeVinAsync(
+        CancellationToken cancellationToken)
     {
-        int score = 50;
+        if (string.IsNullOrWhiteSpace(Input.Vin))
+        {
+            ModelState.Clear();
 
-        decimal netAfterRepair = Input.ExpectedSalePrice - Input.EstimatedRepairCost;
+            ModelState.AddModelError(
+                "Input.Vin",
+                "Enter a VIN to decode.");
 
-        if (Input.Mileage <= 25000) score += 20;
-        else if (Input.Mileage <= 50000) score += 12;
-        else if (Input.Mileage <= 100000) score += 5;
-        else if (Input.Mileage <= 150000) score -= 10;
-        else if (Input.Mileage <= 200000) score -= 20;
-        else score -= 30;
+            return Page();
+        }
 
-        if (Input.EstimatedRepairCost <= 500) score += 15;
-        else if (Input.EstimatedRepairCost <= 1500) score += 5;
-        else if (Input.EstimatedRepairCost <= 3000) score -= 15;
-        else score -= 30;
+        VehicleProfile decoded =
+            await _vinDecoderService.DecodeAsync(
+                Input.Vin,
+                cancellationToken);
 
-        if (Input.MarketValue > 0 && netAfterRepair >= Input.MarketValue) score += 20;
-        else if (Input.MarketValue > 0 && netAfterRepair >= Input.MarketValue * 0.85m) score += 10;
-        else if (Input.MarketValue > 0 && netAfterRepair < Input.MarketValue * 0.70m) score -= 25;
+        if (!decoded.DecodeSuccessful)
+        {
+            ModelState.Clear();
 
-        score = Math.Max(0, Math.Min(100, score));
+            string warning =
+                decoded.DecodeWarnings.FirstOrDefault()
+                ?? "The VIN could not be decoded.";
 
-        Result = new BuyDecisionResult
-{
-    ConfidenceScore = score,
-    Recommendation = score >= 75 ? "SELL NOW" : score >= 50 ? "NEGOTIATE / REPAIR FIRST" : "HOLD OR REWORK",
-    Reasoning = score >= 75
-        ? "The numbers support selling now."
-        : score >= 50
-            ? "Selling may make sense, but repairs, pricing, or timing need to be tightened up."
-            : "The current sale path leaves too much money on the table."
-};
+            ModelState.AddModelError(
+                "Input.Vin",
+                warning);
+
+            return Page();
+        }
+
+        decoded =
+            await _vehicleSpecEnrichmentService.EnrichAsync(
+                decoded,
+                cancellationToken);
+
+        ApplyDecodedVehicle(decoded);
+
+        ModelState.Clear();
+
+        VinDecodeMessage =
+            string.IsNullOrWhiteSpace(decoded.DisplayName)
+                ? "VIN decoded successfully."
+                : $"VIN decoded: {decoded.DisplayName}";
+
+        return Page();
+    }
+
+    public IActionResult OnPostAnalyze()
+    {
+        if (!ModelState.IsValid)
+        {
+            return Page();
+        }
+
+        Result =
+            _sellScoringService.Analyze(Input);
+
+        return Page();
+    }
+
+    private void ApplyDecodedVehicle(
+        VehicleProfile decoded)
+    {
+        if (!string.IsNullOrWhiteSpace(decoded.Vin))
+        {
+            Input.Vin = decoded.Vin;
+        }
+
+        if (decoded.Year.HasValue)
+        {
+            Input.Year = decoded.Year.Value;
+        }
+
+        if (!string.IsNullOrWhiteSpace(decoded.Make))
+        {
+            Input.Make = decoded.Make;
+        }
+
+        if (!string.IsNullOrWhiteSpace(decoded.Model))
+        {
+            Input.Model = decoded.Model;
+        }
+
+        if (!string.IsNullOrWhiteSpace(decoded.Trim))
+        {
+            Input.Trim = decoded.Trim;
+        }
     }
 }
