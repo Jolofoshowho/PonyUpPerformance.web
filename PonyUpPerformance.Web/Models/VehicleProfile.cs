@@ -20,6 +20,16 @@ namespace PonyUpPerformance.Web.Models
 
         public string EngineCylinders { get; set; } = "";
 
+        public int? Horsepower { get; set; }
+
+        public int? TorqueLbFt { get; set; }
+
+        public int? CityMpg { get; set; }
+
+        public int? HighwayMpg { get; set; }
+
+        public int? CurbWeightLbs { get; set; }
+
         public string Transmission { get; set; } = "";
 
         public string TransmissionStyle { get; set; } = "";
