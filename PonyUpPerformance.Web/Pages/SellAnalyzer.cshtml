@@ -4,51 +4,423 @@
 @{
     ViewData["Title"] = "Sell Analyzer";
 
-    var stoplight = new PonyUpPerformance.Web.Models.PonyUpStoplightResultViewModel
+    string recommendation =
+        Model.Result?.Recommendation
+        ?? "READY";
+
+    string reasoning =
+        Model.Result?.Reasoning
+        ?? "Enter the vehicle and selling details, then run the analysis.";
+
+    string inputPanelStyle =
+        Model.Result != null
+            ? "max-width:900px;margin:0 auto;display:none;"
+            : "max-width:900px;margin:0 auto;";
+
+    string Money(decimal? value)
     {
-        HasResult = Model.Result != null,
-        AnalysisType = "ANALYSIS STATUS",
-        Recommendation = Model.Result?.Recommendation ?? "READY",
-        ConfidenceScore = Model.Result?.ConfidenceScore ?? 0,
-        Reasoning = Model.Result?.Reasoning ?? "Enter the vehicle information and run the sell analysis."
-    };
+        return value.HasValue
+            ? value.Value.ToString("C0")
+            : "Not available";
+    }
+
+    string OfferGap(decimal? value)
+    {
+        if (!value.HasValue)
+        {
+            return "Not available";
+        }
+
+        if (value.Value > 0)
+        {
+            return $"{value.Value:C0} below fair asking";
+        }
+
+        if (value.Value < 0)
+        {
+            return $"{Math.Abs(value.Value):C0} above fair asking";
+        }
+
+        return "At fair asking";
+    }
+
+    var stoplight =
+        new PonyUpPerformance.Web.Models.PonyUpStoplightResultViewModel
+        {
+            HasResult = Model.Result != null,
+            AnalysisType = "SELL DECISION",
+            Score = Model.Result?.Score,
+            Recommendation = recommendation,
+            ConfidenceScore = Model.Result?.ConfidenceScore ?? 0,
+            RiskLevel = Model.Result?.RiskLevel ?? string.Empty,
+            Reasoning = reasoning
+        };
 }
 
 <section class="page-section analyzer-page sell-bg">
 
-<img class="analyzer-banner"
-     src="/images/SellAnal.png"
-     alt="PonyUp Performance Sell Analyzer" />
+    <img class="analyzer-banner"
+         src="/images/SellAnal.png"
+         alt="PonyUp Performance Sell Analyzer" />
 
-    <div class="price-card analyzer-card"
-     style="max-width:900px;margin:0 auto;">
-        <form method="post">
-            <label>Year</label>
-            <input asp-for="Input.Year" />
+    <div id="sell-input-panel"
+         class="price-card analyzer-card"
+         style="@inputPanelStyle">
 
-            <label>Make</label>
-            <input asp-for="Input.Make" />
+        <form method="post"
+              class="analyzer-form">
 
-            <label>Model</label>
-            <input asp-for="Input.Model" />
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger">
+            </div>
 
-            <label>Mileage</label>
-            <input asp-for="Input.Mileage" />
+            <h2>
+                VEHICLE INFORMATION
+            </h2>
 
-            <label>Current Offer / Expected Sale Price</label>
-            <input asp-for="Input.ExpectedSalePrice" />
+            <div class="form-row">
 
-            <label>Estimated Repair Cost Before Selling</label>
-            <input asp-for="Input.EstimatedRepairCost" />
+                <label asp-for="Input.Vin">
+                    VIN
+                </label>
 
-            <label>Market Value</label>
-            <input asp-for="Input.MarketValue" />
+                <input asp-for="Input.Vin"
+                       maxlength="17"
+                       autocomplete="off"
+                       data-vin-history="true"
+                       style="text-transform:uppercase;" />
 
-            <button class="btn-red" type="submit" style="margin-top:20px;">
-                ANALYZE SELL
-            </button>
+                <span asp-validation-for="Input.Vin"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+            <div class="form-actions"
+                 style="margin-top:10px;margin-bottom:20px;">
+
+                <button class="btn-red"
+                        type="submit"
+                        asp-page-handler="DecodeVin"
+                        formnovalidate>
+
+                    DECODE VIN
+
+                </button>
+
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(
+                Model.VinDecodeMessage))
+            {
+                <p style="font-weight:700;">
+                    @Model.VinDecodeMessage
+                </p>
+            }
+
+            <div class="form-row">
+                <label asp-for="Input.Year">Year</label>
+                <input asp-for="Input.Year" />
+                <span asp-validation-for="Input.Year"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="form-row">
+                <label asp-for="Input.Make">Make</label>
+                <input asp-for="Input.Make" />
+                <span asp-validation-for="Input.Make"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="form-row">
+                <label asp-for="Input.Model">Model</label>
+                <input asp-for="Input.Model" />
+                <span asp-validation-for="Input.Model"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="form-row">
+                <label asp-for="Input.Trim">Trim</label>
+                <input asp-for="Input.Trim" />
+                <span asp-validation-for="Input.Trim"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="form-row">
+                <label asp-for="Input.Mileage">Mileage</label>
+                <input asp-for="Input.Mileage" />
+                <span asp-validation-for="Input.Mileage"
+                      class="text-danger"></span>
+            </div>
+
+            <div class="analyzer-section-divider">
+            </div>
+
+            <h2>
+                SELLING NUMBERS
+            </h2>
+
+            <div class="form-row">
+
+                <label asp-for="Input.ExpectedSalePrice">
+                    Current Offer / Expected As-Is Sale Price
+                </label>
+
+                <input asp-for="Input.ExpectedSalePrice" />
+
+                <span asp-validation-for="Input.ExpectedSalePrice"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+            <div class="form-row">
+
+                <label asp-for="Input.MarketValue">
+                    Estimated Market Value
+                </label>
+
+                <input asp-for="Input.MarketValue" />
+
+                <span asp-validation-for="Input.MarketValue"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+            <div class="form-row">
+
+                <label asp-for="Input.EstimatedRepairCost">
+                    Estimated Repair Cost Before Selling
+                </label>
+
+                <input asp-for="Input.EstimatedRepairCost" />
+
+                <span asp-validation-for="Input.EstimatedRepairCost"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+            <div class="analyzer-section-divider">
+            </div>
+
+            <h2>
+                DECISION FACTORS
+            </h2>
+
+            <div class="form-row">
+
+                <label asp-for="Input.MechanicalCondition">
+                    Mechanical Condition
+                </label>
+
+                <select asp-for="Input.MechanicalCondition">
+                    <option value="-1">Select Condition</option>
+                    <option value="0">Excellent</option>
+                    <option value="1">Good</option>
+                    <option value="2">Fair</option>
+                    <option value="3">Poor</option>
+                    <option value="4">Severe</option>
+                </select>
+
+            </div>
+
+            <div class="form-row">
+
+                <label asp-for="Input.TitleStatus">
+                    Title Status
+                </label>
+
+                <select asp-for="Input.TitleStatus">
+                    <option value="-1">Select Title Status</option>
+                    <option value="0">Clean</option>
+                    <option value="1">Rebuilt</option>
+                    <option value="2">Salvage</option>
+                    <option value="3">Flood</option>
+                </select>
+
+            </div>
+
+            <div class="form-row">
+
+                <label asp-for="Input.AccidentHistory">
+                    Accident History
+                </label>
+
+                <select asp-for="Input.AccidentHistory">
+                    <option value="-1">Select Accident History</option>
+                    <option value="0">None</option>
+                    <option value="1">Minor</option>
+                    <option value="2">Moderate</option>
+                    <option value="3">Major</option>
+                </select>
+
+            </div>
+
+            <div class="form-actions">
+
+                <button class="btn-red"
+                        type="submit"
+                        asp-page-handler="Analyze">
+
+                    ANALYZE SALE
+
+                </button>
+
+            </div>
+
         </form>
+
     </div>
 
-    <partial name="_PonyUpStoplightResult" model="stoplight" />
+    @if (Model.Result != null)
+    {
+        <div id="sell-result-panel">
+
+            <partial name="_PonyUpStoplightResult"
+                     model="stoplight" />
+
+            <div class="form-actions"
+                 style="max-width:900px;margin:20px auto;">
+
+                <button type="button"
+                        class="btn-dark"
+                        onclick="editSellAnalysis()">
+
+                    EDIT ANALYSIS
+
+                </button>
+
+            </div>
+
+            <div class="price-card featured"
+                 style="max-width:900px;margin:0 auto;">
+
+                <h2>
+                    SELLING NUMBERS
+                </h2>
+
+                <p>
+                    <strong>Current Offer / Expected As-Is Price:</strong>
+                    @Money(Model.Input.ExpectedSalePrice)
+                </p>
+
+                <p>
+                    <strong>Estimated Market Value:</strong>
+                    @Money(Model.Input.MarketValue)
+                </p>
+
+                <p>
+                    <strong>Estimated Repair Cost:</strong>
+                    @Money(Model.Input.EstimatedRepairCost)
+                </p>
+
+                <div class="analyzer-section-divider">
+                </div>
+
+                <h3>
+                    PONYUP SELLING MATRIX
+                </h3>
+
+                <p>
+                    <strong>PonyUp Fair Asking Price:</strong>
+                    @Money(Model.Result.FairAskingPrice)
+                </p>
+
+                <p>
+                    <strong>Current Offer Position:</strong>
+                    @OfferGap(Model.Result.CurrentOfferGap)
+                </p>
+
+                <p>
+                    <strong>Repair Break-Even Sale Price:</strong>
+                    @Money(Model.Result.RepairBreakEvenSalePrice)
+                </p>
+
+                <p>
+                    <strong>Repair Cost vs Market Value:</strong>
+
+                    @(Model.Result.RepairCostToMarketPercent.HasValue
+                        ? $"{Model.Result.RepairCostToMarketPercent.Value:0.#}%"
+                        : "Not available")
+                </p>
+
+                @if (!string.IsNullOrWhiteSpace(
+                    Model.Result.FinancialImpact))
+                {
+                    <div class="analyzer-section-divider">
+                    </div>
+
+                    <h3>
+                        FINANCIAL IMPACT
+                    </h3>
+
+                    <p>
+                        @Model.Result.FinancialImpact
+                    </p>
+                }
+
+                @if (Model.Result.NextSteps.Count > 0)
+                {
+                    <div class="analyzer-section-divider">
+                    </div>
+
+                    <h3>
+                        NEXT STEPS
+                    </h3>
+
+                    <ul>
+                        @foreach (
+                            string nextStep
+                            in Model.Result.NextSteps)
+                        {
+                            <li>
+                                @nextStep
+                            </li>
+                        }
+                    </ul>
+                }
+
+            </div>
+
+        </div>
+    }
+
 </section>
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+
+        function editSellAnalysis() {
+
+            const inputPanel =
+                document.getElementById(
+                    "sell-input-panel");
+
+            const resultPanel =
+                document.getElementById(
+                    "sell-result-panel");
+
+            if (resultPanel) {
+                resultPanel.style.display =
+                    "none";
+            }
+
+            if (inputPanel) {
+
+                inputPanel.style.display =
+                    "block";
+
+                inputPanel.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+            }
+        }
+
+    </script>
+}
