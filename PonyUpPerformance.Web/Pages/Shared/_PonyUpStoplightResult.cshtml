@@ -4,20 +4,14 @@
     int overallScore =
         Model.Score ?? Model.ConfidenceScore;
 
-    string recommendationKey =
-        (Model.Recommendation ?? string.Empty)
-        .Trim()
-        .ToUpperInvariant();
-
     string state =
-        !Model.HasResult
-            ? "off"
-            : recommendationKey.Contains("PONY UP")
-                ? "green"
-                : recommendationKey.Contains("WALK AWAY") ||
-                  recommendationKey == "STOP"
-                    ? "red"
-                    : "yellow";
+    !Model.HasResult
+        ? "off"
+        : overallScore >= 75
+            ? "green"
+            : overallScore >= 50
+                ? "yellow"
+                : "red";
 
     string stoplightImage =
         state == "green"
