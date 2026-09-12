@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using PonyUpPerformance.Web.Models;
+using System.Text.Json.Serialization;
 
 namespace PonyUpPerformance.Web.Services
 {
@@ -67,6 +68,8 @@ namespace PonyUpPerformance.Web.Services
                 profile.Engine = BuildEngineDescription(vehicle);
                 profile.EngineDisplacement = Clean(vehicle.DisplacementL);
                 profile.EngineCylinders = Clean(vehicle.EngineCylinders);
+
+                profile.Horsepower = ParseNullableInt(vehicle.EngineHP);
 
                 profile.Transmission = Clean(vehicle.TransmissionStyle);
                 profile.TransmissionStyle = Clean(vehicle.TransmissionStyle);
@@ -147,6 +150,9 @@ namespace PonyUpPerformance.Web.Services
             VpicVehicle vehicle)
         {
             var parts = new List<string>();
+
+            [JsonPropertyName("EngineHP")]
+            public string? EngineHP { get; set; }
 
             if (!string.IsNullOrWhiteSpace(vehicle.DisplacementL))
             {
