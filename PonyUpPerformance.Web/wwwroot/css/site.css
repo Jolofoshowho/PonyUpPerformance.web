@@ -2423,3 +2423,26 @@ body::before {
         font-size: .70rem;
     }
 }
+
+/* =========================================================
+   TRADE SELECT / DROPDOWN READABILITY
+   ========================================================= */
+
+.trade-spec-value select,
+.trade-history-field select {
+    background: #0b0b0b !important;
+    color: #f5f5f5 !important;
+    color-scheme: dark;
+}
+
+.trade-spec-value select option,
+.trade-history-field select option {
+    background: #0b0b0b !important;
+    color: #f5f5f5 !important;
+}
+
+.trade-spec-value select option:checked,
+.trade-history-field select option:checked {
+    background: #2a0a0a !important;
+    color: #ffffff !important;
+}
