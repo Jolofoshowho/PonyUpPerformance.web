@@ -86,6 +86,7 @@ builder.Services.AddHttpClient<IMarketValueService, MarketValueService>(client =
 builder.Services.AddScoped<StripeCheckoutService>();
 builder.Services.AddScoped<UsageCreditService>();
 builder.Services.AddScoped<IBuyScoringService, BuyScoringService>();
+builder.Services.AddScoped<ISellScoringService, SellScoringService>();
 
 var app = builder.Build();
 
