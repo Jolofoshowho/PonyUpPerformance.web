@@ -6,112 +6,98 @@ public class SellScoringService : ISellScoringService
 {
     private const int BaseScore = 50;
 
-    private const int SalePositionMaximum = 15;
-    private const int RepairEconomicsMaximum = 12;
-    private const int MechanicalMaximum = 8;
-    private const int MileageMaximum = 6;
-    private const int TitleMaximum = 5;
-    private const int AccidentMaximum = 4;
+    private const int SellNowThreshold = 75;
+    private const int StrategicThreshold = 50;
 
     public SellDecisionResult Analyze(
         SellDecisionInput input)
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        SellFactorScore salePosition =
-            ScoreSalePosition(input);
+        WeightProfile profile =
+            GetWeightProfile(
+                input.IntendedUse);
 
-        SellFactorScore repairEconomics =
-            ScoreRepairEconomics(input);
+        var adjustments =
+            new List<SellScoreAdjustment>
+            {
+                ScoreCondition(
+                    input,
+                    profile.Condition),
 
-        SellFactorScore mechanical =
-            ScoreMechanicalCondition(input);
+                ScorePriceVsMarket(
+                    input,
+                    profile.Price),
 
-        SellFactorScore mileage =
-            ScoreMileageForAge(input);
+                ScoreTitle(
+                    input,
+                    profile.Title),
 
-        SellFactorScore title =
-            ScoreTitleStatus(input);
+                ScoreMileage(
+                    input,
+                    profile.Mileage),
 
-        SellFactorScore accident =
-            ScoreAccidentHistory(input);
+                ScoreAccidentHistory(
+                    input,
+                    profile.Accident),
 
-        var factors = new[]
-        {
-            salePosition,
-            repairEconomics,
-            mechanical,
-            mileage,
-            title,
-            accident
-        };
+                ScoreRuns(
+                    input,
+                    profile.Runs),
+
+                ScoreDrives(
+                    input,
+                    profile.Drives)
+            };
 
         int totalAdjustment =
-            factors.Sum(x => x.Adjustment);
+            adjustments.Sum(
+                x => x.Adjustment);
 
         int score =
             Math.Clamp(
-                BaseScore + totalAdjustment,
+                BaseScore +
+                totalAdjustment,
                 0,
                 100);
 
-        decimal? fairAskingPrice =
-            CalculateFairAskingPrice(input);
+        int confidenceScore =
+            CalculateConfidenceScore(
+                input,
+                profile);
 
-        decimal? currentOfferGap = null;
+        int riskScore =
+            CalculateRiskScore(
+                adjustments,
+                confidenceScore);
 
-        if (fairAskingPrice.HasValue &&
-            input.ExpectedSalePrice.HasValue)
-        {
-            currentOfferGap =
-                fairAskingPrice.Value -
-                input.ExpectedSalePrice.Value;
-        }
+        string recommendation =
+            DetermineRecommendation(score);
 
-        decimal? repairBreakEvenSalePrice = null;
+        decimal? salePriceVsMarketPercent =
+            null;
+
+        decimal? salePriceVsMarketDifference =
+            null;
 
         if (input.ExpectedSalePrice.HasValue &&
-            input.EstimatedRepairCost.HasValue)
-        {
-            repairBreakEvenSalePrice =
-                input.ExpectedSalePrice.Value +
-                input.EstimatedRepairCost.Value;
-        }
-
-        decimal? repairCostToMarketPercent = null;
-
-        if (input.EstimatedRepairCost.HasValue &&
             input.MarketValue.HasValue &&
             input.MarketValue.Value > 0)
         {
-            repairCostToMarketPercent =
-                input.EstimatedRepairCost.Value /
+            salePriceVsMarketDifference =
+                input.ExpectedSalePrice.Value -
+                input.MarketValue.Value;
+
+            salePriceVsMarketPercent =
+                input.ExpectedSalePrice.Value /
                 input.MarketValue.Value *
                 100m;
         }
 
-        int confidenceScore =
-            CalculateConfidenceScore(input);
-
-        bool repairMayPay =
-            RepairMayPay(input);
-
-        string recommendation =
-            DetermineRecommendation(
-                input,
-                score,
-                fairAskingPrice,
-                repairMayPay);
-
-        int riskScore =
-            CalculateRiskScore(
-                input,
-                fairAskingPrice,
-                confidenceScore);
-
         return new SellDecisionResult
         {
-            Score = score,
+            Score =
+                score,
 
             Recommendation =
                 recommendation,
@@ -120,474 +106,489 @@ public class SellScoringService : ISellScoringService
                 confidenceScore,
 
             RiskLevel =
-                DetermineRiskLevel(riskScore),
+                DetermineRiskLevel(
+                    riskScore),
 
-            FairAskingPrice =
-                RoundCurrency(fairAskingPrice),
+            WeightingProfile =
+                profile.Name,
 
-            CurrentOfferGap =
-                RoundCurrency(currentOfferGap),
-
-            RepairBreakEvenSalePrice =
-                RoundCurrency(
-                    repairBreakEvenSalePrice),
-
-            RepairCostToMarketPercent =
-                repairCostToMarketPercent.HasValue
+            SalePriceVsMarketPercent =
+                salePriceVsMarketPercent.HasValue
                     ? Math.Round(
-                        repairCostToMarketPercent.Value,
+                        salePriceVsMarketPercent.Value,
                         1,
                         MidpointRounding.AwayFromZero)
                     : null,
 
+            SalePriceVsMarketDifference =
+                RoundCurrency(
+                    salePriceVsMarketDifference),
+
             FinancialImpact =
                 BuildFinancialImpact(
                     input,
-                    fairAskingPrice,
-                    currentOfferGap,
-                    repairBreakEvenSalePrice),
+                    salePriceVsMarketDifference),
 
             Reasoning =
                 BuildReasoning(
-                    factors,
-                    recommendation),
+                    recommendation,
+                    profile,
+                    adjustments),
 
             NextSteps =
                 BuildNextSteps(
                     input,
-                    recommendation,
-                    repairMayPay)
+                    recommendation)
         };
     }
 
-    private static SellFactorScore ScoreSalePosition(
-        SellDecisionInput input)
+    private static WeightProfile GetWeightProfile(
+        SellIntendedUse intendedUse)
+    {
+        /*
+         * TRANSPORT PROFILE
+         *
+         * Runs and drives matter heavily because
+         * transportation is the intended purpose.
+         *
+         * Total authority = 50.
+         */
+        if (intendedUse is
+            SellIntendedUse.DailyDriver
+            or SellIntendedUse.WorkVehicle
+            or SellIntendedUse.FamilyVehicle)
+        {
+            return new WeightProfile(
+                "DAILY / FAMILY / WORK",
+                Condition: 8,
+                Price: 8,
+                Title: 7,
+                Mileage: 6,
+                Accident: 5,
+                Runs: 8,
+                Drives: 8);
+        }
+
+        /*
+         * BUILD PROFILE
+         *
+         * Running/driving status matters much less
+         * because drivetrain replacement or major
+         * mechanical work may already be planned.
+         *
+         * Condition, title and accident history
+         * become substantially more important.
+         *
+         * Total authority = 50.
+         */
+        if (intendedUse is
+            SellIntendedUse.ProjectVehicle
+            or SellIntendedUse.PerformanceBuild
+            or SellIntendedUse.Restoration)
+        {
+            return new WeightProfile(
+                "PROJECT / PERFORMANCE / RESTORATION",
+                Condition: 11,
+                Price: 11,
+                Title: 11,
+                Mileage: 5,
+                Accident: 8,
+                Runs: 2,
+                Drives: 2);
+        }
+
+        /*
+         * NEUTRAL PROFILE
+         *
+         * Used only when Intended Use is blank.
+         * Do not assume the vehicle is either a
+         * commuter or a project.
+         *
+         * Total authority = 50.
+         */
+        return new WeightProfile(
+            "GENERAL / NOT PROVIDED",
+            Condition: 10,
+            Price: 10,
+            Title: 9,
+            Mileage: 6,
+            Accident: 5,
+            Runs: 5,
+            Drives: 5);
+    }
+
+    private static SellScoreAdjustment ScoreCondition(
+        SellDecisionInput input,
+        int maximum)
+    {
+        decimal multiplier =
+            input.Condition switch
+            {
+                SellCondition.Excellent => 1.00m,
+                SellCondition.Good => 0.60m,
+                SellCondition.Fair => 0m,
+                SellCondition.Poor => -0.60m,
+                SellCondition.Severe => -1.00m,
+                _ => 0m
+            };
+
+        int adjustment =
+            Scale(
+                maximum,
+                multiplier);
+
+        string explanation =
+            input.Condition ==
+            SellCondition.NotProvided
+                ? "Overall condition was not provided."
+                : $"Overall vehicle condition is {FormatEnum(input.Condition)}.";
+
+        return CreateAdjustment(
+            "Condition",
+            adjustment,
+            maximum,
+            explanation);
+    }
+
+    private static SellScoreAdjustment ScorePriceVsMarket(
+        SellDecisionInput input,
+        int maximum)
     {
         if (!input.ExpectedSalePrice.HasValue ||
             !input.MarketValue.HasValue ||
             input.MarketValue.Value <= 0)
         {
-            return new SellFactorScore(
-                "Sale Price vs Market",
+            return CreateAdjustment(
+                "Asking Price vs Market Value",
                 0,
-                "Sale price and market value were not both provided.");
+                maximum,
+                "Sale price and market value were not both available.");
         }
 
         decimal ratio =
             input.ExpectedSalePrice.Value /
             input.MarketValue.Value;
 
-        int adjustment =
+        decimal multiplier =
             ratio switch
             {
-                >= 1.05m => 15,
-                >= 0.98m => 12,
-                >= 0.92m => 8,
-                >= 0.85m => 4,
-                >= 0.75m => -4,
-                >= 0.65m => -9,
-                _ => -15
+                >= 1.05m => 1.00m,
+                >= 0.98m => 0.75m,
+                >= 0.92m => 0.50m,
+                >= 0.85m => 0.25m,
+                >= 0.75m => -0.40m,
+                >= 0.65m => -0.70m,
+                _ => -1.00m
             };
 
-        return new SellFactorScore(
-            "Sale Price vs Market",
-            adjustment,
-            $"The current offer or expected as-is sale price is approximately {ratio:P0} of estimated market value.");
-    }
-
-    private static SellFactorScore ScoreRepairEconomics(
-        SellDecisionInput input)
-    {
-        if (!input.EstimatedRepairCost.HasValue)
-        {
-            return new SellFactorScore(
-                "Repair Before Sale Economics",
-                0,
-                "No pre-sale repair cost was provided.");
-        }
-
-        if (input.EstimatedRepairCost.Value <= 0)
-        {
-            return new SellFactorScore(
-                "Repair Before Sale Economics",
-                6,
-                "No pre-sale repair expense is currently expected.");
-        }
-
-        if (!input.MarketValue.HasValue ||
-            input.MarketValue.Value <= 0)
-        {
-            return new SellFactorScore(
-                "Repair Before Sale Economics",
-                0,
-                "Repair cost was provided, but market value is unavailable for comparison.");
-        }
-
-        decimal repairCost =
-            input.EstimatedRepairCost.Value;
-
-        decimal marketValue =
-            input.MarketValue.Value;
-
-        decimal repairRatio =
-            repairCost / marketValue;
-
-        int adjustment;
-
-        if (input.ExpectedSalePrice.HasValue)
-        {
-            decimal marketHeadroom =
-                Math.Max(
-                    0m,
-                    marketValue -
-                    input.ExpectedSalePrice.Value);
-
-            if (marketHeadroom >= repairCost * 1.50m)
-            {
-                adjustment = 12;
-            }
-            else if (marketHeadroom >= repairCost)
-            {
-                adjustment = 7;
-            }
-            else
-            {
-                adjustment =
-                    repairRatio switch
-                    {
-                        <= 0.03m => 3,
-                        <= 0.08m => 0,
-                        <= 0.15m => -6,
-                        _ => -12
-                    };
-            }
-        }
-        else
-        {
-            adjustment =
-                repairRatio switch
-                {
-                    <= 0.03m => 3,
-                    <= 0.08m => 0,
-                    <= 0.15m => -6,
-                    _ => -12
-                };
-        }
-
-        adjustment =
-            Math.Clamp(
-                adjustment,
-                -RepairEconomicsMaximum,
-                RepairEconomicsMaximum);
-
-        return new SellFactorScore(
-            "Repair Before Sale Economics",
-            adjustment,
-            $"Estimated repairs equal approximately {repairRatio:P0} of market value.");
-    }
-
-    private static SellFactorScore ScoreMechanicalCondition(
-        SellDecisionInput input)
-    {
         int adjustment =
-            input.MechanicalCondition switch
-            {
-                MechanicalCondition.Excellent => 8,
-                MechanicalCondition.Good => 4,
-                MechanicalCondition.Fair => 0,
-                MechanicalCondition.Poor => -5,
-                MechanicalCondition.Severe => -8,
-                _ => 0
-            };
+            Scale(
+                maximum,
+                multiplier);
 
         string explanation =
-            input.MechanicalCondition ==
-            MechanicalCondition.NotProvided
-                ? "Mechanical condition was not provided."
-                : $"Mechanical condition is {input.MechanicalCondition}.";
+            $"Expected sale price is approximately {ratio:P0} of estimated market value.";
 
-        return new SellFactorScore(
-            "Mechanical Condition",
+        return CreateAdjustment(
+            "Asking Price vs Market Value",
             adjustment,
+            maximum,
             explanation);
     }
 
-    private static SellFactorScore ScoreMileageForAge(
-        SellDecisionInput input)
+    private static SellScoreAdjustment ScoreTitle(
+        SellDecisionInput input,
+        int maximum)
+    {
+        decimal multiplier =
+            input.TitleStatus switch
+            {
+                TitleStatus.Clean => 1.00m,
+                TitleStatus.Rebuilt => -0.45m,
+                TitleStatus.Salvage => -0.75m,
+                TitleStatus.Flood => -1.00m,
+                _ => 0m
+            };
+
+        int adjustment =
+            Scale(
+                maximum,
+                multiplier);
+
+        string explanation =
+            input.TitleStatus switch
+            {
+                TitleStatus.Clean =>
+                    "The vehicle has a clean title.",
+
+                TitleStatus.Rebuilt =>
+                    "A rebuilt title reduces the available buyer pool and resale strength.",
+
+                TitleStatus.Salvage =>
+                    "A salvage title substantially affects buyer demand and market value.",
+
+                TitleStatus.Flood =>
+                    "A flood title creates severe resale and long-term condition concerns.",
+
+                _ =>
+                    "Title status was not provided."
+            };
+
+        return CreateAdjustment(
+            "Title Status",
+            adjustment,
+            maximum,
+            explanation);
+    }
+
+    private static SellScoreAdjustment ScoreMileage(
+        SellDecisionInput input,
+        int maximum)
     {
         if (!input.Year.HasValue ||
             !input.Mileage.HasValue)
         {
-            return new SellFactorScore(
+            return CreateAdjustment(
                 "Mileage vs Age",
                 0,
+                maximum,
                 "Year and mileage were not both provided.");
         }
 
-        int age =
+        int vehicleAge =
             Math.Max(
                 1,
                 DateTime.UtcNow.Year -
                 input.Year.Value);
 
         decimal expectedMileage =
-            age * 12_000m;
+            vehicleAge *
+            12_000m;
 
         decimal ratio =
             input.Mileage.Value /
             expectedMileage;
 
-        int adjustment =
+        decimal multiplier =
             ratio switch
             {
-                <= 0.60m => 6,
-                <= 0.80m => 4,
-                <= 1.00m => 2,
-                <= 1.20m => 0,
-                <= 1.40m => -2,
-                <= 1.70m => -4,
-                _ => -6
+                <= 0.50m => 1.00m,
+                <= 0.70m => 0.75m,
+                <= 0.85m => 0.50m,
+                <= 1.00m => 0.25m,
+                <= 1.15m => 0m,
+                <= 1.35m => -0.40m,
+                <= 1.60m => -0.75m,
+                _ => -1.00m
             };
 
-        return new SellFactorScore(
+        int adjustment =
+            Scale(
+                maximum,
+                multiplier);
+
+        decimal annualMileage =
+            input.Mileage.Value /
+            (decimal)vehicleAge;
+
+        string explanation =
+            $"The vehicle averages approximately {annualMileage:N0} miles per year against a 12,000-mile annual benchmark.";
+
+        return CreateAdjustment(
             "Mileage vs Age",
             adjustment,
-            $"Mileage is approximately {ratio:P0} of the 12,000-mile-per-year benchmark.");
-    }
-
-    private static SellFactorScore ScoreTitleStatus(
-        SellDecisionInput input)
-    {
-        int adjustment =
-            input.TitleStatus switch
-            {
-                TitleStatus.Clean => 5,
-                TitleStatus.Rebuilt => -2,
-                TitleStatus.Salvage => -4,
-                TitleStatus.Flood => -5,
-                _ => 0
-            };
-
-        string explanation =
-            input.TitleStatus ==
-            TitleStatus.NotProvided
-                ? "Title status was not provided."
-                : $"Title status is {input.TitleStatus}.";
-
-        return new SellFactorScore(
-            "Title Status",
-            adjustment,
+            maximum,
             explanation);
     }
 
-    private static SellFactorScore ScoreAccidentHistory(
-        SellDecisionInput input)
+    private static SellScoreAdjustment ScoreAccidentHistory(
+        SellDecisionInput input,
+        int maximum)
     {
-        int adjustment =
+        decimal multiplier =
             input.AccidentHistory switch
             {
-                AccidentHistory.None => 4,
-                AccidentHistory.Minor => 1,
-                AccidentHistory.Moderate => -2,
-                AccidentHistory.Major => -4,
-                _ => 0
+                AccidentHistory.None => 1.00m,
+                AccidentHistory.Minor => 0.25m,
+                AccidentHistory.Moderate => -0.40m,
+                AccidentHistory.Major => -1.00m,
+                _ => 0m
             };
 
-        string explanation =
-            input.AccidentHistory ==
-            AccidentHistory.NotProvided
-                ? "Accident history was not provided."
-                : $"Accident history is {input.AccidentHistory}.";
+        int adjustment =
+            Scale(
+                maximum,
+                multiplier);
 
-        return new SellFactorScore(
+        string explanation =
+            input.AccidentHistory switch
+            {
+                AccidentHistory.None =>
+                    "No known accident history was reported.",
+
+                AccidentHistory.Minor =>
+                    "Minor accident history has limited impact when repairs were completed correctly.",
+
+                AccidentHistory.Moderate =>
+                    "Moderate accident history can affect body integrity, alignment and resale demand.",
+
+                AccidentHistory.Major =>
+                    "Major accident history can substantially affect structural integrity and buyer demand.",
+
+                _ =>
+                    "Accident history was not provided."
+            };
+
+        return CreateAdjustment(
             "Accident History",
             adjustment,
+            maximum,
             explanation);
     }
 
-    private static decimal? CalculateFairAskingPrice(
-        SellDecisionInput input)
-    {
-        if (!input.MarketValue.HasValue ||
-            input.MarketValue.Value <= 0)
-        {
-            return null;
-        }
-
-        decimal adjustment = 0m;
-
-        adjustment +=
-            input.MechanicalCondition switch
-            {
-                MechanicalCondition.Excellent => 0.03m,
-                MechanicalCondition.Good => 0.01m,
-                MechanicalCondition.Fair => 0m,
-                MechanicalCondition.Poor => -0.08m,
-                MechanicalCondition.Severe => -0.15m,
-                _ => 0m
-            };
-
-        adjustment +=
-            input.TitleStatus switch
-            {
-                TitleStatus.Clean => 0m,
-                TitleStatus.Rebuilt => -0.08m,
-                TitleStatus.Salvage => -0.18m,
-                TitleStatus.Flood => -0.25m,
-                _ => 0m
-            };
-
-        adjustment +=
-            input.AccidentHistory switch
-            {
-                AccidentHistory.None => 0m,
-                AccidentHistory.Minor => -0.02m,
-                AccidentHistory.Moderate => -0.06m,
-                AccidentHistory.Major => -0.12m,
-                _ => 0m
-            };
-
-        if (input.Year.HasValue &&
-            input.Mileage.HasValue)
-        {
-            int age =
-                Math.Max(
-                    1,
-                    DateTime.UtcNow.Year -
-                    input.Year.Value);
-
-            decimal expectedMileage =
-                age * 12_000m;
-
-            decimal mileageRatio =
-                input.Mileage.Value /
-                expectedMileage;
-
-            adjustment +=
-                mileageRatio switch
-                {
-                    <= 0.70m => 0.03m,
-                    <= 1.00m => 0.01m,
-                    <= 1.20m => 0m,
-                    <= 1.40m => -0.03m,
-                    <= 1.70m => -0.06m,
-                    _ => -0.10m
-                };
-        }
-
-        adjustment =
-            Math.Clamp(
-                adjustment,
-                -0.45m,
-                0.08m);
-
-        return input.MarketValue.Value *
-               (1m + adjustment);
-    }
-
-    private static bool RepairMayPay(
-        SellDecisionInput input)
-    {
-        if (!input.EstimatedRepairCost.HasValue ||
-            input.EstimatedRepairCost.Value <= 0 ||
-            !input.ExpectedSalePrice.HasValue ||
-            !input.MarketValue.HasValue ||
-            input.MarketValue.Value <= 0)
-        {
-            return false;
-        }
-
-        decimal potentialHeadroom =
-            input.MarketValue.Value -
-            input.ExpectedSalePrice.Value;
-
-        return potentialHeadroom >=
-               input.EstimatedRepairCost.Value *
-               1.15m;
-    }
-
-    private static string DetermineRecommendation(
+    private static SellScoreAdjustment ScoreRuns(
         SellDecisionInput input,
-        int score,
-        decimal? fairAskingPrice,
-        bool repairMayPay)
+        int maximum)
     {
-        if (input.ExpectedSalePrice.HasValue &&
-            fairAskingPrice.HasValue &&
-            fairAskingPrice.Value > 0)
+        if (!input.Runs.HasValue)
         {
-            decimal offerRatio =
-                input.ExpectedSalePrice.Value /
-                fairAskingPrice.Value;
-
-            if (offerRatio >= 0.95m &&
-                score >= 55)
-            {
-                return "SELL NOW";
-            }
+            return CreateAdjustment(
+                "Runs",
+                0,
+                maximum,
+                "Running status was not provided.");
         }
 
-        if (repairMayPay)
+        int adjustment =
+            input.Runs.Value
+                ? maximum
+                : -maximum;
+
+        string explanation =
+            input.Runs.Value
+                ? "The vehicle currently runs."
+                : "The vehicle currently does not run.";
+
+        return CreateAdjustment(
+            "Runs",
+            adjustment,
+            maximum,
+            explanation);
+    }
+
+    private static SellScoreAdjustment ScoreDrives(
+        SellDecisionInput input,
+        int maximum)
+    {
+        if (!input.Drives.HasValue)
         {
-            return "REPAIR FIRST";
+            return CreateAdjustment(
+                "Drives",
+                0,
+                maximum,
+                "Driving status was not provided.");
         }
 
-        if (score >= 70)
-        {
-            return "SELL NOW";
-        }
+        int adjustment =
+            input.Drives.Value
+                ? maximum
+                : -maximum;
 
-        return "HOLD / REWORK";
+        string explanation =
+            input.Drives.Value
+                ? "The vehicle currently drives."
+                : "The vehicle currently does not drive.";
+
+        return CreateAdjustment(
+            "Drives",
+            adjustment,
+            maximum,
+            explanation);
     }
 
     private static int CalculateConfidenceScore(
-        SellDecisionInput input)
+        SellDecisionInput input,
+        WeightProfile profile)
     {
-        int confidence = 0;
+        int evidenceWeight = 0;
 
-        if (!string.IsNullOrWhiteSpace(input.Vin))
-            confidence += 8;
-
-        if (input.Year.HasValue)
-            confidence += 5;
-
-        if (!string.IsNullOrWhiteSpace(input.Make))
-            confidence += 5;
-
-        if (!string.IsNullOrWhiteSpace(input.Model))
-            confidence += 5;
-
-        if (!string.IsNullOrWhiteSpace(input.Trim))
-            confidence += 2;
-
-        if (input.Mileage.HasValue)
-            confidence += 10;
-
-        if (input.ExpectedSalePrice.HasValue)
-            confidence += 18;
-
-        if (input.MarketValue.HasValue)
-            confidence += 18;
-
-        if (input.EstimatedRepairCost.HasValue)
-            confidence += 10;
-
-        if (input.MechanicalCondition !=
-            MechanicalCondition.NotProvided)
+        if (input.Condition !=
+            SellCondition.NotProvided)
         {
-            confidence += 7;
+            evidenceWeight +=
+                profile.Condition;
+        }
+
+        if (input.ExpectedSalePrice.HasValue &&
+            input.MarketValue.HasValue &&
+            input.MarketValue.Value > 0)
+        {
+            evidenceWeight +=
+                profile.Price;
         }
 
         if (input.TitleStatus !=
             TitleStatus.NotProvided)
         {
-            confidence += 6;
+            evidenceWeight +=
+                profile.Title;
+        }
+
+        if (input.Year.HasValue &&
+            input.Mileage.HasValue)
+        {
+            evidenceWeight +=
+                profile.Mileage;
         }
 
         if (input.AccidentHistory !=
             AccidentHistory.NotProvided)
         {
-            confidence += 6;
+            evidenceWeight +=
+                profile.Accident;
+        }
+
+        if (input.Runs.HasValue)
+        {
+            evidenceWeight +=
+                profile.Runs;
+        }
+
+        if (input.Drives.HasValue)
+        {
+            evidenceWeight +=
+                profile.Drives;
+        }
+
+        /*
+         * Factor evidence accounts for 90%.
+         * Vehicle identity contributes the final 10%.
+         */
+        int confidence =
+            (int)Math.Round(
+                evidenceWeight /
+                50m *
+                90m,
+                MidpointRounding.AwayFromZero);
+
+        if (!string.IsNullOrWhiteSpace(input.Vin))
+        {
+            confidence += 4;
+        }
+
+        if (input.Year.HasValue)
+        {
+            confidence += 2;
+        }
+
+        if (!string.IsNullOrWhiteSpace(input.Make))
+        {
+            confidence += 2;
+        }
+
+        if (!string.IsNullOrWhiteSpace(input.Model))
+        {
+            confidence += 2;
         }
 
         return Math.Clamp(
@@ -597,86 +598,47 @@ public class SellScoringService : ISellScoringService
     }
 
     private static int CalculateRiskScore(
-        SellDecisionInput input,
-        decimal? fairAskingPrice,
+        IEnumerable<SellScoreAdjustment> adjustments,
         int confidenceScore)
     {
-        int risk = 0;
+        int negativeFactorRisk =
+            adjustments
+                .Where(
+                    x => x.Adjustment < 0)
+                .Sum(
+                    x => Math.Abs(
+                        x.Adjustment));
 
-        if (input.ExpectedSalePrice.HasValue &&
-            fairAskingPrice.HasValue &&
-            fairAskingPrice.Value > 0)
-        {
-            decimal ratio =
-                input.ExpectedSalePrice.Value /
-                fairAskingPrice.Value;
-
-            risk +=
-                ratio switch
-                {
-                    >= 0.95m => 0,
-                    >= 0.85m => 10,
-                    >= 0.75m => 20,
-                    _ => 30
-                };
-        }
-
-        if (input.EstimatedRepairCost.HasValue &&
-            input.MarketValue.HasValue &&
-            input.MarketValue.Value > 0)
-        {
-            decimal ratio =
-                input.EstimatedRepairCost.Value /
-                input.MarketValue.Value;
-
-            risk +=
-                ratio switch
-                {
-                    <= 0.03m => 2,
-                    <= 0.08m => 8,
-                    <= 0.15m => 15,
-                    _ => 25
-                };
-        }
-
-        risk +=
-            input.MechanicalCondition switch
-            {
-                MechanicalCondition.Poor => 10,
-                MechanicalCondition.Severe => 18,
-                _ => 0
-            };
-
-        risk +=
-            input.TitleStatus switch
-            {
-                TitleStatus.Rebuilt => 8,
-                TitleStatus.Salvage => 15,
-                TitleStatus.Flood => 20,
-                _ => 0
-            };
-
-        risk +=
-            input.AccidentHistory switch
-            {
-                AccidentHistory.Moderate => 8,
-                AccidentHistory.Major => 15,
-                _ => 0
-            };
-
-        if (confidenceScore < 40)
-        {
-            risk += 15;
-        }
-        else if (confidenceScore < 65)
-        {
-            risk += 8;
-        }
+        int confidenceRisk =
+            (int)Math.Round(
+                (100 -
+                 confidenceScore) /
+                2m,
+                MidpointRounding.AwayFromZero);
 
         return Math.Clamp(
-            risk,
+            negativeFactorRisk +
+            confidenceRisk,
             0,
             100);
+    }
+
+    private static string DetermineRecommendation(
+        int score)
+    {
+        if (score >=
+            SellNowThreshold)
+        {
+            return "SELL NOW";
+        }
+
+        if (score >=
+            StrategicThreshold)
+        {
+            return "REPAIR / PRICE STRATEGICALLY";
+        }
+
+        return "HOLD / REWORK";
     }
 
     private static string DetermineRiskLevel(
@@ -692,116 +654,138 @@ public class SellScoringService : ISellScoringService
 
     private static string BuildFinancialImpact(
         SellDecisionInput input,
-        decimal? fairAskingPrice,
-        decimal? currentOfferGap,
-        decimal? repairBreakEvenSalePrice)
+        decimal? difference)
     {
-        var parts = new List<string>();
-
-        if (input.ExpectedSalePrice.HasValue &&
-            fairAskingPrice.HasValue &&
-            currentOfferGap.HasValue)
-        {
-            if (currentOfferGap.Value > 0)
-            {
-                parts.Add(
-                    $"The current offer or expected as-is sale price is approximately {currentOfferGap.Value:C0} below PonyUp's fair asking price.");
-            }
-            else if (currentOfferGap.Value < 0)
-            {
-                parts.Add(
-                    $"The current offer or expected as-is sale price is approximately {Math.Abs(currentOfferGap.Value):C0} above PonyUp's fair asking price.");
-            }
-            else
-            {
-                parts.Add(
-                    "The current offer is essentially at PonyUp's fair asking price.");
-            }
-        }
-
-        if (input.EstimatedRepairCost.HasValue &&
-            input.EstimatedRepairCost.Value > 0 &&
-            repairBreakEvenSalePrice.HasValue)
-        {
-            parts.Add(
-                $"If you repair before selling, the post-repair sale price must exceed approximately {repairBreakEvenSalePrice.Value:C0} just to outperform selling at the current as-is price.");
-        }
-
-        if (parts.Count == 0)
+        if (!input.ExpectedSalePrice.HasValue ||
+            !input.MarketValue.HasValue ||
+            !difference.HasValue)
         {
             return
-                "Add the expected sale price and estimated market value for a stronger financial comparison.";
+                "Add both an expected sale price and estimated market value for a direct seller-position comparison.";
         }
 
-        return string.Join(
-            " ",
-            parts);
+        if (difference.Value > 0)
+        {
+            return
+                $"The expected sale price is approximately {difference.Value:C0} above estimated market value.";
+        }
+
+        if (difference.Value < 0)
+        {
+            return
+                $"The expected sale price is approximately {Math.Abs(difference.Value):C0} below estimated market value.";
+        }
+
+        return
+            "The expected sale price is approximately equal to estimated market value.";
     }
 
     private static string BuildReasoning(
-        IEnumerable<SellFactorScore> factors,
-        string recommendation)
+        string recommendation,
+        WeightProfile profile,
+        IEnumerable<SellScoreAdjustment> adjustments)
     {
-        string factorText =
+        string factors =
             string.Join(
                 " ",
-                factors.Select(
-                    x =>
-                        $"{x.Name}: {x.Explanation}"));
+                adjustments.Select(
+                    factor =>
+                        $"{factor.Name}: {factor.Explanation}"));
 
         return
-            $"{recommendation}. {factorText}";
+            $"{recommendation}. " +
+            $"PonyUp used the {profile.Name} weighting profile. " +
+            factors;
     }
 
     private static List<string> BuildNextSteps(
         SellDecisionInput input,
-        string recommendation,
-        bool repairMayPay)
+        string recommendation)
     {
-        var steps = new List<string>();
+        var steps =
+            new List<string>();
 
         if (!input.MarketValue.HasValue)
         {
             steps.Add(
-                "Establish a realistic market value using comparable vehicles before accepting an offer.");
+                "Establish a realistic current market value before setting or accepting a sale price.");
         }
 
         if (!input.ExpectedSalePrice.HasValue)
         {
             steps.Add(
-                "Get at least one real purchase offer or establish an expected as-is selling price.");
+                "Set a realistic asking or expected sale price.");
         }
 
         if (input.TitleStatus ==
             TitleStatus.NotProvided)
         {
             steps.Add(
-                "Confirm title status before listing the vehicle.");
+                "Confirm title status before listing or accepting an offer.");
         }
 
-        if (repairMayPay)
+        if (input.AccidentHistory ==
+            AccidentHistory.NotProvided)
         {
             steps.Add(
-                "Compare a documented repair quote with the realistic increase in selling price before authorizing repairs.");
+                "Confirm accident history when reliable vehicle-history data is available.");
         }
 
-        if (recommendation == "SELL NOW")
+        if (input.IntendedUse ==
+            SellIntendedUse.NotProvided)
         {
             steps.Add(
-                "Verify payment, title transfer, and buyer documentation before releasing the vehicle.");
+                "Select the likely buyer use so PonyUp can weight running, driving, condition and title factors correctly.");
         }
-        else if (recommendation == "REPAIR FIRST")
+
+        if (recommendation ==
+            "SELL NOW")
         {
             steps.Add(
-                "Repair only items whose expected selling-price improvement clearly exceeds their cost.");
+                "Verify payment and title-transfer documentation before releasing the vehicle.");
+        }
+        else if (recommendation ==
+                 "REPAIR / PRICE STRATEGICALLY")
+        {
+            steps.Add(
+                "Compare the likely sale-price improvement against any repair or preparation expense before spending more money.");
         }
         else
         {
             steps.Add(
-                "Rework the asking price, repair plan, or timing before committing to the sale.");
+                "Rework price, condition, timing or target buyer before committing to the sale.");
         }
 
         return steps;
+    }
+
+    private static SellScoreAdjustment CreateAdjustment(
+        string name,
+        int adjustment,
+        int maximum,
+        string explanation)
+    {
+        return new SellScoreAdjustment(
+            name,
+            Math.Clamp(
+                adjustment,
+                -maximum,
+                maximum),
+            maximum,
+            explanation);
+    }
+
+    private static int Scale(
+        int maximum,
+        decimal multiplier)
+    {
+        return Math.Clamp(
+            (int)Math.Round(
+                maximum *
+                multiplier,
+                MidpointRounding.AwayFromZero),
+            -maximum,
+            maximum);
     }
 
     private static decimal? RoundCurrency(
@@ -818,8 +802,36 @@ public class SellScoringService : ISellScoringService
             MidpointRounding.AwayFromZero);
     }
 
-    private sealed record SellFactorScore(
+    private static string FormatEnum<T>(
+        T value)
+        where T : Enum
+    {
+        return value
+            .ToString()
+            .Replace(
+                "Vehicle",
+                " Vehicle")
+            .Replace(
+                "Driver",
+                " Driver")
+            .Replace(
+                "Build",
+                " Build");
+    }
+
+    private sealed record WeightProfile(
+        string Name,
+        int Condition,
+        int Price,
+        int Title,
+        int Mileage,
+        int Accident,
+        int Runs,
+        int Drives);
+
+    private sealed record SellScoreAdjustment(
         string Name,
         int Adjustment,
+        int Maximum,
         string Explanation);
 }
