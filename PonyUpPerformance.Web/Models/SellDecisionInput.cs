@@ -31,7 +31,7 @@ public class SellDecisionInput
         ErrorMessage = "Enter valid mileage.")]
     public int? Mileage { get; set; }
 
-    [Display(Name = "Current Offer / Expected As-Is Sale Price")]
+    [Display(Name = "Asking / Expected Sale Price")]
     [Range(
         typeof(decimal),
         "0.01",
@@ -47,17 +47,9 @@ public class SellDecisionInput
         ErrorMessage = "Enter a valid market value.")]
     public decimal? MarketValue { get; set; }
 
-    [Display(Name = "Estimated Repair Cost Before Selling")]
-    [Range(
-        typeof(decimal),
-        "0",
-        "100000000",
-        ErrorMessage = "Enter a valid repair cost.")]
-    public decimal? EstimatedRepairCost { get; set; }
-
-    [Display(Name = "Mechanical Condition")]
-    public MechanicalCondition MechanicalCondition { get; set; }
-        = MechanicalCondition.NotProvided;
+    [Display(Name = "Overall Vehicle Condition")]
+    public SellCondition Condition { get; set; }
+        = SellCondition.NotProvided;
 
     [Display(Name = "Title Status")]
     public TitleStatus TitleStatus { get; set; }
@@ -66,4 +58,35 @@ public class SellDecisionInput
     [Display(Name = "Accident History")]
     public AccidentHistory AccidentHistory { get; set; }
         = AccidentHistory.NotProvided;
+
+    [Display(Name = "Runs")]
+    public bool? Runs { get; set; }
+
+    [Display(Name = "Drives")]
+    public bool? Drives { get; set; }
+
+    [Display(Name = "Intended Use")]
+    public SellIntendedUse IntendedUse { get; set; }
+        = SellIntendedUse.NotProvided;
+}
+
+public enum SellCondition
+{
+    NotProvided = -1,
+    Excellent = 0,
+    Good = 1,
+    Fair = 2,
+    Poor = 3,
+    Severe = 4
+}
+
+public enum SellIntendedUse
+{
+    NotProvided = -1,
+    DailyDriver = 0,
+    WorkVehicle = 1,
+    FamilyVehicle = 2,
+    ProjectVehicle = 3,
+    PerformanceBuild = 4,
+    Restoration = 5
 }
