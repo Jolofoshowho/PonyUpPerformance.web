@@ -4,69 +4,928 @@
 @{
     ViewData["Title"] = "Trade Analyzer";
 
-    var stoplight = new PonyUpPerformance.Web.Models.PonyUpStoplightResultViewModel
+    var stoplight =
+        new PonyUpPerformance.Web.Models.PonyUpStoplightResultViewModel
+        {
+            HasResult =
+                Model.Result != null,
+
+            AnalysisType =
+                "TRADE DECISION",
+
+            Score =
+                Model.Result?.Score,
+
+            Recommendation =
+                Model.Result?.Recommendation
+                ?? "READY",
+
+            ConfidenceScore =
+                Model.Result?.ConfidenceScore
+                ?? 0,
+
+            RiskLevel =
+                Model.Result?.RiskLevel
+                ?? string.Empty,
+
+            Reasoning =
+                Model.Result?.Reasoning
+                ?? "Compare both vehicles and run the trade analysis."
+        };
+
+    string Money(decimal? value)
     {
-        HasResult = Model.Result != null,
-        AnalysisType = "ANALYSIS STATUS",
-        Recommendation = Model.Result?.Recommendation ?? "READY",
-        ConfidenceScore = Model.Result?.ConfidenceScore ?? 0,
-        Reasoning = Model.Result?.Reasoning ?? "Enter both vehicles and run the trade analysis."
-    };
+        return value.HasValue
+            ? value.Value.ToString("C0")
+            : "—";
+    }
 }
 
 <section class="page-section analyzer-page trade-bg">
 
-<img class="analyzer-banner"
-     src="/images/TradeAnal.png"
-     alt="PonyUp Performance Trade Analyzer" />
+    <img class="analyzer-banner"
+         src="/images/TradeAnal.png"
+         alt="PonyUp Performance Trade Analyzer" />
 
-<div class="price-card analyzer-card"
-     style="max-width:900px;margin:0 auto;">
+    <div class="trade-compare-shell">
+
         <form method="post">
-            <h3 style="margin-bottom:20px;">YOUR VEHICLE</h3>
 
-            <label>Year</label>
-            <input asp-for="Input.YourYear" />
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger">
+            </div>
 
-            <label>Make</label>
-            <input asp-for="Input.YourMake" />
+            <div class="trade-vehicle-grid">
 
-            <label>Model</label>
-            <input asp-for="Input.YourModel" />
+                <!-- ============================
+                     YOUR VEHICLE
+                     ============================ -->
 
-            <label>Mileage</label>
-            <input asp-for="Input.YourMileage" />
+                <div class="trade-vehicle-card">
 
-            <label>Estimated Value</label>
-            <input asp-for="Input.YourValue" />
+                    <div class="trade-side-label">
+                        YOUR VEHICLE
+                    </div>
 
-            <hr />
+                    <div class="trade-market-label">
+                        MARKET VALUE
+                    </div>
 
-            <h3 style="margin-bottom:20px;">THEIR VEHICLE</h3>
+                    <div class="trade-market-value">
+                        <span>$</span>
 
-            <label>Year</label>
-            <input asp-for="Input.TheirYear" />
+                        <input asp-for="Input.YourValue"
+                               aria-label="Your vehicle market value"
+                               placeholder="0" />
+                    </div>
 
-            <label>Make</label>
-            <input asp-for="Input.TheirMake" />
+                    <div class="trade-name-line">
 
-            <label>Model</label>
-            <input asp-for="Input.TheirModel" />
+                        <input asp-for="Input.YourYear"
+                               class="trade-year"
+                               aria-label="Your vehicle year"
+                               placeholder="1996" />
 
-            <label>Mileage</label>
-            <input asp-for="Input.TheirMileage" />
+                        <input asp-for="Input.YourMake"
+                               class="trade-make"
+                               aria-label="Your vehicle make"
+                               placeholder="Mercury" />
 
-            <label>Estimated Value</label>
-            <input asp-for="Input.TheirValue" />
+                    </div>
 
-            <label>Estimated Repairs Needed</label>
-            <input asp-for="Input.EstimatedRepairCost" />
+                    <input asp-for="Input.YourModel"
+                           class="trade-model"
+                           aria-label="Your vehicle model"
+                           placeholder="Grand Marquis" />
 
-            <button class="btn-red" type="submit" style="margin-top:25px;">
-                ANALYZE TRADE
-            </button>
+                    <input asp-for="Input.YourTrim"
+                           class="trade-trim"
+                           aria-label="Your vehicle trim"
+                           placeholder="Trim" />
+
+                    <div class="trade-vin-row">
+
+                        <input asp-for="Input.YourVin"
+                               maxlength="17"
+                               aria-label="Your vehicle VIN"
+                               placeholder="VIN" />
+
+                        <button type="submit"
+                                class="trade-decode-button"
+                                asp-page-handler="DecodeYourVin"
+                                formnovalidate>
+
+                            DECODE
+
+                        </button>
+
+                    </div>
+
+                    <span asp-validation-for="Input.YourVin"
+                          class="text-danger trade-mini-message">
+                    </span>
+
+                    @if (!string.IsNullOrWhiteSpace(
+                        Model.YourVinMessage))
+                    {
+                        <div class="trade-mini-message">
+                            @Model.YourVinMessage
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(
+                        Model.YourValueMessage))
+                    {
+                        <div class="trade-mini-message value">
+                            @Model.YourValueMessage
+                        </div>
+                    }
+
+                    <details class="trade-history">
+
+                        <summary>
+                            VEHICLE HISTORY ›
+                        </summary>
+
+                        <div class="trade-history-panel">
+
+                            <div class="trade-history-field">
+
+                                <label>
+                                    Title
+                                </label>
+
+                                <select asp-for="Input.YourTitleStatus">
+
+                                    <option value="-1">
+                                        Not Provided
+                                    </option>
+
+                                    <option value="0">
+                                        Clean
+                                    </option>
+
+                                    <option value="1">
+                                        Rebuilt
+                                    </option>
+
+                                    <option value="2">
+                                        Salvage
+                                    </option>
+
+                                    <option value="3">
+                                        Flood
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="trade-history-field">
+
+                                <label>
+                                    Accident
+                                </label>
+
+                                <select asp-for="Input.YourAccidentHistory">
+
+                                    <option value="-1">
+                                        Not Provided
+                                    </option>
+
+                                    <option value="0">
+                                        None
+                                    </option>
+
+                                    <option value="1">
+                                        Minor
+                                    </option>
+
+                                    <option value="2">
+                                        Moderate
+                                    </option>
+
+                                    <option value="3">
+                                        Major
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="trade-history-field">
+
+                                <label>
+                                    Runs
+                                </label>
+
+                                <select asp-for="Input.YourRuns">
+
+                                    <option value="">
+                                        Not Provided
+                                    </option>
+
+                                    <option value="true">
+                                        Yes
+                                    </option>
+
+                                    <option value="false">
+                                        No
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="trade-history-field">
+
+                                <label>
+                                    Drives
+                                </label>
+
+                                <select asp-for="Input.YourDrives">
+
+                                    <option value="">
+                                        Not Provided
+                                    </option>
+
+                                    <option value="true">
+                                        Yes
+                                    </option>
+
+                                    <option value="false">
+                                        No
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="trade-history-field">
+
+                                <label>
+                                    Repairs
+                                </label>
+
+                                <input asp-for="Input.YourEstimatedRepairCost"
+                                       placeholder="$0" />
+
+                            </div>
+
+                        </div>
+
+                    </details>
+
+                </div>
+
+
+                <!-- ============================
+                     THEIR VEHICLE
+                     ============================ -->
+
+                <div class="trade-vehicle-card">
+
+                    <div class="trade-side-label">
+                        THEIR VEHICLE
+                    </div>
+
+                    <div class="trade-market-label">
+                        MARKET VALUE
+                    </div>
+
+                    <div class="trade-market-value">
+                        <span>$</span>
+
+                        <input asp-for="Input.TheirValue"
+                               aria-label="Their vehicle market value"
+                               placeholder="0" />
+                    </div>
+
+                    <div class="trade-name-line">
+
+                        <input asp-for="Input.TheirYear"
+                               class="trade-year"
+                               aria-label="Their vehicle year"
+                               placeholder="2008" />
+
+                        <input asp-for="Input.TheirMake"
+                               class="trade-make"
+                               aria-label="Their vehicle make"
+                               placeholder="Pontiac" />
+
+                    </div>
+
+                    <input asp-for="Input.TheirModel"
+                           class="trade-model"
+                           aria-label="Their vehicle model"
+                           placeholder="Grand Prix" />
+
+                    <input asp-for="Input.TheirTrim"
+                           class="trade-trim"
+                           aria-label="Their vehicle trim"
+                           placeholder="Trim" />
+
+                    <div class="trade-vin-row">
+
+                        <input asp-for="Input.TheirVin"
+                               maxlength="17"
+                               aria-label="Their vehicle VIN"
+                               placeholder="VIN" />
+
+                        <button type="submit"
+                                class="trade-decode-button"
+                                asp-page-handler="DecodeTheirVin"
+                                formnovalidate>
+
+                            DECODE
+
+                        </button>
+
+                    </div>
+
+                    <span asp-validation-for="Input.TheirVin"
+                          class="text-danger trade-mini-message">
+                    </span>
+
+                    @if (!string.IsNullOrWhiteSpace(
+                        Model.TheirVinMessage))
+                    {
+                        <div class="trade-mini-message">
+                            @Model.TheirVinMessage
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(
+                        Model.TheirValueMessage))
+                    {
+                        <div class="trade-mini-message value">
+                            @Model.TheirValueMessage
+                        </div>
+                    }
+
+                    <details class="trade-history">
+
+                        <summary>
+                            VEHICLE HISTORY ›
+                        </summary>
+
+                        <div class="trade-history-panel">
+
+                            <div class="trade-history-field">
+
+                                <label>
+                                    Title
+                                </label>
+
+                                <select asp-for="Input.TheirTitleStatus">
+
+                                    <option value="-1">
+                                        Not Provided
+                                    </option>
+
+                                    <option value="0">
+                                        Clean
+                                    </option>
+
+                                    <option value="1">
+                                        Rebuilt
+                                    </option>
+
+                                    <option value="2">
+                                        Salvage
+                                    </option>
+
+                                    <option value="3">
+                                        Flood
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="trade-history-field">
+
+                                <label>
+                                    Accident
+                                </label>
+
+                                <select asp-for="Input.TheirAccidentHistory">
+
+                                    <option value="-1">
+                                        Not Provided
+                                    </option>
+
+                                    <option value="0">
+                                        None
+                                    </option>
+
+                                    <option value="1">
+                                        Minor
+                                    </option>
+
+                                    <option value="2">
+                                        Moderate
+                                    </option>
+
+                                    <option value="3">
+                                        Major
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="trade-history-field">
+
+                                <label>
+                                    Runs
+                                </label>
+
+                                <select asp-for="Input.TheirRuns">
+
+                                    <option value="">
+                                        Not Provided
+                                    </option>
+
+                                    <option value="true">
+                                        Yes
+                                    </option>
+
+                                    <option value="false">
+                                        No
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="trade-history-field">
+
+                                <label>
+                                    Drives
+                                </label>
+
+                                <select asp-for="Input.TheirDrives">
+
+                                    <option value="">
+                                        Not Provided
+                                    </option>
+
+                                    <option value="true">
+                                        Yes
+                                    </option>
+
+                                    <option value="false">
+                                        No
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="trade-history-field">
+
+                                <label>
+                                    Repairs
+                                </label>
+
+                                <input asp-for="Input.TheirEstimatedRepairCost"
+                                       placeholder="$0" />
+
+                            </div>
+
+                        </div>
+
+                    </details>
+
+                </div>
+
+            </div>
+
+
+            <!-- ============================
+                 SIDE-BY-SIDE SPEC TABLE
+                 ============================ -->
+
+            <div class="trade-spec-table">
+
+                <div class="trade-spec-row">
+
+                    <div class="trade-spec-value">
+                        <input asp-for="Input.YourEngine"
+                               aria-label="Your engine"
+                               placeholder="—" />
+                    </div>
+
+                    <div class="trade-spec-label">
+                        ENGINE
+                    </div>
+
+                    <div class="trade-spec-value">
+                        <input asp-for="Input.TheirEngine"
+                               aria-label="Their engine"
+                               placeholder="—" />
+                    </div>
+
+                </div>
+
+
+                <div class="trade-spec-row">
+
+                    <div class="trade-spec-value unit">
+
+                        <input asp-for="Input.YourHorsepower"
+                               aria-label="Your horsepower"
+                               placeholder="—" />
+
+                        <span>HP</span>
+
+                    </div>
+
+                    <div class="trade-spec-label">
+                        HORSEPOWER
+                    </div>
+
+                    <div class="trade-spec-value unit">
+
+                        <input asp-for="Input.TheirHorsepower"
+                               aria-label="Their horsepower"
+                               placeholder="—" />
+
+                        <span>HP</span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="trade-spec-row">
+
+                    <div class="trade-spec-value unit">
+
+                        <input asp-for="Input.YourTorqueLbFt"
+                               aria-label="Your torque"
+                               placeholder="—" />
+
+                        <span>LB-FT</span>
+
+                    </div>
+
+                    <div class="trade-spec-label">
+                        TORQUE
+                    </div>
+
+                    <div class="trade-spec-value unit">
+
+                        <input asp-for="Input.TheirTorqueLbFt"
+                               aria-label="Their torque"
+                               placeholder="—" />
+
+                        <span>LB-FT</span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="trade-spec-row">
+
+                    <div class="trade-spec-value">
+                        <input asp-for="Input.YourTransmission"
+                               aria-label="Your transmission"
+                               placeholder="—" />
+                    </div>
+
+                    <div class="trade-spec-label">
+                        TRANSMISSION
+                    </div>
+
+                    <div class="trade-spec-value">
+                        <input asp-for="Input.TheirTransmission"
+                               aria-label="Their transmission"
+                               placeholder="—" />
+                    </div>
+
+                </div>
+
+
+                <div class="trade-spec-row">
+
+                    <div class="trade-spec-value">
+                        <input asp-for="Input.YourDrivetrain"
+                               aria-label="Your drivetrain"
+                               placeholder="—" />
+                    </div>
+
+                    <div class="trade-spec-label">
+                        DRIVETRAIN
+                    </div>
+
+                    <div class="trade-spec-value">
+                        <input asp-for="Input.TheirDrivetrain"
+                               aria-label="Their drivetrain"
+                               placeholder="—" />
+                    </div>
+
+                </div>
+
+
+                <div class="trade-spec-row">
+
+                    <div class="trade-spec-value">
+                        <input asp-for="Input.YourFuelType"
+                               aria-label="Your fuel type"
+                               placeholder="—" />
+                    </div>
+
+                    <div class="trade-spec-label">
+                        FUEL
+                    </div>
+
+                    <div class="trade-spec-value">
+                        <input asp-for="Input.TheirFuelType"
+                               aria-label="Their fuel type"
+                               placeholder="—" />
+                    </div>
+
+                </div>
+
+
+                <div class="trade-spec-row">
+
+                    <div class="trade-spec-value">
+                        <input asp-for="Input.YourBodyStyle"
+                               aria-label="Your body style"
+                               placeholder="—" />
+                    </div>
+
+                    <div class="trade-spec-label">
+                        BODY
+                    </div>
+
+                    <div class="trade-spec-value">
+                        <input asp-for="Input.TheirBodyStyle"
+                               aria-label="Their body style"
+                               placeholder="—" />
+                    </div>
+
+                </div>
+
+
+                <div class="trade-spec-row">
+
+                    <div class="trade-spec-value unit">
+
+                        <input asp-for="Input.YourMileage"
+                               aria-label="Your mileage"
+                               placeholder="—" />
+
+                        <span>MI</span>
+
+                    </div>
+
+                    <div class="trade-spec-label">
+                        MILEAGE
+                    </div>
+
+                    <div class="trade-spec-value unit">
+
+                        <input asp-for="Input.TheirMileage"
+                               aria-label="Their mileage"
+                               placeholder="—" />
+
+                        <span>MI</span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="trade-spec-row">
+
+                    <div class="trade-spec-value trade-mpg">
+
+                        <input asp-for="Input.YourCityMpg"
+                               aria-label="Your city MPG"
+                               placeholder="City" />
+
+                        <span>/</span>
+
+                        <input asp-for="Input.YourHighwayMpg"
+                               aria-label="Your highway MPG"
+                               placeholder="Hwy" />
+
+                    </div>
+
+                    <div class="trade-spec-label">
+                        MPG C/H
+                    </div>
+
+                    <div class="trade-spec-value trade-mpg">
+
+                        <input asp-for="Input.TheirCityMpg"
+                               aria-label="Their city MPG"
+                               placeholder="City" />
+
+                        <span>/</span>
+
+                        <input asp-for="Input.TheirHighwayMpg"
+                               aria-label="Their highway MPG"
+                               placeholder="Hwy" />
+
+                    </div>
+
+                </div>
+
+
+                <div class="trade-spec-row">
+
+                    <div class="trade-spec-value unit">
+
+                        <input asp-for="Input.YourCurbWeightLbs"
+                               aria-label="Your curb weight"
+                               placeholder="—" />
+
+                        <span>LB</span>
+
+                    </div>
+
+                    <div class="trade-spec-label">
+                        CURB WEIGHT
+                    </div>
+
+                    <div class="trade-spec-value unit">
+
+                        <input asp-for="Input.TheirCurbWeightLbs"
+                               aria-label="Their curb weight"
+                               placeholder="—" />
+
+                        <span>LB</span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="trade-spec-row trade-condition-row">
+
+                    <div class="trade-spec-value">
+
+                        <select asp-for="Input.YourCondition"
+                                aria-label="Your vehicle condition">
+
+                            <option value="-1">
+                                Not Provided
+                            </option>
+
+                            <option value="0">
+                                Excellent
+                            </option>
+
+                            <option value="1">
+                                Good
+                            </option>
+
+                            <option value="2">
+                                Fair
+                            </option>
+
+                            <option value="3">
+                                Poor
+                            </option>
+
+                            <option value="4">
+                                Severe
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="trade-spec-label">
+                        CONDITION
+                    </div>
+
+                    <div class="trade-spec-value">
+
+                        <select asp-for="Input.TheirCondition"
+                                aria-label="Their vehicle condition">
+
+                            <option value="-1">
+                                Not Provided
+                            </option>
+
+                            <option value="0">
+                                Excellent
+                            </option>
+
+                            <option value="1">
+                                Good
+                            </option>
+
+                            <option value="2">
+                                Fair
+                            </option>
+
+                            <option value="3">
+                                Poor
+                            </option>
+
+                            <option value="4">
+                                Severe
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ============================
+                 TRADE CASH
+                 ============================ -->
+
+            <div class="trade-cash-grid">
+
+                <div>
+
+                    <label>
+                        CASH YOU ADD
+                    </label>
+
+                    <input asp-for="Input.CashYouAdd"
+                           placeholder="$0" />
+
+                </div>
+
+                <div>
+
+                    <label>
+                        CASH THEY ADD
+                    </label>
+
+                    <input asp-for="Input.CashTheyAdd"
+                           placeholder="$0" />
+
+                </div>
+
+            </div>
+
+
+            <div class="trade-analyze-action">
+
+                <button type="submit"
+                        class="btn-red"
+                        asp-page-handler="Analyze">
+
+                    ANALYZE TRADE
+
+                </button>
+
+            </div>
+
         </form>
+
+
+        @if (Model.Result != null)
+        {
+            <div class="trade-result-summary">
+
+                <div>
+                    <span>YOUR ADJUSTED VALUE</span>
+                    <strong>
+                        @Money(Model.Result.YourAdjustedValue)
+                    </strong>
+                </div>
+
+                <div>
+                    <span>NET TRADE POSITION</span>
+                    <strong>
+                        @Money(Model.Result.NetTradePosition)
+                    </strong>
+                </div>
+
+                <div>
+                    <span>THEIR ADJUSTED VALUE</span>
+                    <strong>
+                        @Money(Model.Result.TheirAdjustedValue)
+                    </strong>
+                </div>
+
+            </div>
+
+            <partial name="_PonyUpStoplightResult"
+                     model="stoplight" />
+        }
+
     </div>
 
-    <partial name="_PonyUpStoplightResult" model="stoplight" />
 </section>
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+}
