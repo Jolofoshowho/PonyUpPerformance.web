@@ -624,22 +624,22 @@ public class SellScoringService : ISellScoringService
     }
 
     private static string DetermineRecommendation(
-        int score)
+    int score)
+{
+    if (score >=
+        SellNowThreshold)
     {
-        if (score >=
-            SellNowThreshold)
-        {
-            return "SELL NOW";
-        }
-
-        if (score >=
-            StrategicThreshold)
-        {
-            return "REPAIR / PRICE STRATEGICALLY";
-        }
-
-        return "HOLD / REWORK";
+        return "GIDDY UP!";
     }
+
+    if (score >=
+        StrategicThreshold)
+    {
+        return "ON SECOND TROT";
+    }
+
+    return "WHOA NELLY!!";
+}
 
     private static string DetermineRiskLevel(
         int riskScore)
