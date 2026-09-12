@@ -274,5 +274,6 @@ namespace PonyUpPerformance.Web.Services
                 XDocument.Parse(xml);
 
             var root =
-                document.Root;
+                document.Root();
                 }
+           }
