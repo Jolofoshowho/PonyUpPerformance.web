@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PonyUpPerformance.Web.Data;
 using PonyUpPerformance.Web.Models;
@@ -8,15 +8,21 @@ namespace PonyUpPerformance.Web.Services
 {
     public class AnalysisHistoryService
     {
-        private readonly ApplicationDbContext _dbContext;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ApplicationDbContext
+            _dbContext;
+
+        private readonly UserManager<ApplicationUser>
+            _userManager;
 
         public AnalysisHistoryService(
             ApplicationDbContext dbContext,
             UserManager<ApplicationUser> userManager)
         {
-            _dbContext = dbContext;
-            _userManager = userManager;
+            _dbContext =
+                dbContext;
+
+            _userManager =
+                userManager;
         }
 
         public async Task SaveRepairAnalysisAsync(
@@ -26,48 +32,95 @@ namespace PonyUpPerformance.Web.Services
             RepairCostEstimateResult estimateResult,
             DecisionResult result)
         {
-            ApplicationUser? user = await _userManager.GetUserAsync(userPrincipal);
+            ApplicationUser? user =
+                await _userManager.GetUserAsync(
+                    userPrincipal);
 
             if (user == null)
             {
                 return;
             }
 
-            AnalysisHistory history = new AnalysisHistory
-            {
-                UserId = user.Id,
-                AnalysisType = "Repair",
+            AnalysisHistory history =
+                new AnalysisHistory
+                {
+                    UserId =
+                        user.Id,
 
-                VehicleYear = input.VehicleYear,
-                VehicleMake = input.VehicleMake,
-                VehicleModel = input.VehicleModel,
-                Mileage = input.Mileage,
+                    AnalysisType =
+                        "Repair",
 
-                RepairType = estimateInput.RepairType,
-                LowEstimate = estimateResult.LowEstimate,
-                ExpectedEstimate = estimateResult.ExpectedEstimate,
-                HighEstimate = estimateResult.HighEstimate,
+                    VehicleYear =
+                        input.VehicleYear ?? 0,
 
-                VehicleValue = input.VehicleValue,
-                VehicleCondition = input.Condition.ToString(),
-                PlannedOwnershipYears = input.OwnershipYears,
+                    VehicleMake =
+                        input.VehicleMake
+                        ?? string.Empty,
 
-                Recommendation = result.Recommendation.ToString(),
-                ConfidenceScore = result.ConfidenceScore,
-                RiskLevel = result.RiskLevel.ToString(),
-                FinancialImpact = result.FinancialImpact.ToString(),
-                Reasoning = result.Reasoning,
+                    VehicleModel =
+                        input.VehicleModel
+                        ?? string.Empty,
 
-                CreatedOn = DateTime.UtcNow
-            };
+                    Mileage =
+                        input.Mileage ?? 0,
 
-            _dbContext.AnalysisHistories.Add(history);
+                    RepairType =
+                        estimateInput.RepairType
+                        ?? string.Empty,
+
+                    LowEstimate =
+                        estimateResult.LowEstimate,
+
+                    ExpectedEstimate =
+                        estimateResult.ExpectedEstimate,
+
+                    HighEstimate =
+                        estimateResult.HighEstimate,
+
+                    VehicleValue =
+                        input.VehicleValue ?? 0m,
+
+                    VehicleCondition =
+                        input.Condition ==
+                        MechanicalCondition.NotProvided
+                            ? string.Empty
+                            : input.Condition.ToString(),
+
+                    PlannedOwnershipYears =
+                        input.OwnershipYears ?? 0,
+
+                    Recommendation =
+                        result.Recommendation,
+
+                    ConfidenceScore =
+                        result.ConfidenceScore,
+
+                    RiskLevel =
+                        result.RiskLevel,
+
+                    FinancialImpact =
+                        result.FinancialImpact,
+
+                    Reasoning =
+                        result.Reasoning,
+
+                    CreatedOn =
+                        DateTime.UtcNow
+                };
+
+            _dbContext.AnalysisHistories.Add(
+                history);
+
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<List<AnalysisHistory>> GetUserHistoryAsync(ClaimsPrincipal userPrincipal)
+        public async Task<List<AnalysisHistory>>
+            GetUserHistoryAsync(
+                ClaimsPrincipal userPrincipal)
         {
-            ApplicationUser? user = await _userManager.GetUserAsync(userPrincipal);
+            ApplicationUser? user =
+                await _userManager.GetUserAsync(
+                    userPrincipal);
 
             if (user == null)
             {
@@ -75,8 +128,13 @@ namespace PonyUpPerformance.Web.Services
             }
 
             return await _dbContext.AnalysisHistories
-                .Where(x => x.UserId == user.Id)
-                .OrderByDescending(x => x.CreatedOn)
+                .Where(
+                    history =>
+                        history.UserId ==
+                        user.Id)
+                .OrderByDescending(
+                    history =>
+                        history.CreatedOn)
                 .ToListAsync();
         }
     }
