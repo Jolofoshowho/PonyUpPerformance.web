@@ -10,7 +10,7 @@
 
     string reasoning =
         Model.Result?.Reasoning
-        ?? "Enter the repair details and run the analysis.";
+        ?? "Enter whatever repair and vehicle information you know, then run the analysis.";
 
     string Money(decimal value)
     {
@@ -41,10 +41,12 @@
                 recommendation,
 
             ConfidenceScore =
-                Model.Result?.ConfidenceScore ?? 0,
+                Model.Result?.ConfidenceScore
+                ?? 0,
 
             RiskLevel =
-                Model.Result?.RiskLevel ?? string.Empty,
+                Model.Result?.RiskLevel
+                ?? string.Empty,
 
             Reasoning =
                 reasoning
@@ -52,13 +54,6 @@
 }
 
 <style>
-
-    /*
-     * REPAIR ANALYZER FORM LAYOUT
-     *
-     * Overrides the site's global 220px label column
-     * only inside the Repair Analyzer.
-     */
 
     .repair-bg .analyzer-form {
         width: 100%;
@@ -107,31 +102,18 @@
         min-width: 0;
     }
 
-    /*
-     * Give the complete-decision section enough usable
-     * width without changing the outer PonyUp card.
-     */
-
     .repair-bg .analyzer-card {
         overflow: visible;
     }
 
-    /*
-     * Safety-critical checkbox gets its own centered row.
-     */
-
-    .repair-bg .single-check {
-        width: min(720px, 100%);
-        margin-left: auto;
-        margin-right: auto;
+    .repair-optional-note {
+        max-width: 720px;
+        margin: 0 auto 20px;
         text-align: center;
+        color: #aaa;
+        font-size: .9rem;
+        line-height: 1.4;
     }
-
-    /*
-     * Mobile/tablet:
-     * labels stack over their controls rather than
-     * squeezing or clipping.
-     */
 
     @@media (max-width: 760px) {
 
@@ -160,8 +142,8 @@
 <section class="page-section analyzer-page repair-bg">
 
     <img class="analyzer-banner"
-     src="/images/RepairAnal.png"
-     alt="PonyUp Performance Repair Analyzer" />
+         src="/images/RepairAnal.png"
+         alt="PonyUp Performance Repair Analyzer" />
 
     @if (!string.IsNullOrWhiteSpace(
         Model.CreditMessage))
@@ -176,14 +158,11 @@
         </div>
     }
 
+
     @*
         ==================================================
         STAGE 1
-        VEHICLE + REPAIR ESTIMATE INPUTS
-
-        Decode VIN stays on Stage 1.
-        Estimate Repair Cost is the only action that
-        advances successfully to Stage 2.
+        VEHICLE + OPTIONAL REPAIR ESTIMATE
         ==================================================
     *@
 
@@ -219,9 +198,19 @@
                 <input asp-for="Input.IsSafetyCritical"
                        type="hidden" />
 
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger">
+                </div>
+
                 <h2>
                     VEHICLE INFORMATION
                 </h2>
+
+                <p class="repair-optional-note">
+                    VIN is optional. Enter it for automatic
+                    vehicle identification, or enter the
+                    vehicle manually.
+                </p>
 
                 <div class="form-row">
 
@@ -277,19 +266,16 @@
 
                 <div class="form-row">
 
-                    <label for="Input_VehicleYear">
+                    <label asp-for="Input.VehicleYear">
                         Year
                     </label>
 
-                    <input id="Input_VehicleYear"
-                           name="Input.VehicleYear"
-                           type="number"
-                           min="1886"
-                           max="2100"
-                           placeholder="Year"
-                           value="@(Model.Input.VehicleYear > 0
-                               ? Model.Input.VehicleYear.ToString()
-                               : string.Empty)" />
+                    <input asp-for="Input.VehicleYear"
+                           placeholder="Year" />
+
+                    <span asp-validation-for="Input.VehicleYear"
+                          class="text-danger">
+                    </span>
 
                 </div>
 
@@ -299,7 +285,8 @@
                         Make
                     </label>
 
-                    <input asp-for="Input.VehicleMake" />
+                    <input asp-for="Input.VehicleMake"
+                           placeholder="Make" />
 
                 </div>
 
@@ -309,7 +296,8 @@
                         Model
                     </label>
 
-                    <input asp-for="Input.VehicleModel" />
+                    <input asp-for="Input.VehicleModel"
+                           placeholder="Model" />
 
                 </div>
 
@@ -320,13 +308,21 @@
                     REPAIR COST ESTIMATE
                 </h2>
 
+                <p class="repair-optional-note">
+                    PonyUp can estimate the repair cost,
+                    or you can continue and enter your own
+                    quote. Location fields are optional;
+                    national averages are used when needed.
+                </p>
+
                 <div class="form-row">
 
                     <label asp-for="EstimateInput.City">
                         City
                     </label>
 
-                    <input asp-for="EstimateInput.City" />
+                    <input asp-for="EstimateInput.City"
+                           placeholder="City" />
 
                 </div>
 
@@ -336,7 +332,8 @@
                         State
                     </label>
 
-                    <input asp-for="EstimateInput.State" />
+                    <input asp-for="EstimateInput.State"
+                           placeholder="State" />
 
                 </div>
 
@@ -346,7 +343,8 @@
                         ZIP Code
                     </label>
 
-                    <input asp-for="EstimateInput.ZipCode" />
+                    <input asp-for="EstimateInput.ZipCode"
+                           placeholder="ZIP" />
 
                 </div>
 
@@ -402,6 +400,15 @@
 
                     </button>
 
+                    <button class="btn-dark"
+                            type="submit"
+                            asp-page-handler="ContinueToAnalysis"
+                            formnovalidate>
+
+                        CONTINUE WITHOUT ESTIMATE
+
+                    </button>
+
                 </div>
 
             </form>
@@ -409,17 +416,15 @@
         </div>
     }
 
+
     @*
         ==================================================
         STAGE 2
-        ACTUAL REPAIR ESTIMATE + DECISION INPUTS
-
-        Appears ONLY after Estimate Repair Cost succeeds.
+        COMPLETE REPAIR DECISION
         ==================================================
     *@
 
-    @if (Model.WorkflowStage == 2 &&
-         Model.EstimateResult != null)
+    @if (Model.WorkflowStage == 2)
     {
         <div class="price-card analyzer-card"
              style="max-width:900px;margin:0 auto;">
@@ -463,217 +468,243 @@
                 <input asp-for="EstimateInput.IncludeTowFee"
                        type="hidden" />
 
-                <input asp-for="EstimateResult.RepairType"
-                       type="hidden" />
+                @if (Model.EstimateResult != null)
+                {
+                    <input asp-for="EstimateResult.RepairType"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.LocationUsed"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.LocationUsed"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.LaborRateLow"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.LaborRateLow"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.LaborRateAverage"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.LaborRateAverage"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.LaborRateHigh"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.LaborRateHigh"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.LaborHoursLow"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.LaborHoursLow"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.LaborHoursAverage"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.LaborHoursAverage"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.LaborHoursHigh"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.LaborHoursHigh"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.PartsLow"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.PartsLow"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.PartsAverage"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.PartsAverage"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.PartsHigh"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.PartsHigh"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.ShopFeeAverage"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.ShopFeeAverage"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.SalesTaxRate"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.SalesTaxRate"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.DiagnosticFee"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.DiagnosticFee"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.TowFee"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.TowFee"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.LowEstimate"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.LowEstimate"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.ExpectedEstimate"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.ExpectedEstimate"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.HighEstimate"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.HighEstimate"
+                           type="hidden" />
 
-                <input asp-for="EstimateResult.EstimateNote"
-                       type="hidden" />
+                    <input asp-for="EstimateResult.EstimateNote"
+                           type="hidden" />
+                }
 
-                <h2>
-                    REPAIR COST ESTIMATE
-                </h2>
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger">
+                </div>
 
-                <p style="
-                    font-size:1.1rem;
-                    font-weight:900;
-                    margin-bottom:24px;">
+                @if (Model.EstimateResult != null)
+                {
+                    <h2>
+                        REPAIR COST ESTIMATE
+                    </h2>
 
-                    @if (Model.Input.VehicleYear > 0)
+                    <p style="
+                        font-size:1.1rem;
+                        font-weight:900;
+                        margin-bottom:24px;">
+
+                        @if (Model.Input.VehicleYear.HasValue)
+                        {
+                            @Model.Input.VehicleYear.Value
+                            <text> </text>
+                        }
+
+                        @Model.Input.VehicleMake
+                        @Model.Input.VehicleModel
+
+                    </p>
+
+                    <p>
+                        <strong>
+                            Repair:
+                        </strong>
+
+                        @Model.EstimateResult.RepairType
+                    </p>
+
+                    <p>
+                        <strong>
+                            Location:
+                        </strong>
+
+                        @Model.EstimateResult.LocationUsed
+                    </p>
+
+                    <div class="analyzer-section-divider">
+                    </div>
+
+                    <p>
+                        <strong>
+                            Low Estimate:
+                        </strong>
+
+                        @Money(
+                            Model.EstimateResult.LowEstimate)
+                    </p>
+
+                    <p style="font-size:1.2rem;">
+
+                        <strong>
+                            Expected Estimate:
+                        </strong>
+
+                        @Money(
+                            Model.EstimateResult.ExpectedEstimate)
+
+                    </p>
+
+                    <p>
+                        <strong>
+                            High Estimate:
+                        </strong>
+
+                        @Money(
+                            Model.EstimateResult.HighEstimate)
+                    </p>
+
+                    <div class="analyzer-section-divider">
+                    </div>
+
+                    <p>
+                        <strong>
+                            Average Labor Rate:
+                        </strong>
+
+                        @Money(
+                            Model.EstimateResult.LaborRateAverage)
+
+                        per hour
+                    </p>
+
+                    <p>
+                        <strong>
+                            Average Labor Time:
+                        </strong>
+
+                        @Hours(
+                            Model.EstimateResult.LaborHoursAverage)
+
+                        hours
+                    </p>
+
+                    <p>
+                        <strong>
+                            Average Parts Cost:
+                        </strong>
+
+                        @Money(
+                            Model.EstimateResult.PartsAverage)
+                    </p>
+
+                    <p>
+                        <strong>
+                            Average Shop Fee:
+                        </strong>
+
+                        @Money(
+                            Model.EstimateResult.ShopFeeAverage)
+                    </p>
+
+                    @if (Model.EstimateResult.DiagnosticFee > 0)
                     {
-                        @Model.Input.VehicleYear
-                        <text> </text>
+                        <p>
+                            <strong>
+                                Diagnostic Fee:
+                            </strong>
+
+                            @Money(
+                                Model.EstimateResult.DiagnosticFee)
+                        </p>
                     }
 
-                    @Model.Input.VehicleMake
-                    @Model.Input.VehicleModel
+                    @if (Model.EstimateResult.TowFee > 0)
+                    {
+                        <p>
+                            <strong>
+                                Tow Fee:
+                            </strong>
 
-                </p>
+                            @Money(
+                                Model.EstimateResult.TowFee)
+                        </p>
+                    }
 
-                <p>
-                    <strong>
-                        Repair:
-                    </strong>
+                    @if (!string.IsNullOrWhiteSpace(
+                        Model.EstimateResult.EstimateNote))
+                    {
+                        <p>
+                            @Model.EstimateResult.EstimateNote
+                        </p>
+                    }
 
-                    @Model.EstimateResult.RepairType
-                </p>
-
-                <p>
-                    <strong>
-                        Location:
-                    </strong>
-
-                    @Model.EstimateResult.LocationUsed
-                </p>
-
-                <div class="analyzer-section-divider">
-                </div>
-
-                <p>
-                    <strong>
-                        Low Estimate:
-                    </strong>
-
-                    @Money(
-                        Model.EstimateResult.LowEstimate)
-                </p>
-
-                <p style="font-size:1.2rem;">
-
-                    <strong>
-                        Expected Estimate:
-                    </strong>
-
-                    @Money(
-                        Model.EstimateResult.ExpectedEstimate)
-
-                </p>
-
-                <p>
-                    <strong>
-                        High Estimate:
-                    </strong>
-
-                    @Money(
-                        Model.EstimateResult.HighEstimate)
-                </p>
-
-                <div class="analyzer-section-divider">
-                </div>
-
-                <p>
-                    <strong>
-                        Average Labor Rate:
-                    </strong>
-
-                    @Money(
-                        Model.EstimateResult.LaborRateAverage)
-
-                    per hour
-                </p>
-
-                <p>
-                    <strong>
-                        Average Labor Time:
-                    </strong>
-
-                    @Hours(
-                        Model.EstimateResult.LaborHoursAverage)
-
-                    hours
-                </p>
-
-                <p>
-                    <strong>
-                        Average Parts Cost:
-                    </strong>
-
-                    @Money(
-                        Model.EstimateResult.PartsAverage)
-                </p>
-
-                <p>
-                    <strong>
-                        Average Shop Fee:
-                    </strong>
-
-                    @Money(
-                        Model.EstimateResult.ShopFeeAverage)
-                </p>
-
-                @if (Model.EstimateResult.DiagnosticFee > 0)
-                {
-                    <p>
-                        <strong>
-                            Diagnostic Fee:
-                        </strong>
-
-                        @Money(
-                            Model.EstimateResult.DiagnosticFee)
-                    </p>
+                    <div class="analyzer-section-divider">
+                    </div>
                 }
-
-                @if (Model.EstimateResult.TowFee > 0)
-                {
-                    <p>
-                        <strong>
-                            Tow Fee:
-                        </strong>
-
-                        @Money(
-                            Model.EstimateResult.TowFee)
-                    </p>
-                }
-
-                @if (!string.IsNullOrWhiteSpace(
-                    Model.EstimateResult.EstimateNote))
-                {
-                    <p>
-                        @Model.EstimateResult.EstimateNote
-                    </p>
-                }
-
-                <div class="analyzer-section-divider">
-                </div>
 
                 <h2>
                     COMPLETE REPAIR DECISION
                 </h2>
 
-                <p>
-                    PonyUp has filled Repair Cost with the
-                    expected estimate. Change it only if you
-                    have a more accurate quote.
+                <p class="repair-optional-note">
+
+                    @if (Model.EstimateResult != null)
+                    {
+                        <text>
+                            PonyUp filled Repair Cost with the
+                            expected estimate. Replace it if you
+                            have a more accurate written quote.
+                        </text>
+                    }
+                    else
+                    {
+                        <text>
+                            Enter whatever information you know.
+                            Nothing is mandatory; missing evidence
+                            lowers confidence instead of blocking
+                            the decision.
+                        </text>
+                    }
+
                 </p>
 
                 <div class="form-row">
@@ -682,7 +713,12 @@
                         Repair Cost
                     </label>
 
-                    <input asp-for="Input.RepairCost" />
+                    <input asp-for="Input.RepairCost"
+                           placeholder="—" />
+
+                    <span asp-validation-for="Input.RepairCost"
+                          class="text-danger">
+                    </span>
 
                 </div>
 
@@ -692,7 +728,12 @@
                         Mileage
                     </label>
 
-                    <input asp-for="Input.Mileage" />
+                    <input asp-for="Input.Mileage"
+                           placeholder="—" />
+
+                    <span asp-validation-for="Input.Mileage"
+                          class="text-danger">
+                    </span>
 
                 </div>
 
@@ -702,7 +743,12 @@
                         Estimated Vehicle Value
                     </label>
 
-                    <input asp-for="Input.VehicleValue" />
+                    <input asp-for="Input.VehicleValue"
+                           placeholder="—" />
+
+                    <span asp-validation-for="Input.VehicleValue"
+                          class="text-danger">
+                    </span>
 
                 </div>
 
@@ -714,20 +760,28 @@
 
                     <select asp-for="Input.Condition">
 
-                        <option value="Poor">
-                            Poor
+                        <option value="-1">
+                            —
                         </option>
 
-                        <option value="Fair">
-                            Fair
+                        <option value="0">
+                            Excellent
                         </option>
 
-                        <option value="Good">
+                        <option value="1">
                             Good
                         </option>
 
-                        <option value="Excellent">
-                            Excellent
+                        <option value="2">
+                            Fair
+                        </option>
+
+                        <option value="3">
+                            Poor
+                        </option>
+
+                        <option value="4">
+                            Severe
                         </option>
 
                     </select>
@@ -740,19 +794,36 @@
                         Years You Plan to Keep It
                     </label>
 
-                    <input asp-for="Input.OwnershipYears" />
+                    <input asp-for="Input.OwnershipYears"
+                           placeholder="—" />
+
+                    <span asp-validation-for="Input.OwnershipYears"
+                          class="text-danger">
+                    </span>
 
                 </div>
 
-                <div class="form-check-row single-check">
+                <div class="form-row">
 
-                    <label>
-
-                        <input asp-for="Input.IsSafetyCritical" />
-
+                    <label asp-for="Input.IsSafetyCritical">
                         Safety-Critical Repair
-
                     </label>
+
+                    <select asp-for="Input.IsSafetyCritical">
+
+                        <option value="">
+                            —
+                        </option>
+
+                        <option value="true">
+                            Yes
+                        </option>
+
+                        <option value="false">
+                            No
+                        </option>
+
+                    </select>
 
                 </div>
 
@@ -771,7 +842,7 @@
                             asp-page-handler="ChangeEstimate"
                             formnovalidate>
 
-                        CHANGE ESTIMATE
+                        CHANGE / ADD ESTIMATE
 
                     </button>
 
@@ -782,12 +853,11 @@
         </div>
     }
 
+
     @*
         ==================================================
         STAGE 3
         PONYUP STOPLIGHT RESULT
-
-        Appears ONLY after Analyze Repair succeeds.
         ==================================================
     *@
 
