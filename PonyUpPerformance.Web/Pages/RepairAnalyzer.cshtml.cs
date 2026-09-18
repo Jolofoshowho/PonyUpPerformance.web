@@ -8,11 +8,20 @@ namespace PonyUpPerformance.Web.Pages;
 
 public class RepairAnalyzerModel : PageModel
 {
-    private readonly IRepairScoringService _repairScoringService;
-    private readonly RepairCostEstimatorService _repairCostEstimatorService;
-    private readonly UsageCreditService _usageCreditService;
-    private readonly IVinDecoderService _vinDecoderService;
-    private readonly IVehicleSpecEnrichmentService _vehicleSpecEnrichmentService;
+    private readonly IRepairScoringService
+        _repairScoringService;
+
+    private readonly RepairCostEstimatorService
+        _repairCostEstimatorService;
+
+    private readonly UsageCreditService
+        _usageCreditService;
+
+    private readonly IVinDecoderService
+        _vinDecoderService;
+
+    private readonly IVehicleSpecEnrichmentService
+        _vehicleSpecEnrichmentService;
 
     public RepairAnalyzerModel(
         IRepairScoringService repairScoringService,
@@ -21,19 +30,29 @@ public class RepairAnalyzerModel : PageModel
         IVinDecoderService vinDecoderService,
         IVehicleSpecEnrichmentService vehicleSpecEnrichmentService)
     {
-        _repairScoringService = repairScoringService;
-        _repairCostEstimatorService = repairCostEstimatorService;
-        _usageCreditService = usageCreditService;
-        _vinDecoderService = vinDecoderService;
+        _repairScoringService =
+            repairScoringService;
+
+        _repairCostEstimatorService =
+            repairCostEstimatorService;
+
+        _usageCreditService =
+            usageCreditService;
+
+        _vinDecoderService =
+            vinDecoderService;
+
         _vehicleSpecEnrichmentService =
             vehicleSpecEnrichmentService;
     }
 
     [BindProperty]
-    public RepairDecisionInput Input { get; set; } = new();
+    public RepairDecisionInput Input { get; set; } =
+        new();
 
     [BindProperty]
-    public RepairCostEstimateInput EstimateInput { get; set; } = new();
+    public RepairCostEstimateInput EstimateInput { get; set; } =
+        new();
 
     [BindProperty]
     public bool EstimateCreditConsumed { get; set; }
@@ -46,46 +65,33 @@ public class RepairAnalyzerModel : PageModel
 
     public DecisionResult? Result { get; set; }
 
-    public UsageCreditStatus CreditStatus { get; set; } = new();
+    public UsageCreditStatus CreditStatus { get; set; } =
+        new();
 
     public string? CreditMessage { get; set; }
 
     public string VinDecodeMessage { get; private set; } =
         string.Empty;
 
-    public List<string> RepairTypes { get; set; } = new();
+    public List<string> RepairTypes { get; set; } =
+        new();
 
     public async Task OnGetAsync()
     {
-        /*
-         * A fresh page always begins at Stage 1.
-         */
         WorkflowStage = 1;
 
-        RepairTypes =
-            _repairCostEstimatorService.GetRepairTypes();
-
-        CreditStatus =
-            await _usageCreditService.GetStatusAsync(User);
+        await LoadPageStateAsync();
     }
 
     public async Task<IActionResult> OnPostDecodeVinAsync(
         CancellationToken cancellationToken)
     {
-        /*
-         * DECODE VIN never advances the workflow.
-         *
-         * It only populates vehicle information.
-         */
         WorkflowStage = 1;
 
-        RepairTypes =
-            _repairCostEstimatorService.GetRepairTypes();
+        await LoadPageStateAsync();
 
-        CreditStatus =
-            await _usageCreditService.GetStatusAsync(User);
-
-        if (string.IsNullOrWhiteSpace(Input.Vin))
+        if (string.IsNullOrWhiteSpace(
+                Input.Vin))
         {
             ModelState.Clear();
 
@@ -106,7 +112,8 @@ public class RepairAnalyzerModel : PageModel
             ModelState.Clear();
 
             string warning =
-                decoded.DecodeWarnings.FirstOrDefault()
+                decoded.DecodeWarnings
+                    .FirstOrDefault()
                 ?? "The VIN could not be decoded.";
 
             ModelState.AddModelError(
@@ -121,42 +128,28 @@ public class RepairAnalyzerModel : PageModel
                 decoded,
                 cancellationToken);
 
-        ApplyDecodedVehicle(decoded);
+        ApplyDecodedVehicle(
+            decoded);
 
-        /*
-         * Clear submitted field values so Razor displays
-         * the decoded vehicle values from Input.
-         */
         ModelState.Clear();
 
         VinDecodeMessage =
-            string.IsNullOrWhiteSpace(decoded.DisplayName)
+            string.IsNullOrWhiteSpace(
+                decoded.DisplayName)
                 ? "VIN decoded successfully."
                 : $"VIN decoded: {decoded.DisplayName}";
 
-        /*
-         * Explicitly remain on Stage 1.
-         */
         WorkflowStage = 1;
 
         return Page();
     }
 
-    public async Task<IActionResult> OnPostEstimateAsync()
+    public async Task<IActionResult>
+        OnPostEstimateAsync()
     {
-        /*
-         * ESTIMATE button begins from Stage 1.
-         *
-         * It advances to Stage 2 ONLY after a successful
-         * repair estimate and successful credit use.
-         */
         WorkflowStage = 1;
 
-        RepairTypes =
-            _repairCostEstimatorService.GetRepairTypes();
-
-        CreditStatus =
-            await _usageCreditService.GetStatusAsync(User);
+        await LoadPageStateAsync();
 
         if (!CreditStatus.IsLoggedIn)
         {
@@ -175,13 +168,15 @@ public class RepairAnalyzerModel : PageModel
         }
 
         EstimateInput.VehicleYear =
-            Input.VehicleYear;
+            Input.VehicleYear ?? 0;
 
         EstimateInput.VehicleMake =
-            Input.VehicleMake;
+            Input.VehicleMake
+            ?? string.Empty;
 
         EstimateInput.VehicleModel =
-            Input.VehicleModel;
+            Input.VehicleModel
+            ?? string.Empty;
 
         EstimateResult =
             _repairCostEstimatorService.Estimate(
@@ -198,60 +193,76 @@ public class RepairAnalyzerModel : PageModel
                 "Unable to consume an analysis credit.";
 
             CreditStatus =
-                await _usageCreditService.GetStatusAsync(User);
+                await _usageCreditService.GetStatusAsync(
+                    User);
 
             EstimateResult = null;
 
-            /*
-             * Estimate failed.
-             * Stay on Stage 1.
-             */
             WorkflowStage = 1;
 
             return Page();
         }
 
-        /*
-         * PonyUp expected estimate becomes the default
-         * Repair Cost for the actual repair decision.
-         */
         Input.RepairCost =
             EstimateResult.ExpectedEstimate;
 
-        /*
-         * Prevent the old posted RepairCost value from
-         * overriding the new expected estimate.
-         */
-        ModelState.Remove("Input.RepairCost");
+        ModelState.Remove(
+            "Input.RepairCost");
 
         EstimateCreditConsumed = true;
 
         CreditStatus =
-            await _usageCreditService.GetStatusAsync(User);
+            await _usageCreditService.GetStatusAsync(
+                User);
 
-        /*
-         * ONLY the successful ESTIMATE button advances
-         * the page to Stage 2.
-         */
         WorkflowStage = 2;
 
         return Page();
     }
 
-    public async Task<IActionResult> OnPostAnalyzeAsync()
+    /*
+     * Repair estimation is optional.
+     *
+     * A customer may already have a written quote,
+     * may want to enter the cost manually, or may
+     * simply want PonyUp to evaluate the evidence
+     * they currently have.
+     */
+    public async Task<IActionResult>
+        OnPostContinueToAnalysisAsync()
     {
-        /*
-         * ANALYZE REPAIR operates from Stage 2.
-         *
-         * Any failure leaves the customer on Stage 2.
-         */
         WorkflowStage = 2;
 
-        RepairTypes =
-            _repairCostEstimatorService.GetRepairTypes();
+        EstimateResult = null;
 
-        CreditStatus =
-            await _usageCreditService.GetStatusAsync(User);
+        await LoadPageStateAsync();
+
+        ModelState.Clear();
+
+        return Page();
+    }
+
+    public async Task<IActionResult>
+        OnPostAnalyzeAsync()
+    {
+        WorkflowStage = 2;
+
+        await LoadPageStateAsync();
+
+        /*
+         * Nothing is mandatory.
+         *
+         * Blank nullable fields are valid.
+         * Truly invalid supplied values still need
+         * to be corrected.
+         */
+        if (!ModelState.IsValid)
+        {
+            CreditMessage =
+                "Correct any invalid values and run the analysis again.";
+
+            return Page();
+        }
 
         if (!CreditStatus.IsLoggedIn)
         {
@@ -261,14 +272,12 @@ public class RepairAnalyzerModel : PageModel
             return Page();
         }
 
-        if (Input.RepairCost <= 0)
-        {
-            CreditMessage =
-                "Estimate the repair cost first or enter a valid repair cost.";
-
-            return Page();
-        }
-
+        /*
+         * If the customer already used a credit for
+         * PonyUp's repair estimate, do not charge a
+         * second credit for the decision immediately
+         * following that estimate.
+         */
         if (!EstimateCreditConsumed)
         {
             if (!CreditStatus.CanRunAnalysis)
@@ -290,69 +299,67 @@ public class RepairAnalyzerModel : PageModel
                     "Unable to consume an analysis credit.";
 
                 CreditStatus =
-                    await _usageCreditService.GetStatusAsync(User);
+                    await _usageCreditService.GetStatusAsync(
+                        User);
 
                 return Page();
             }
         }
 
         Result =
-            _repairScoringService.Analyze(Input);
+            _repairScoringService.Analyze(
+                Input);
 
         EstimateCreditConsumed = false;
 
         CreditStatus =
-            await _usageCreditService.GetStatusAsync(User);
+            await _usageCreditService.GetStatusAsync(
+                User);
 
-        /*
-         * ONLY a successful ANALYZE REPAIR button
-         * advances the workflow to Stage 3.
-         */
         WorkflowStage = 3;
 
         return Page();
     }
 
-    public async Task<IActionResult> OnPostChangeEstimateAsync()
+    public async Task<IActionResult>
+        OnPostChangeEstimateAsync()
     {
-        /*
-         * Explicit user action returns to Stage 1.
-         */
         WorkflowStage = 1;
 
         Result = null;
 
-        RepairTypes =
-            _repairCostEstimatorService.GetRepairTypes();
-
-        CreditStatus =
-            await _usageCreditService.GetStatusAsync(User);
+        await LoadPageStateAsync();
 
         return Page();
     }
 
-    public async Task<IActionResult> OnPostEditAnalysisAsync()
+    public async Task<IActionResult>
+        OnPostEditAnalysisAsync()
     {
-        /*
-         * Explicit user action returns to Stage 2.
-         */
         WorkflowStage = 2;
 
         Result = null;
 
+        await LoadPageStateAsync();
+
+        return Page();
+    }
+
+    private async Task LoadPageStateAsync()
+    {
         RepairTypes =
             _repairCostEstimatorService.GetRepairTypes();
 
         CreditStatus =
-            await _usageCreditService.GetStatusAsync(User);
-
-        return Page();
+            await _usageCreditService.GetStatusAsync(
+                User);
     }
 
     private void ApplyDecodedVehicle(
         VehicleProfile decoded)
     {
-        if (!string.IsNullOrWhiteSpace(decoded.Vin))
+        if (!string.IsNullOrWhiteSpace(
+                decoded.Vin))
         {
             Input.Vin =
                 decoded.Vin;
@@ -364,13 +371,15 @@ public class RepairAnalyzerModel : PageModel
                 decoded.Year.Value;
         }
 
-        if (!string.IsNullOrWhiteSpace(decoded.Make))
+        if (!string.IsNullOrWhiteSpace(
+                decoded.Make))
         {
             Input.VehicleMake =
                 decoded.Make;
         }
 
-        if (!string.IsNullOrWhiteSpace(decoded.Model))
+        if (!string.IsNullOrWhiteSpace(
+                decoded.Model))
         {
             Input.VehicleModel =
                 decoded.Model;
