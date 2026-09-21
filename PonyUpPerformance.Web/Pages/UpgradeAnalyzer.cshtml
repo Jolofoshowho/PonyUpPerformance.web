@@ -1,57 +1,161 @@
-@page
-@model PonyUpPerformance.Web.Pages.UpgradeAnalyzerModel
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using PonyUpPerformance.Web.Models;
+using PonyUpPerformance.Web.Services;
+using PonyUpPerformance.Web.Services.Scoring;
 
-@{
-    ViewData["Title"] = "Upgrade Analyzer";
+namespace PonyUpPerformance.Web.Pages;
 
-    var stoplight = new PonyUpPerformance.Web.Models.PonyUpStoplightResultViewModel
+public class UpgradeAnalyzerModel : PageModel
+{
+    private readonly IUpgradeScoringService
+        _upgradeScoringService;
+
+    private readonly IVinDecoderService
+        _vinDecoderService;
+
+    private readonly IVehicleSpecEnrichmentService
+        _vehicleSpecEnrichmentService;
+
+    public UpgradeAnalyzerModel(
+        IUpgradeScoringService upgradeScoringService,
+        IVinDecoderService vinDecoderService,
+        IVehicleSpecEnrichmentService vehicleSpecEnrichmentService)
     {
-        HasResult = Model.Result != null,
-        AnalysisType = "ANALYSIS STATUS",
-        Recommendation = Model.Result?.Recommendation ?? "READY",
-        ConfidenceScore = Model.Result?.ConfidenceScore ?? 0,
-        Reasoning = Model.Result?.Reasoning ?? "Enter the upgrade details and run the analysis."
-    };
+        _upgradeScoringService =
+            upgradeScoringService;
+
+        _vinDecoderService =
+            vinDecoderService;
+
+        _vehicleSpecEnrichmentService =
+            vehicleSpecEnrichmentService;
+    }
+
+    [BindProperty]
+    public UpgradeDecisionInput Input { get; set; } =
+        new();
+
+    public UpgradeDecisionResult? Result { get; private set; }
+
+    public string VinDecodeMessage { get; private set; } =
+        string.Empty;
+
+    public void OnGet()
+    {
+    }
+
+    public async Task<IActionResult> OnPostDecodeVinAsync(
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(
+                Input.Vin))
+        {
+            ModelState.Clear();
+
+            ModelState.AddModelError(
+                "Input.Vin",
+                "Enter a VIN to decode.");
+
+            return Page();
+        }
+
+        VehicleProfile decoded =
+            await _vinDecoderService.DecodeAsync(
+                Input.Vin,
+                cancellationToken);
+
+        if (!decoded.DecodeSuccessful)
+        {
+            ModelState.Clear();
+
+            string warning =
+                decoded.DecodeWarnings
+                    .FirstOrDefault()
+                ?? "The VIN could not be decoded.";
+
+            ModelState.AddModelError(
+                "Input.Vin",
+                warning);
+
+            return Page();
+        }
+
+        decoded =
+            await _vehicleSpecEnrichmentService.EnrichAsync(
+                decoded,
+                cancellationToken);
+
+        ApplyDecodedVehicle(
+            decoded);
+
+        ModelState.Clear();
+
+        VinDecodeMessage =
+            string.IsNullOrWhiteSpace(
+                decoded.DisplayName)
+                ? "VIN decoded successfully."
+                : $"VIN decoded: {decoded.DisplayName}";
+
+        return Page();
+    }
+
+    public IActionResult OnPostAnalyze()
+    {
+        if (!ModelState.IsValid)
+        {
+            return Page();
+        }
+
+        Result =
+            _upgradeScoringService.Analyze(
+                Input);
+
+        return Page();
+    }
+
+    private void ApplyDecodedVehicle(
+        VehicleProfile decoded)
+    {
+        if (!string.IsNullOrWhiteSpace(
+                decoded.Vin))
+        {
+            Input.Vin =
+                decoded.Vin;
+        }
+
+        if (decoded.Year.HasValue)
+        {
+            Input.Year =
+                decoded.Year.Value;
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+                decoded.Make))
+        {
+            Input.Make =
+                decoded.Make;
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+                decoded.Model))
+        {
+            Input.Model =
+                decoded.Model;
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+                decoded.Trim))
+        {
+            Input.Trim =
+                decoded.Trim;
+        }
+
+        if (decoded.Horsepower.HasValue &&
+            decoded.Horsepower.Value > 0)
+        {
+            Input.CurrentHorsepower =
+                decoded.Horsepower.Value;
+        }
+    }
 }
-
-<section class="page-section analyzer-page upgrade-bg">
-
-<img class="analyzer-banner"
-     src="/images/UpgradeAnal.png"
-     alt="PonyUp Performance Upgrade Analyzer" />
-
-<div class="price-card analyzer-card"
-     style="max-width:900px;margin:0 auto;">
-        <form method="post">
-            <label>Year</label>
-            <input asp-for="Input.Year" />
-
-            <label>Make</label>
-            <input asp-for="Input.Make" />
-
-            <label>Model</label>
-            <input asp-for="Input.Model" />
-
-            <label>Current Vehicle Value</label>
-            <input asp-for="Input.CurrentValue" />
-
-            <label>Upgrade Cost</label>
-            <input asp-for="Input.UpgradeCost" />
-
-            <label>Estimated Value Added</label>
-            <input asp-for="Input.ValueAdded" />
-
-            <label>Estimated Horsepower Gain</label>
-            <input asp-for="Input.HorsepowerGain" />
-
-            <label>Reliability Impact (-100 to +100)</label>
-            <input asp-for="Input.ReliabilityImpact" />
-
-            <button class="btn-red" type="submit" style="margin-top:25px;">
-                ANALYZE UPGRADE
-            </button>
-        </form>
-    </div>
-
-    <partial name="_PonyUpStoplightResult" model="stoplight" />
-</section>
