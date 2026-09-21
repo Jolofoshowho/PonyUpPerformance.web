@@ -1,62 +1,161 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using PonyUpPerformance.Web.Models;
+using PonyUpPerformance.Web.Services;
+using PonyUpPerformance.Web.Services.Scoring;
 
-namespace PonyUpPerformance.Web.Pages
+namespace PonyUpPerformance.Web.Pages;
+
+public class UpgradeAnalyzerModel : PageModel
 {
-    public class UpgradeAnalyzerModel : PageModel
+    private readonly IUpgradeScoringService
+        _upgradeScoringService;
+
+    private readonly IVinDecoderService
+        _vinDecoderService;
+
+    private readonly IVehicleSpecEnrichmentService
+        _vehicleSpecEnrichmentService;
+
+    public UpgradeAnalyzerModel(
+        IUpgradeScoringService upgradeScoringService,
+        IVinDecoderService vinDecoderService,
+        IVehicleSpecEnrichmentService vehicleSpecEnrichmentService)
     {
-        [BindProperty]
-        public UpgradeDecisionInput Input { get; set; } = new();
+        _upgradeScoringService =
+            upgradeScoringService;
 
-        public BuyDecisionResult? Result { get; set; }
+        _vinDecoderService =
+            vinDecoderService;
 
-        public void OnGet()
+        _vehicleSpecEnrichmentService =
+            vehicleSpecEnrichmentService;
+    }
+
+    [BindProperty]
+    public UpgradeDecisionInput Input { get; set; } =
+        new();
+
+    public UpgradeDecisionResult? Result { get; private set; }
+
+    public string VinDecodeMessage { get; private set; } =
+        string.Empty;
+
+    public void OnGet()
+    {
+    }
+
+    public async Task<IActionResult> OnPostDecodeVinAsync(
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(
+                Input.Vin))
         {
+            ModelState.Clear();
+
+            ModelState.AddModelError(
+                "Input.Vin",
+                "Enter a VIN to decode.");
+
+            return Page();
         }
 
-        public void OnPost()
+        VehicleProfile decoded =
+            await _vinDecoderService.DecodeAsync(
+                Input.Vin,
+                cancellationToken);
+
+        if (!decoded.DecodeSuccessful)
         {
-            int score = 50;
+            ModelState.Clear();
 
-            if (Input.UpgradeCost <= 500) score += 15;
-            else if (Input.UpgradeCost <= 1500) score += 8;
-            else if (Input.UpgradeCost <= 3000) score -= 5;
-            else score -= 20;
+            string warning =
+                decoded.DecodeWarnings
+                    .FirstOrDefault()
+                ?? "The VIN could not be decoded.";
 
-            if (Input.ValueAdded >= Input.UpgradeCost) score += 25;
-            else if (Input.ValueAdded >= Input.UpgradeCost * 0.5m) score += 10;
-            else score -= 15;
+            ModelState.AddModelError(
+                "Input.Vin",
+                warning);
 
-            if (Input.HorsepowerGain >= 100) score += 15;
-            else if (Input.HorsepowerGain >= 50) score += 8;
-            else if (Input.HorsepowerGain >= 20) score += 3;
+            return Page();
+        }
 
-            if (Input.ReliabilityImpact >= 50) score += 15;
-            else if (Input.ReliabilityImpact >= 0) score += 5;
-            else if (Input.ReliabilityImpact >= -50) score -= 15;
-            else score -= 30;
+        decoded =
+            await _vehicleSpecEnrichmentService.EnrichAsync(
+                decoded,
+                cancellationToken);
 
-            score = Math.Max(0, Math.Min(100, score));
+        ApplyDecodedVehicle(
+            decoded);
 
-            string decision =
-                score >= 75 ? "PONY UP" :
-                score >= 50 ? "PLAN CAREFULLY" :
-                "WALK AWAY";
+        ModelState.Clear();
 
-            string summary =
-                score >= 75
-                    ? "The upgrade looks worth the money. It adds enough value, performance, or benefit to justify moving forward."
-                    : score >= 50
-                        ? "The upgrade may be worth doing, but only with a tighter budget, better parts plan, or lower reliability risk."
-                        : "The upgrade does not currently justify the spend. Too much money is going out for too little return.";
+        VinDecodeMessage =
+            string.IsNullOrWhiteSpace(
+                decoded.DisplayName)
+                ? "VIN decoded successfully."
+                : $"VIN decoded: {decoded.DisplayName}";
 
-            Result = new BuyDecisionResult
-{
-    ConfidenceScore = score,
-    Recommendation = decision,
-    Reasoning = summary
-};
+        return Page();
+    }
+
+    public IActionResult OnPostAnalyze()
+    {
+        if (!ModelState.IsValid)
+        {
+            return Page();
+        }
+
+        Result =
+            _upgradeScoringService.Analyze(
+                Input);
+
+        return Page();
+    }
+
+    private void ApplyDecodedVehicle(
+        VehicleProfile decoded)
+    {
+        if (!string.IsNullOrWhiteSpace(
+                decoded.Vin))
+        {
+            Input.Vin =
+                decoded.Vin;
+        }
+
+        if (decoded.Year.HasValue)
+        {
+            Input.Year =
+                decoded.Year.Value;
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+                decoded.Make))
+        {
+            Input.Make =
+                decoded.Make;
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+                decoded.Model))
+        {
+            Input.Model =
+                decoded.Model;
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+                decoded.Trim))
+        {
+            Input.Trim =
+                decoded.Trim;
+        }
+
+        if (decoded.Horsepower.HasValue &&
+            decoded.Horsepower.Value > 0)
+        {
+            Input.CurrentHorsepower =
+                decoded.Horsepower.Value;
         }
     }
 }
