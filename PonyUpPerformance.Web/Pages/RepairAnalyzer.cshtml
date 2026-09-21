@@ -141,9 +141,12 @@
 
 <section class="page-section analyzer-page repair-bg">
 
+    @if (Model.Result == null)
+{
     <img class="analyzer-banner"
          src="/images/RepairAnal.png"
          alt="PonyUp Performance Repair Analyzer" />
+}
 
     @if (!string.IsNullOrWhiteSpace(
         Model.CreditMessage))
