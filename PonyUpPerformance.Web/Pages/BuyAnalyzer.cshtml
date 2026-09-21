@@ -55,9 +55,12 @@
 
 <section class="page-section analyzer-page buy-bg">
 
+    @if (Model.Result == null)
+{
     <img class="analyzer-banner"
-     src="/images/BuyAnal.png"
-     alt="PonyUp Performance Buy Analyzer" />
+         src="/images/BuyAnal.png"
+         alt="PonyUp Performance Buy Analyzer" />
+}
 
     <div id="buy-input-panel"
          class="price-card analyzer-card"
