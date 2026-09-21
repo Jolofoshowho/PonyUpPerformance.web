@@ -59,9 +59,12 @@
 
 <section class="page-section analyzer-page sell-bg">
 
+@if (Model.Result == null)
+{
     <img class="analyzer-banner"
          src="/images/SellAnal.png"
          alt="PonyUp Performance Sell Analyzer" />
+}
 
     <div id="sell-input-panel"
          class="price-card analyzer-card"
