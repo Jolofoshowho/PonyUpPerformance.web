@@ -88,7 +88,7 @@ builder.Services.AddScoped<UsageCreditService>();
 builder.Services.AddScoped<IBuyScoringService, BuyScoringService>();
 builder.Services.AddScoped<ISellScoringService, SellScoringService>();
 builder.Services.AddScoped<ITradeScoringService, TradeScoringService>();
-builder.Services.AddScoped<ITradeScoringService, TradeScoringService>();
+builder.Services.AddScoped<IUpgradeScoringService, UpgradeScoringService>();
 
 var app = builder.Build();
 
