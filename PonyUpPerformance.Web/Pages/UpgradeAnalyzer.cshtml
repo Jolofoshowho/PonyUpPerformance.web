@@ -1,161 +1,554 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using PonyUpPerformance.Web.Models;
-using PonyUpPerformance.Web.Services;
-using PonyUpPerformance.Web.Services.Scoring;
+@page
+@model PonyUpPerformance.Web.Pages.UpgradeAnalyzerModel
 
-namespace PonyUpPerformance.Web.Pages;
+@{
+    ViewData["Title"] = "Upgrade Analyzer";
 
-public class UpgradeAnalyzerModel : PageModel
+    string inputPanelStyle =
+        Model.Result != null
+            ? "max-width:900px;margin:0 auto;display:none;"
+            : "max-width:900px;margin:0 auto;";
+
+    string Money(decimal? value)
+    {
+        return value.HasValue
+            ? value.Value.ToString("C0")
+            : "—";
+    }
+
+    string Percent(decimal? value)
+    {
+        return value.HasValue
+            ? $"{value.Value:0.#}%"
+            : "—";
+    }
+
+    var stoplight =
+        new PonyUpPerformance.Web.Models.PonyUpStoplightResultViewModel
+        {
+            HasResult =
+                Model.Result != null,
+
+            AnalysisType =
+                "UPGRADE DECISION",
+
+            Score =
+                Model.Result?.Score,
+
+            Recommendation =
+                Model.Result?.Recommendation
+                ?? "READY",
+
+            ConfidenceScore =
+                Model.Result?.ConfidenceScore
+                ?? 0,
+
+            RiskLevel =
+                Model.Result?.RiskLevel
+                ?? string.Empty,
+
+            Reasoning =
+                Model.Result?.Reasoning
+                ?? "Enter whatever upgrade information you know and run the analysis."
+        };
+}
+
+<section class="page-section analyzer-page upgrade-bg">
+
+    @if (Model.Result == null)
+    {
+        <img class="analyzer-banner"
+             src="/images/UpgradeAnal.png"
+             alt="PonyUp Performance Upgrade Analyzer" />
+    }
+
+    <div id="upgrade-input-panel"
+         class="price-card analyzer-card"
+         style="@inputPanelStyle">
+
+        <form method="post"
+              class="analyzer-form">
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger">
+            </div>
+
+            <h2>
+                VEHICLE INFORMATION
+            </h2>
+
+            <div class="form-row">
+
+                <label asp-for="Input.Vin">
+                    VIN
+                </label>
+
+                <input asp-for="Input.Vin"
+                       maxlength="17"
+                       autocomplete="off"
+                       data-vin-history="true"
+                       style="text-transform:uppercase;" />
+
+                <span asp-validation-for="Input.Vin"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+            <div class="form-actions"
+                 style="margin-top:10px;margin-bottom:20px;">
+
+                <button class="btn-red"
+                        type="submit"
+                        asp-page-handler="DecodeVin"
+                        formnovalidate>
+
+                    DECODE VIN
+
+                </button>
+
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(
+                Model.VinDecodeMessage))
+            {
+                <p style="font-weight:700;">
+                    @Model.VinDecodeMessage
+                </p>
+            }
+
+            <div class="form-row">
+
+                <label asp-for="Input.Year">
+                    Year
+                </label>
+
+                <input asp-for="Input.Year"
+                       placeholder="Year" />
+
+                <span asp-validation-for="Input.Year"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+            <div class="form-row">
+
+                <label asp-for="Input.Make">
+                    Make
+                </label>
+
+                <input asp-for="Input.Make"
+                       placeholder="Make" />
+
+            </div>
+
+            <div class="form-row">
+
+                <label asp-for="Input.Model">
+                    Model
+                </label>
+
+                <input asp-for="Input.Model"
+                       placeholder="Model" />
+
+            </div>
+
+            <div class="form-row">
+
+                <label asp-for="Input.Trim">
+                    Trim
+                </label>
+
+                <input asp-for="Input.Trim"
+                       placeholder="Trim" />
+
+            </div>
+
+            <div class="form-row">
+
+                <label asp-for="Input.CurrentHorsepower">
+                    Current Horsepower
+                </label>
+
+                <input asp-for="Input.CurrentHorsepower"
+                       placeholder="—" />
+
+                <span asp-validation-for="Input.CurrentHorsepower"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+            <div class="form-row">
+
+                <label asp-for="Input.CurrentValue">
+                    Current Vehicle Value
+                </label>
+
+                <input asp-for="Input.CurrentValue"
+                       placeholder="—" />
+
+                <span asp-validation-for="Input.CurrentValue"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <div class="analyzer-section-divider">
+            </div>
+
+            <h2>
+                UPGRADE PLAN
+            </h2>
+
+            <div class="form-row">
+
+                <label asp-for="Input.Goal">
+                    Upgrade Goal
+                </label>
+
+                <select asp-for="Input.Goal">
+
+                    <option value="-1">
+                        —
+                    </option>
+
+                    <option value="0">
+                        Performance
+                    </option>
+
+                    <option value="1">
+                        Reliability
+                    </option>
+
+                    <option value="2">
+                        Appearance
+                    </option>
+
+                    <option value="3">
+                        Comfort / Technology
+                    </option>
+
+                    <option value="4">
+                        Utility / Towing
+                    </option>
+
+                    <option value="5">
+                        Fuel Economy
+                    </option>
+
+                    <option value="6">
+                        Restoration
+                    </option>
+
+                    <option value="7">
+                        Resale Value
+                    </option>
+
+                </select>
+
+            </div>
+
+            <div class="form-row">
+
+                <label asp-for="Input.UpgradeCost">
+                    Upgrade Cost
+                </label>
+
+                <input asp-for="Input.UpgradeCost"
+                       placeholder="—" />
+
+                <span asp-validation-for="Input.UpgradeCost"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+            <div class="form-row">
+
+                <label asp-for="Input.ValueAdded">
+                    Estimated Resale Value Added
+                </label>
+
+                <input asp-for="Input.ValueAdded"
+                       placeholder="—" />
+
+                <span asp-validation-for="Input.ValueAdded"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+            <div class="form-row">
+
+                <label asp-for="Input.HorsepowerGain">
+                    Estimated Horsepower Gain
+                </label>
+
+                <input asp-for="Input.HorsepowerGain"
+                       placeholder="—" />
+
+                <span asp-validation-for="Input.HorsepowerGain"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+            <div class="form-row">
+
+                <label asp-for="Input.ReliabilityImpact">
+                    Reliability Impact
+                </label>
+
+                <select asp-for="Input.ReliabilityImpact">
+
+                    <option value="-1">
+                        —
+                    </option>
+
+                    <option value="0">
+                        Much Better
+                    </option>
+
+                    <option value="1">
+                        Better
+                    </option>
+
+                    <option value="2">
+                        No Change
+                    </option>
+
+                    <option value="3">
+                        Worse
+                    </option>
+
+                    <option value="4">
+                        Much Worse
+                    </option>
+
+                </select>
+
+            </div>
+
+            <div class="form-row">
+
+                <label asp-for="Input.IsDailyDriver">
+                    Daily Driver
+                </label>
+
+                <select asp-for="Input.IsDailyDriver">
+
+                    <option value="">
+                        —
+                    </option>
+
+                    <option value="true">
+                        Yes
+                    </option>
+
+                    <option value="false">
+                        No
+                    </option>
+
+                </select>
+
+            </div>
+
+            <div class="form-actions">
+
+                <button class="btn-red"
+                        type="submit"
+                        asp-page-handler="Analyze">
+
+                    ANALYZE UPGRADE
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    @if (Model.Result != null)
+    {
+        <div id="upgrade-result-panel">
+
+            <partial name="_PonyUpStoplightResult"
+                     model="stoplight" />
+
+            <div class="form-actions"
+                 style="max-width:900px;margin:20px auto;">
+
+                <button type="button"
+                        class="btn-dark"
+                        onclick="editUpgradeAnalysis()">
+
+                    EDIT ANALYSIS
+
+                </button>
+
+            </div>
+
+            <div class="price-card featured"
+                 style="max-width:900px;margin:0 auto;">
+
+                <h2>
+                    UPGRADE ECONOMICS
+                </h2>
+
+                <p>
+                    <strong>
+                        Current Vehicle Value:
+                    </strong>
+
+                    @Money(
+                        Model.Input.CurrentValue)
+                </p>
+
+                <p>
+                    <strong>
+                        Upgrade Cost:
+                    </strong>
+
+                    @Money(
+                        Model.Input.UpgradeCost)
+                </p>
+
+                <p>
+                    <strong>
+                        Cost vs Vehicle Value:
+                    </strong>
+
+                    @Percent(
+                        Model.Result.UpgradeCostVsVehicleValuePercent)
+                </p>
+
+                <p>
+                    <strong>
+                        Estimated Value Added:
+                    </strong>
+
+                    @Money(
+                        Model.Input.ValueAdded)
+                </p>
+
+                <p>
+                    <strong>
+                        Value Recovery:
+                    </strong>
+
+                    @Percent(
+                        Model.Result.ValueRecoveryPercent)
+                </p>
+
+                <p>
+                    <strong>
+                        Projected Vehicle Value:
+                    </strong>
+
+                    @Money(
+                        Model.Result.ProjectedVehicleValue)
+                </p>
+
+                <p>
+                    <strong>
+                        Net Value Impact:
+                    </strong>
+
+                    @Money(
+                        Model.Result.NetValueImpact)
+                </p>
+
+                <div class="analyzer-section-divider">
+                </div>
+
+                <p>
+                    <strong>
+                        Upgrade Profile:
+                    </strong>
+
+                    @Model.Result.WeightingProfile
+                </p>
+
+                <p>
+                    <strong>
+                        Financial Impact:
+                    </strong>
+
+                    @Model.Result.FinancialImpact
+                </p>
+
+                @if (Model.Result.NextSteps.Count > 0)
+                {
+                    <div class="analyzer-section-divider">
+                    </div>
+
+                    <h3>
+                        NEXT STEPS
+                    </h3>
+
+                    <ul>
+
+                        @foreach (
+                            string nextStep
+                            in Model.Result.NextSteps)
+                        {
+                            <li>
+                                @nextStep
+                            </li>
+                        }
+
+                    </ul>
+                }
+
+            </div>
+
+        </div>
+    }
+
+</section>
+
+@section Scripts
 {
-    private readonly IUpgradeScoringService
-        _upgradeScoringService;
+    <partial name="_ValidationScriptsPartial" />
 
-    private readonly IVinDecoderService
-        _vinDecoderService;
+    <script>
 
-    private readonly IVehicleSpecEnrichmentService
-        _vehicleSpecEnrichmentService;
+        function editUpgradeAnalysis() {
 
-    public UpgradeAnalyzerModel(
-        IUpgradeScoringService upgradeScoringService,
-        IVinDecoderService vinDecoderService,
-        IVehicleSpecEnrichmentService vehicleSpecEnrichmentService)
-    {
-        _upgradeScoringService =
-            upgradeScoringService;
+            const inputPanel =
+                document.getElementById(
+                    "upgrade-input-panel");
 
-        _vinDecoderService =
-            vinDecoderService;
+            const resultPanel =
+                document.getElementById(
+                    "upgrade-result-panel");
 
-        _vehicleSpecEnrichmentService =
-            vehicleSpecEnrichmentService;
-    }
+            if (resultPanel) {
 
-    [BindProperty]
-    public UpgradeDecisionInput Input { get; set; } =
-        new();
+                resultPanel.style.display =
+                    "none";
+            }
 
-    public UpgradeDecisionResult? Result { get; private set; }
+            if (inputPanel) {
 
-    public string VinDecodeMessage { get; private set; } =
-        string.Empty;
+                inputPanel.style.display =
+                    "block";
 
-    public void OnGet()
-    {
-    }
+                inputPanel.scrollIntoView({
 
-    public async Task<IActionResult> OnPostDecodeVinAsync(
-        CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(
-                Input.Vin))
-        {
-            ModelState.Clear();
+                    behavior:
+                        "smooth",
 
-            ModelState.AddModelError(
-                "Input.Vin",
-                "Enter a VIN to decode.");
-
-            return Page();
+                    block:
+                        "start"
+                });
+            }
         }
 
-        VehicleProfile decoded =
-            await _vinDecoderService.DecodeAsync(
-                Input.Vin,
-                cancellationToken);
-
-        if (!decoded.DecodeSuccessful)
-        {
-            ModelState.Clear();
-
-            string warning =
-                decoded.DecodeWarnings
-                    .FirstOrDefault()
-                ?? "The VIN could not be decoded.";
-
-            ModelState.AddModelError(
-                "Input.Vin",
-                warning);
-
-            return Page();
-        }
-
-        decoded =
-            await _vehicleSpecEnrichmentService.EnrichAsync(
-                decoded,
-                cancellationToken);
-
-        ApplyDecodedVehicle(
-            decoded);
-
-        ModelState.Clear();
-
-        VinDecodeMessage =
-            string.IsNullOrWhiteSpace(
-                decoded.DisplayName)
-                ? "VIN decoded successfully."
-                : $"VIN decoded: {decoded.DisplayName}";
-
-        return Page();
-    }
-
-    public IActionResult OnPostAnalyze()
-    {
-        if (!ModelState.IsValid)
-        {
-            return Page();
-        }
-
-        Result =
-            _upgradeScoringService.Analyze(
-                Input);
-
-        return Page();
-    }
-
-    private void ApplyDecodedVehicle(
-        VehicleProfile decoded)
-    {
-        if (!string.IsNullOrWhiteSpace(
-                decoded.Vin))
-        {
-            Input.Vin =
-                decoded.Vin;
-        }
-
-        if (decoded.Year.HasValue)
-        {
-            Input.Year =
-                decoded.Year.Value;
-        }
-
-        if (!string.IsNullOrWhiteSpace(
-                decoded.Make))
-        {
-            Input.Make =
-                decoded.Make;
-        }
-
-        if (!string.IsNullOrWhiteSpace(
-                decoded.Model))
-        {
-            Input.Model =
-                decoded.Model;
-        }
-
-        if (!string.IsNullOrWhiteSpace(
-                decoded.Trim))
-        {
-            Input.Trim =
-                decoded.Trim;
-        }
-
-        if (decoded.Horsepower.HasValue &&
-            decoded.Horsepower.Value > 0)
-        {
-            Input.CurrentHorsepower =
-                decoded.Horsepower.Value;
-        }
-    }
+    </script>
 }
