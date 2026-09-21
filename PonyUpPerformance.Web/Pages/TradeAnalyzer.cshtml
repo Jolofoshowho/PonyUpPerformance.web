@@ -98,9 +98,12 @@
 
 <section class="page-section analyzer-page trade-bg">
 
+@if (Model.Result == null)
+{
     <img class="analyzer-banner"
          src="/images/TradeAnal.png"
          alt="PonyUp Performance Trade Analyzer" />
+}
 
     <div class="trade-compare-shell">
 
