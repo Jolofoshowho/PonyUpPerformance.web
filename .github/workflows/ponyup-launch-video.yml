@@ -1,0 +1,372 @@
+name: Build PonyUp Launch Video
+
+on:
+  push:
+    paths:
+      - '.github/workflows/ponyup-launch-video.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install render dependencies
+        run: |
+          python3 -m pip install --quiet pillow numpy
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
+
+      - name: Render PonyUp launch video
+        shell: bash
+        run: |
+          cat > /tmp/render_ponyup.py <<'PY'
+          import os, math, random, subprocess, wave
+          from pathlib import Path
+          import numpy as np
+          from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
+
+          random.seed(22)
+          W, H = 720, 1280
+          FPS = 24
+          DURATION = 17.5
+          N = int(FPS * DURATION)
+          ROOT = Path('PonyUpPerformance.Web/wwwroot/images')
+          OUT = Path('PonyUpPerformance_Now_Live_1080x1920.mp4')
+
+          def load_asset(name):
+              p = ROOT / name
+              if not p.exists():
+                  raise FileNotFoundError(p)
+              return Image.open(p).convert('RGBA')
+
+          mechanical = load_asset('ponyup-mechanical.png')
+          simple_logo = load_asset('ponyup-logo.jpg')
+          word_logo = load_asset('ponyup-wordlogo.png')
+          nightmare = load_asset('ponyup-nightmare.png')
+
+          def fit_contain(img, max_w, max_h):
+              s = min(max_w / img.width, max_h / img.height)
+              return img.resize((max(1,int(img.width*s)), max(1,int(img.height*s))), Image.Resampling.LANCZOS)
+
+          def cover(img, w, h):
+              s = max(w / img.width, h / img.height)
+              x = img.resize((max(1,int(img.width*s)), max(1,int(img.height*s))), Image.Resampling.LANCZOS)
+              l = max(0, (x.width-w)//2); t = max(0,(x.height-h)//2)
+              return x.crop((l,t,l+w,t+h))
+
+          def auto_cutout(img):
+              arr = np.array(img).astype(np.float32)
+              a = arr[:,:,3]
+              if np.percentile(a, 5) < 245:
+                  return img
+              rgb = arr[:,:,:3]
+              b = 18
+              edge = np.concatenate([
+                  rgb[:b,:,:].reshape(-1,3), rgb[-b:,:,:].reshape(-1,3),
+                  rgb[:, :b,:].reshape(-1,3), rgb[:, -b:,:].reshape(-1,3)
+              ], axis=0)
+              bg = np.median(edge, axis=0)
+              dist = np.linalg.norm(rgb-bg, axis=2)
+              alpha = np.clip((dist-18.0)*6.0, 0, 255)
+              if bg.mean() < 70:
+                  lum = rgb.mean(axis=2)
+                  alpha = np.maximum(alpha, np.clip((lum-24)*4.5,0,255))
+              alpha = Image.fromarray(alpha.astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.8))
+              out = img.copy(); out.putalpha(alpha)
+              return out
+
+          mechanical = auto_cutout(mechanical)
+          mechanical = fit_contain(mechanical, 610, 790)
+          simple_logo = fit_contain(simple_logo, 370, 370)
+          word_logo = fit_contain(word_logo, 600, 250)
+
+          bg = cover(nightmare, W, H).convert('RGB')
+          bg = ImageEnhance.Brightness(bg).enhance(0.20).filter(ImageFilter.GaussianBlur(2.0))
+          bg = bg.convert('RGBA')
+          black = Image.new('RGBA',(W,H),(3,3,4,255))
+
+          font_path = '/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf'
+          def font(sz): return ImageFont.truetype(font_path, sz)
+          F_BIG = font(112)
+          F_MED = font(64)
+          F_SMALL = font(34)
+          F_TINY = font(28)
+          RED=(226,18,28,255); WHITE=(245,245,245,255); DIM=(170,170,170,255)
+
+          def ease_out(p): return 1-(1-p)**3
+          def ease_inout(p): return 0.5-0.5*math.cos(math.pi*max(0,min(1,p)))
+          def clamp(x,a=0,b=1): return max(a,min(b,x))
+
+          def text_center(im, txt, y, fnt, fill=WHITE, stroke=0, stroke_fill=(0,0,0,255)):
+              d=ImageDraw.Draw(im)
+              box=d.textbbox((0,0),txt,font=fnt,stroke_width=stroke)
+              x=(W-(box[2]-box[0]))//2
+              d.text((x,y),txt,font=fnt,fill=fill,stroke_width=stroke,stroke_fill=stroke_fill)
+
+          sparks=[]
+          for i in range(120):
+              sparks.append({
+                  'u':random.random(), 'v':random.random(), 'spd':random.uniform(0.6,1.8),
+                  'r':random.uniform(1.0,3.4), 'life':random.uniform(0.35,1.0)
+              })
+
+          def add_fire_trails(base, progress, opening=True):
+              layer=Image.new('RGBA',(W,H),(0,0,0,0))
+              glow=Image.new('RGBA',(W,H),(0,0,0,0))
+              dg=ImageDraw.Draw(glow); dl=ImageDraw.Draw(layer)
+              cy=H//2-40
+              if opening:
+                  curx = int(W*0.50 + 300*progress); x0 = int(W*0.22); x1 = curx
+              else:
+                  curx = int(W*0.50 + 300*(1-progress)); x0 = curx; x1 = int(W*0.94)
+              for off in (-92,92):
+                  yy=cy+off
+                  dg.line((x0,yy,x1,yy), fill=(255,30,0,160), width=42)
+                  dg.line((x0,yy,x1,yy), fill=(255,110,0,190), width=20)
+                  dl.line((x0,yy,x1,yy), fill=(255,235,130,230), width=5)
+              glow=glow.filter(ImageFilter.GaussianBlur(22))
+              base=Image.alpha_composite(base,glow); base=Image.alpha_composite(base,layer)
+              s=Image.new('RGBA',(W,H),(0,0,0,0)); ds=ImageDraw.Draw(s)
+              for sp in sparks:
+                  q=(progress*sp['spd']+sp['u'])%1.0
+                  if q>sp['life']: continue
+                  trail_len=max(40,abs(x1-x0))
+                  xx=curx - q*trail_len if opening else curx + q*trail_len
+                  yy=cy + (sp['v']-.5)*310 + math.sin(q*10)*18
+                  r=sp['r']*(1-q/max(sp['life'],.01))
+                  if r<=0: continue
+                  ds.ellipse((xx-r,yy-r,xx+r,yy+r),fill=(255,185+int(60*(1-q)),35,220))
+              s=s.filter(ImageFilter.GaussianBlur(.7))
+              return Image.alpha_composite(base,s)
+
+          def masked_peel(subject, progress, opening=True):
+              sw,sh=subject.size
+              m=np.zeros((sh,sw),dtype=np.uint8)
+              xs=np.linspace(0,1,sw)[None,:]
+              ys=np.linspace(0,1,sh)[:,None]
+              if opening:
+                  th=progress*1.18 - .09 + .16*(ys-.5)
+                  keep=xs>th
+                  shift=300*ease_out(progress)
+                  rot=-13*ease_out(progress)
+                  scale=1-.12*progress
+              else:
+                  th=1-progress*1.18 + .09 + .16*(ys-.5)
+                  keep=xs>th
+                  shift=300*(1-ease_out(progress))
+                  rot=-13*(1-ease_out(progress))
+                  scale=.88+.12*progress
+              m[keep]=255
+              mask=Image.fromarray(m).filter(ImageFilter.GaussianBlur(3.0))
+              sub=subject.copy()
+              existing=sub.getchannel('A')
+              mask=np.minimum(np.array(mask),np.array(existing)).astype(np.uint8)
+              sub.putalpha(Image.fromarray(mask))
+              nw=max(1,int(sw*scale)); nh=max(1,int(sh*scale))
+              sub=sub.resize((nw,nh),Image.Resampling.LANCZOS).rotate(rot,expand=True,resample=Image.Resampling.BICUBIC)
+              return sub,int(shift)
+
+          def paste_center(base, fg, dx=0, dy=0, alpha=1.0):
+              if alpha<1:
+                  fg=fg.copy(); a=fg.getchannel('A').point(lambda v:int(v*alpha)); fg.putalpha(a)
+              x=(W-fg.width)//2+int(dx); y=(H-fg.height)//2+int(dy)
+              base.alpha_composite(fg,(x,y))
+
+          def add_scanlines(im, strength=28):
+              d=ImageDraw.Draw(im)
+              for y in range(0,H,8): d.line((0,y,W,y),fill=(255,255,255,strength),width=1)
+
+          def add_slash(im, y, width=8):
+              d=ImageDraw.Draw(im)
+              d.polygon([(0,y),(W,y-70),(W,y-70+width),(0,y+width)],fill=RED)
+
+          def frame_at(t):
+              pulse=.04*math.sin(t*7)+.02*math.sin(t*19)
+              base=Image.blend(black,bg,clamp(.34+pulse,0,.5))
+              vign=Image.new('L',(W,H),0)
+              dv=ImageDraw.Draw(vign)
+              dv.ellipse((-180,-100,W+180,H+140),fill=210)
+              vign=vign.filter(ImageFilter.GaussianBlur(120))
+              shade=Image.new('RGBA',(W,H),(0,0,0,185)); shade.putalpha(Image.eval(vign,lambda p:255-p))
+              base=Image.alpha_composite(base,shade)
+
+              if t < 2.20:
+                  p=ease_inout(t/2.20)
+                  base=add_fire_trails(base,p,opening=True)
+                  sub,shift=masked_peel(mechanical,p,opening=True)
+                  paste_center(base,sub,dx=shift,dy=-45)
+                  if .15<t<1.75:
+                      text_center(base,'PONY UP PERFORMANCE',105,F_SMALL,WHITE,2,(0,0,0,255))
+                  if t<.13:
+                      flash=Image.new('RGBA',(W,H),(255,35,10,int(210*(1-t/.13))))
+                      base=Image.alpha_composite(base,flash)
+                  return base.convert('RGB')
+
+              if t < 3.20:
+                  p=clamp((t-2.20)/1.0)
+                  shake=int((1-p)*12*math.sin(t*65))
+                  add_slash(base,430)
+                  text_center(base,'PONY UP',385+shake,F_MED,WHITE,3,(0,0,0,255))
+                  text_center(base,'PERFORMANCE',470-shake,F_MED,WHITE,3,(0,0,0,255))
+                  text_center(base,'NOW LIVE',610,F_BIG,RED,4,(0,0,0,255))
+                  add_scanlines(base,22)
+                  return base.convert('RGB')
+
+              decision_words=['REPAIR','BUY','SELL','TRADE','UPGRADE']
+              if t < 6.95:
+                  span=(6.95-3.20)/len(decision_words)
+                  idx=min(len(decision_words)-1,int((t-3.20)/span))
+                  local=((t-3.20)-idx*span)/span
+                  word=decision_words[idx]
+                  scale=1.16-.16*ease_out(clamp(local))
+                  f=font(int(126*scale))
+                  for k in range(4): add_slash(base,300+k*190+int(50*math.sin(t*7+k)),4)
+                  text_center(base,word,535,f,WHITE,5,RED)
+                  text_center(base,'MAKE THE MONEY DECISION BEFORE YOU COMMIT.',735,F_TINY,DIM)
+                  add_scanlines(base,18)
+                  return base.convert('RGB')
+
+              if t < 9.75:
+                  p=clamp((t-6.95)/.5)
+                  add_slash(base,330,10)
+                  y=400+int(45*(1-ease_out(p)))
+                  text_center(base,'KNOW',y,F_BIG,WHITE,5,(0,0,0,255))
+                  text_center(base,'BEFORE YOU',y+135,F_BIG,WHITE,5,(0,0,0,255))
+                  text_center(base,'SPEND.',y+270,F_BIG,RED,5,(0,0,0,255))
+                  text_center(base,'Repair it. Buy it. Sell it. Trade it. Upgrade it.',885,F_TINY,DIM)
+                  return base.convert('RGB')
+
+              if t < 12.45:
+                  lines=[('ALL CARS.',WHITE),('ALL BUILDS.',WHITE),('ALL BUSINESS.',RED)]
+                  y=390
+                  for txt,col in lines:
+                      text_center(base,txt,y,F_BIG,col,5,(0,0,0,255)); y+=155
+                  text_center(base,'PONY UP PERFORMANCE',900,F_SMALL,DIM)
+                  return base.convert('RGB')
+
+              if t < 15.10:
+                  p=ease_inout((t-12.45)/(15.10-12.45))
+                  base=add_fire_trails(base,p,opening=False)
+                  sub,shift=masked_peel(mechanical,p,opening=False)
+                  paste_center(base,sub,dx=shift,dy=-45)
+                  halo=Image.new('RGBA',(W,H),(0,0,0,0)); dh=ImageDraw.Draw(halo)
+                  r=int(180+170*p); cx=W//2; cy=H//2-35
+                  dh.ellipse((cx-r,cy-r,cx+r,cy+r),outline=(255,40,0,int(140*(1-p)+30)),width=18)
+                  halo=halo.filter(ImageFilter.GaussianBlur(28))
+                  base=Image.alpha_composite(base,halo)
+                  return base.convert('RGB')
+
+              p=ease_inout((t-15.10)/(DURATION-15.10))
+              paste_center(base,mechanical,dy=-210,alpha=max(0,1-p)*.55)
+              paste_center(base,simple_logo,dy=-235,alpha=p)
+              paste_center(base,word_logo,dy=145,alpha=p)
+              if p>.28:
+                  q=clamp((p-.28)/.72)
+                  text_center(base,'NOW LIVE',890,F_MED,RED,3,(0,0,0,255))
+                  text_center(base,'PONY-UP-PERFORMANCE.COM',1000,F_TINY,WHITE,2,(0,0,0,255))
+                  d=ImageDraw.Draw(base); a=int(170*q)
+                  d.rectangle((18,18,W-18,H-18),outline=(225,18,28,a),width=3)
+              return base.convert('RGB')
+
+          visual='/tmp/ponyup_visual.mp4'
+          cmd=['ffmpeg','-y','-loglevel','error','-f','rawvideo','-pix_fmt','rgb24','-s',f'{W}x{H}','-r',str(FPS),'-i','-',
+               '-an','-c:v','libx264','-preset','medium','-crf','17','-pix_fmt','yuv420p','-movflags','+faststart',visual]
+          proc=subprocess.Popen(cmd,stdin=subprocess.PIPE)
+          for i in range(N):
+              fr=frame_at(i/FPS)
+              proc.stdin.write(np.asarray(fr,dtype=np.uint8).tobytes())
+          proc.stdin.close(); rc=proc.wait()
+          if rc!=0: raise SystemExit(rc)
+
+          sr=44100; total=int(sr*DURATION); tt=np.arange(total)/sr
+          audio=np.zeros(total,dtype=np.float64)
+          audio += 0.055*np.sin(2*np.pi*48*tt)*(0.65+0.35*np.sin(2*np.pi*.7*tt)**2)
+          audio += 0.025*np.sin(2*np.pi*96*tt)
+
+          def add_kick(at, amp=0.65, dur=.34, f0=90):
+              s=int(at*sr); n=min(int(dur*sr), total-s)
+              if n<=0:return
+              x=np.arange(n)/sr
+              env=np.exp(-11*x)
+              phase=2*np.pi*(f0*x + 55*x*x)
+              audio[s:s+n]+=amp*env*np.sin(phase)
+
+          def add_whoosh(at,dur=.55,amp=.16):
+              s=int(at*sr); n=min(int(dur*sr),total-s)
+              if n<=0:return
+              x=np.arange(n)/sr
+              env=np.sin(np.pi*np.clip(x/dur,0,1))**1.6
+              noise=np.random.default_rng(int(at*1000)+9).standard_normal(n)
+              kernel=np.ones(22)/22
+              smooth=np.convolve(noise,kernel,mode='same')
+              audio[s:s+n]+=amp*env*smooth
+
+          n=int(2.2*sr); x=np.arange(n)/sr
+          f=58+105*(x/2.2)**1.45
+          phase=2*np.pi*np.cumsum(f)/sr
+          rev=np.tanh(2.2*np.sin(phase)+.7*np.sin(2*phase)+.35*np.sin(3*phase))
+          env=np.clip(x/.18,0,1)*np.clip((2.2-x)/.35,0,1)
+          audio[:n]+=0.18*env*rev
+
+          rng=np.random.default_rng(421)
+          for a,b in [(0,2.2),(12.45,15.1)]:
+              s=int(a*sr); n=int((b-a)*sr)
+              crack=np.zeros(n)
+              count=int((b-a)*95)
+              for _ in range(count):
+                  j=rng.integers(0,max(1,n-250)); L=int(rng.integers(25,220))
+                  L=min(L,n-j)
+                  crack[j:j+L]+=rng.uniform(.03,.14)*np.exp(-np.linspace(0,6,L))*rng.choice([-1,1])
+              audio[s:s+n]+=crack
+
+          events=[0.02,2.20,3.20,3.95,4.70,5.45,6.20,6.95,9.75,12.45,15.10]
+          for j,e in enumerate(events):
+              add_kick(e, .68 if j in (0,1,7,9,10) else .45, .36, 72 if j in (0,1,9,10) else 92)
+              if j>0: add_whoosh(max(0,e-.22),.48,.17)
+
+          s=int(12.45*sr); n=int((15.1-12.45)*sr); x=np.arange(n)/sr
+          f=125-55*(x/(15.1-12.45))
+          phase=2*np.pi*np.cumsum(f)/sr
+          env=np.sin(np.pi*np.clip(x/(15.1-12.45),0,1))
+          audio[s:s+n]+=0.12*env*np.tanh(2*np.sin(phase)+.5*np.sin(2*phase))
+          add_kick(15.08,.9,.75,52)
+
+          peak=np.max(np.abs(audio))
+          if peak>0: audio=.92*audio/peak
+          stereo=np.stack([audio,audio],axis=1)
+          pcm=(stereo*32767).astype(np.int16)
+          wav='/tmp/ponyup_audio.wav'
+          with wave.open(wav,'wb') as wf:
+              wf.setnchannels(2); wf.setsampwidth(2); wf.setframerate(sr); wf.writeframes(pcm.tobytes())
+
+          subprocess.run([
+              'ffmpeg','-y','-loglevel','error','-i',visual,'-i',wav,
+              '-vf','scale=1080:1920:flags=lanczos',
+              '-c:v','libx264','-preset','slow','-crf','18','-pix_fmt','yuv420p',
+              '-c:a','aac','-b:a','192k','-shortest','-movflags','+faststart',str(OUT)
+          ],check=True)
+
+          for sec,name in [(0.7,'preview_opening.jpg'),(7.8,'preview_message.jpg'),(16.6,'preview_endcard.jpg')]:
+              subprocess.run(['ffmpeg','-y','-loglevel','error','-ss',str(sec),'-i',str(OUT),'-frames:v','1',name],check=True)
+          print(OUT)
+          PY
+          python3 /tmp/render_ponyup.py
+
+      - name: Upload rendered video
+        uses: actions/upload-artifact@v4
+        with:
+          name: ponyup-launch-video
+          path: |
+            PonyUpPerformance_Now_Live_1080x1920.mp4
+            preview_opening.jpg
+            preview_message.jpg
+            preview_endcard.jpg
+          if-no-files-found: error
+          retention-days: 3
