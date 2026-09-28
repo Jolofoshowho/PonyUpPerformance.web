@@ -442,20 +442,27 @@ a {
     text-shadow: 0 0 8px rgba(255,255,255,.35);
 }
 
-.resource-coming-soon {
+.resource-future-item {
+    color: #ff3131;
+}
+
+.resource-future-name {
+    display: block;
     color: #ffffff;
     font-weight: 850;
     text-shadow: 0 0 8px rgba(255,255,255,.35);
+    white-space: nowrap;
 }
 
-.resource-coming-soon strong {
-    display: inline-block;
-    margin-left: 4px;
+.resource-coming-soon {
+    display: block;
+    margin-top: 3px;
     color: #ff3131;
     font-size: .72rem;
     font-weight: 1000;
     letter-spacing: .04em;
     text-transform: uppercase;
+    text-shadow: 0 0 8px rgba(255,49,49,.65);
     white-space: nowrap;
 }
 
@@ -2463,3 +2470,72 @@ body::before {
     background: #2a0a0a !important;
     color: #ffffff !important;
 }
+
+/* =========================================================
+   PONYUP RESOURCES PAGE
+   ========================================================= */
+
+.resources-banner {
+    width: 100%;
+    overflow: hidden;
+    background: #050505;
+    border-bottom: 1px solid rgba(255,49,49,.7);
+    box-shadow: 0 10px 28px rgba(0,0,0,.7);
+}
+
+.resources-banner img {
+    display: block;
+    width: 100%;
+    height: clamp(300px, 31vw, 440px);
+    object-fit: cover;
+    object-position: center 55%;
+}
+
+.resources-page {
+    padding-top: 48px;
+}
+
+.resources-page .resource-grid {
+    max-width: 1400px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.resources-page .resource-card {
+    min-width: 0;
+    overflow: hidden;
+    padding: 28px 20px;
+}
+
+.resources-page .resource-card h3 {
+    font-size: clamp(1.05rem, 1.4vw, 1.35rem);
+    line-height: 1.08;
+}
+
+@media (max-width: 1200px) {
+    .resources-page .resource-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 850px) {
+    .resources-banner img {
+        height: 300px;
+    }
+
+    .resources-page .resource-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 560px) {
+    .resources-banner img {
+        height: 230px;
+        object-position: center 53%;
+    }
+
+    .resources-page .resource-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
