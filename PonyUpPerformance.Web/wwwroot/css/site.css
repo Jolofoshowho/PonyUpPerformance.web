@@ -387,7 +387,7 @@ a {
     max-width: 1280px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 26px;
     align-items: stretch;
 }
@@ -440,6 +440,23 @@ a {
     font-weight: 850;
     text-decoration: underline;
     text-shadow: 0 0 8px rgba(255,255,255,.35);
+}
+
+.resource-coming-soon {
+    color: #ffffff;
+    font-weight: 850;
+    text-shadow: 0 0 8px rgba(255,255,255,.35);
+}
+
+.resource-coming-soon strong {
+    display: inline-block;
+    margin-left: 4px;
+    color: #ff3131;
+    font-size: .72rem;
+    font-weight: 1000;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .resource-disclaimer {
