@@ -23,12 +23,16 @@ public class RepairAnalyzerModel : PageModel
     private readonly IVehicleSpecEnrichmentService
         _vehicleSpecEnrichmentService;
 
+    private readonly AnalysisHistoryService
+        _analysisHistoryService;
+
     public RepairAnalyzerModel(
         IRepairScoringService repairScoringService,
         RepairCostEstimatorService repairCostEstimatorService,
         UsageCreditService usageCreditService,
         IVinDecoderService vinDecoderService,
-        IVehicleSpecEnrichmentService vehicleSpecEnrichmentService)
+        IVehicleSpecEnrichmentService vehicleSpecEnrichmentService,
+        AnalysisHistoryService analysisHistoryService)
     {
         _repairScoringService =
             repairScoringService;
@@ -44,6 +48,9 @@ public class RepairAnalyzerModel : PageModel
 
         _vehicleSpecEnrichmentService =
             vehicleSpecEnrichmentService;
+
+        _analysisHistoryService =
+            analysisHistoryService;
     }
 
     [BindProperty]
@@ -309,6 +316,24 @@ public class RepairAnalyzerModel : PageModel
         Result =
             _repairScoringService.Analyze(
                 Input);
+
+        await _analysisHistoryService.SaveAnalysisAsync(
+            User,
+            "Repair",
+            Input.VehicleYear,
+            Input.VehicleMake,
+            Input.VehicleModel,
+            Input.Mileage,
+            Input.VehicleValue,
+            Result,
+            EstimateInput.RepairType,
+            Input.RepairCost,
+            Input.RepairCost,
+            Input.RepairCost,
+            Input.Condition == MechanicalCondition.NotProvided
+                ? string.Empty
+                : Input.Condition.ToString(),
+            Input.OwnershipYears);
 
         EstimateCreditConsumed = false;
 
