@@ -225,6 +225,64 @@ namespace PonyUpPerformance.Web.Pages
                 new { vehicleId = vehicle.Id });
         }
 
+        public async Task<IActionResult> OnPostSaveAppearanceAsync(
+            int vehicleId,
+            string appearanceJson)
+        {
+            ApplicationUser? user =
+                await _userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                return new UnauthorizedResult();
+            }
+
+            GarageVehicle? vehicle =
+                await _dbContext.GarageVehicles
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id == vehicleId &&
+                            x.UserId == user.Id);
+
+            if (vehicle == null)
+            {
+                return new NotFoundResult();
+            }
+
+            string normalized =
+                string.IsNullOrWhiteSpace(appearanceJson)
+                    ? "{}"
+                    : appearanceJson.Trim();
+
+            if (normalized.Length > 4000)
+            {
+                return new BadRequestObjectResult(
+                    "Appearance payload is too large.");
+            }
+
+            try
+            {
+                System.Text.Json.JsonDocument.Parse(
+                    normalized);
+            }
+            catch
+            {
+                return new BadRequestObjectResult(
+                    "Appearance payload is invalid.");
+            }
+
+            vehicle.AppearanceJson =
+                normalized;
+
+            await _dbContext.SaveChangesAsync();
+
+            return new JsonResult(
+                new
+                {
+                    ok = true
+                });
+        }
+
         public async Task<IActionResult> OnPostUpdateMileageAsync(
             int vehicleId,
             int mileage)
@@ -411,6 +469,12 @@ namespace PonyUpPerformance.Web.Pages
 
             NewVehicle.SelectedPaintCode =
                 (NewVehicle.SelectedPaintCode ?? "").Trim();
+
+            NewVehicle.AppearanceJson =
+                string.IsNullOrWhiteSpace(
+                    NewVehicle.AppearanceJson)
+                    ? "{}"
+                    : NewVehicle.AppearanceJson.Trim();
 
             if (string.IsNullOrWhiteSpace(
                 NewVehicle.SelectedPaintHex))
