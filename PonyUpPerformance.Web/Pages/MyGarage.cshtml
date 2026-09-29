@@ -236,11 +236,14 @@
                         <div class="garage-viewer-wrap">
                             <div id="garage3dViewer"
                                  class="garage-3d-viewer"
+                                 data-vin="@vehicle.Vin"
+                                 data-year="@vehicle.Year"
+                                 data-make="@vehicle.Make"
+                                 data-model="@vehicle.Model"
+                                 data-trim="@vehicle.Trim"
                                  data-paint="@vehicle.SelectedPaintHex"
                                  data-body="@vehicle.BodyStyle"
-                                 data-render="@vehicle.RenderType"
-                                 data-make="@vehicle.Make"
-                                 data-model="@vehicle.Model">
+                                 data-render="@vehicle.RenderType">
 
                                 <div class="garage-render-fallback">
                                     @Html.Raw(Model.SelectedVehicleSvg)
@@ -249,6 +252,12 @@
 
                             <div class="garage-viewer-hint">
                                 Drag to rotate · Scroll to zoom · Auto-spin resumes when released
+                            </div>
+
+                            <div id="garageModelQuality"
+                                 class="garage-model-quality"
+                                 aria-live="polite">
+                                LOADING VEHICLE MODEL
                             </div>
                         </div>
 
