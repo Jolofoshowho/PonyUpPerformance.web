@@ -1,0 +1,38 @@
+@page
+@{
+    ViewData["Title"] = "Decision Center";
+}
+
+<section class="decision-center-page" aria-label="PonyUp Performance Decision Center">
+    <div class="decision-center-stage">
+        <img src="~/images/Decision_Center.png"
+             alt="PonyUp Performance Decision Center with Repair, Buy, Sell, Trade, and Upgrade garage bays"
+             class="decision-center-image"
+             draggable="false" />
+
+        <a asp-page="/RepairAnalyzer"
+           class="decision-center-hotspot decision-center-repair"
+           aria-label="Open Repair Analyzer"
+           title="Repair"></a>
+
+        <a asp-page="/BuyAnalyzer"
+           class="decision-center-hotspot decision-center-buy"
+           aria-label="Open Buy Analyzer"
+           title="Buy"></a>
+
+        <a asp-page="/SellAnalyzer"
+           class="decision-center-hotspot decision-center-sell"
+           aria-label="Open Sell Analyzer"
+           title="Sell"></a>
+
+        <a asp-page="/TradeAnalyzer"
+           class="decision-center-hotspot decision-center-trade"
+           aria-label="Open Trade Analyzer"
+           title="Trade"></a>
+
+        <a asp-page="/UpgradeAnalyzer"
+           class="decision-center-hotspot decision-center-upgrade"
+           aria-label="Open Upgrade Analyzer"
+           title="Upgrade"></a>
+    </div>
+</section>
