@@ -249,6 +249,344 @@
         refreshSuggestions();
     }
 
+    function populateGarageVehicleFromHistory(vin) {
+
+        const normalized =
+            normalizeVin(vin);
+
+        if (normalized.length !== 17) {
+            return;
+        }
+
+        const vehicle =
+            readVinHistory()
+                .find(item =>
+                    normalizeVin(item.vin) === normalized);
+
+        if (!vehicle) {
+            return;
+        }
+
+        const year =
+            document.querySelector(
+                "[data-garage-year]");
+
+        const make =
+            document.querySelector(
+                "[data-garage-make]");
+
+        const model =
+            document.querySelector(
+                "[data-garage-model]");
+
+        if (year && vehicle.year) {
+            year.value =
+                vehicle.year;
+        }
+
+        if (make && vehicle.make) {
+            make.value =
+                vehicle.make;
+        }
+
+        if (model && vehicle.model) {
+            model.value =
+                vehicle.model;
+        }
+    }
+
+    function renderGarageVinHistory() {
+
+        const list =
+            document.querySelector(
+                "[data-garage-vin-history-list]");
+
+        const wrap =
+            document.getElementById(
+                "garageRecentVinWrap");
+
+        const vinInput =
+            document.querySelector(
+                "[data-garage-vin-input]");
+
+        if (!list || !wrap || !vinInput) {
+            return;
+        }
+
+        const history =
+            readVinHistory();
+
+        list.innerHTML =
+            "";
+
+        if (history.length === 0) {
+            wrap.hidden = true;
+            return;
+        }
+
+        wrap.hidden = false;
+
+        history
+            .slice(0, 10)
+            .forEach(vehicle => {
+
+                const button =
+                    document.createElement(
+                        "button");
+
+                button.type =
+                    "button";
+
+                button.className =
+                    "garage-recent-vin-option";
+
+                const description =
+                    [
+                        vehicle.year,
+                        vehicle.make,
+                        vehicle.model
+                    ]
+                        .filter(Boolean)
+                        .join(" ");
+
+                const vin =
+                    document.createElement(
+                        "strong");
+
+                vin.textContent =
+                    vehicle.vin;
+
+                const label =
+                    document.createElement(
+                        "span");
+
+                label.textContent =
+                    description ||
+                    "Previously decoded vehicle";
+
+                button.appendChild(
+                    vin);
+
+                button.appendChild(
+                    label);
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        vinInput.value =
+                            vehicle.vin;
+
+                        populateGarageVehicleFromHistory(
+                            vehicle.vin);
+
+                        vinInput.dispatchEvent(
+                            new Event(
+                                "input",
+                                {
+                                    bubbles: true
+                                }));
+
+                        vinInput.focus();
+                    });
+
+                list.appendChild(
+                    button);
+            });
+    }
+
+    function initializeGarageUi() {
+
+        const modal =
+            document.getElementById(
+                "garageAddVehicleModal");
+
+        const openButtons =
+            document.querySelectorAll(
+                "[data-open-garage-add]");
+
+        const closeButtons =
+            document.querySelectorAll(
+                "[data-close-garage-add]");
+
+        function openGarageAdd() {
+
+            if (!modal) {
+                return;
+            }
+
+            modal.hidden = false;
+            modal.setAttribute(
+                "aria-hidden",
+                "false");
+
+            document.body.classList.add(
+                "garage-modal-open");
+
+            renderGarageVinHistory();
+
+            window.setTimeout(
+                function () {
+
+                    document.querySelector(
+                        "[data-garage-vin-input]")
+                        ?.focus();
+                },
+                50);
+        }
+
+        function closeGarageAdd() {
+
+            if (!modal) {
+                return;
+            }
+
+            modal.hidden = true;
+            modal.setAttribute(
+                "aria-hidden",
+                "true");
+
+            document.body.classList.remove(
+                "garage-modal-open");
+        }
+
+        openButtons.forEach(
+            button =>
+                button.addEventListener(
+                    "click",
+                    openGarageAdd));
+
+        closeButtons.forEach(
+            button =>
+                button.addEventListener(
+                    "click",
+                    closeGarageAdd));
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (event.key === "Escape" &&
+                    modal &&
+                    !modal.hidden) {
+
+                    closeGarageAdd();
+                }
+            });
+
+        const settings =
+            document.getElementById(
+                "garageSettingsPanel");
+
+        document.querySelectorAll(
+            "[data-toggle-garage-settings]")
+            .forEach(button =>
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        if (!settings) {
+                            return;
+                        }
+
+                        settings.hidden =
+                            !settings.hidden;
+
+                        if (!settings.hidden) {
+
+                            settings.scrollIntoView({
+                                behavior: "smooth",
+                                block: "nearest"
+                            });
+                        }
+                    }));
+
+        document.querySelectorAll(
+            "[data-close-garage-settings]")
+            .forEach(button =>
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        if (settings) {
+                            settings.hidden = true;
+                        }
+                    }));
+
+        document.querySelectorAll(
+            "[data-focus-mileage]")
+            .forEach(button =>
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        const mileage =
+                            document.getElementById(
+                                "garageMileage");
+
+                        if (!mileage) {
+                            return;
+                        }
+
+                        mileage.scrollIntoView({
+                            behavior: "smooth",
+                            block: "center"
+                        });
+
+                        window.setTimeout(
+                            function () {
+
+                                mileage.focus();
+                                mileage.select();
+                            },
+                            300);
+                    }));
+
+        const garageVin =
+            document.querySelector(
+                "[data-garage-vin-input]");
+
+        if (garageVin) {
+
+            const autofill =
+                function () {
+
+                    populateGarageVehicleFromHistory(
+                        garageVin.value);
+                };
+
+            garageVin.addEventListener(
+                "change",
+                autofill);
+
+            garageVin.addEventListener(
+                "input",
+                function () {
+
+                    if (normalizeVin(
+                            garageVin.value)
+                            .length === 17) {
+
+                        autofill();
+                    }
+                });
+        }
+
+        renderGarageVinHistory();
+
+        /*
+         * A decoded Garage POST returns with values filled.
+         * Re-open the Add Vehicle panel so the user can
+         * review them and save the vehicle.
+         */
+        if (modal &&
+            garageVin &&
+            normalizeVin(garageVin.value).length === 17) {
+
+            openGarageAdd();
+        }
+    }
+
     function initializeVinHistory() {
 
         /*
@@ -274,7 +612,11 @@
 
     document.addEventListener(
         "DOMContentLoaded",
-        initializeVinHistory);
+        function () {
+
+            initializeVinHistory();
+            initializeGarageUi();
+        });
 
     /*
      * Keep a small public API available for
