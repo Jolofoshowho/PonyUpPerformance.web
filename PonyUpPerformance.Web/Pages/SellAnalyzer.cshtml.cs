@@ -12,12 +12,14 @@ public class SellAnalyzerModel : PageModel
     private readonly IVinDecoderService _vinDecoderService;
     private readonly IVehicleSpecEnrichmentService _vehicleSpecEnrichmentService;
     private readonly IMarketValueService _marketValueService;
+    private readonly AnalysisHistoryService _analysisHistoryService;
 
     public SellAnalyzerModel(
         ISellScoringService sellScoringService,
         IVinDecoderService vinDecoderService,
         IVehicleSpecEnrichmentService vehicleSpecEnrichmentService,
-        IMarketValueService marketValueService)
+        IMarketValueService marketValueService,
+        AnalysisHistoryService analysisHistoryService)
     {
         _sellScoringService =
             sellScoringService;
@@ -30,6 +32,9 @@ public class SellAnalyzerModel : PageModel
 
         _marketValueService =
             marketValueService;
+
+        _analysisHistoryService =
+            analysisHistoryService;
     }
 
     [BindProperty]
@@ -159,7 +164,7 @@ public class SellAnalyzerModel : PageModel
         return Page();
     }
 
-    public IActionResult OnPostAnalyze()
+    public async Task<IActionResult> OnPostAnalyzeAsync()
     {
         if (!ModelState.IsValid)
         {
@@ -169,6 +174,22 @@ public class SellAnalyzerModel : PageModel
         Result =
             _sellScoringService.Analyze(
                 Input);
+
+        await _analysisHistoryService.SaveAnalysisAsync(
+            User,
+            "Sell",
+            Input.Year,
+            Input.Make,
+            Input.Model,
+            Input.Mileage,
+            Input.MarketValue,
+            Result,
+            expectedEstimate:
+                Input.ExpectedSalePrice,
+            vehicleCondition:
+                Input.Condition == SellCondition.NotProvided
+                    ? string.Empty
+                    : Input.Condition.ToString());
 
         return Page();
     }
