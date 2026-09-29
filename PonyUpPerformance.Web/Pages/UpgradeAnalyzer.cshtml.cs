@@ -17,10 +17,14 @@ public class UpgradeAnalyzerModel : PageModel
     private readonly IVehicleSpecEnrichmentService
         _vehicleSpecEnrichmentService;
 
+    private readonly AnalysisHistoryService
+        _analysisHistoryService;
+
     public UpgradeAnalyzerModel(
         IUpgradeScoringService upgradeScoringService,
         IVinDecoderService vinDecoderService,
-        IVehicleSpecEnrichmentService vehicleSpecEnrichmentService)
+        IVehicleSpecEnrichmentService vehicleSpecEnrichmentService,
+        AnalysisHistoryService analysisHistoryService)
     {
         _upgradeScoringService =
             upgradeScoringService;
@@ -30,6 +34,9 @@ public class UpgradeAnalyzerModel : PageModel
 
         _vehicleSpecEnrichmentService =
             vehicleSpecEnrichmentService;
+
+        _analysisHistoryService =
+            analysisHistoryService;
     }
 
     [BindProperty]
@@ -100,7 +107,7 @@ public class UpgradeAnalyzerModel : PageModel
         return Page();
     }
 
-    public IActionResult OnPostAnalyze()
+    public async Task<IActionResult> OnPostAnalyzeAsync()
     {
         if (!ModelState.IsValid)
         {
@@ -110,6 +117,18 @@ public class UpgradeAnalyzerModel : PageModel
         Result =
             _upgradeScoringService.Analyze(
                 Input);
+
+        await _analysisHistoryService.SaveAnalysisAsync(
+            User,
+            "Upgrade",
+            Input.Year,
+            Input.Make,
+            Input.Model,
+            null,
+            Input.CurrentValue,
+            Result,
+            expectedEstimate:
+                Input.UpgradeCost);
 
         return Page();
     }
