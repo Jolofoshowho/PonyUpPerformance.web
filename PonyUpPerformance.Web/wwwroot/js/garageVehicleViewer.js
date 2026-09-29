@@ -4,11 +4,229 @@ import {
     findVehicleAsset,
     applyAssetTransform,
     applyVehiclePaint,
+    applyInteriorColor,
+    applyWheelFinish,
+    applyWheelVariant,
+    getCustomizationOptions,
     normalizeModelToPodium
 } from './vehicleModelRegistry.js';
 
 const mount = document.getElementById('garage3dViewer');
 const qualityBadge = document.getElementById('garageModelQuality');
+
+const interiorOptionsHost =
+    document.querySelector(
+        '[data-customizer-options="interior"]');
+
+const wheelFinishHost =
+    document.querySelector(
+        '[data-customizer-options="wheel-finish"]');
+
+const wheelStyleHost =
+    document.querySelector(
+        '[data-customizer-options="wheel-style"]');
+
+const interiorStatus =
+    document.querySelector(
+        '[data-customizer-status="interior"]');
+
+const wheelStatus =
+    document.querySelector(
+        '[data-customizer-status="wheels"]');
+
+function appearanceStorageKey() {
+    const vehicleId =
+        mount?.dataset.vehicleId || 'unsaved';
+
+    return `ponyup.garage.appearance.${vehicleId}`;
+}
+
+function readAppearance() {
+    try {
+        const raw =
+            localStorage.getItem(
+                appearanceStorageKey());
+
+        return raw
+            ? JSON.parse(raw)
+            : {};
+    }
+    catch {
+        return {};
+    }
+}
+
+function saveAppearance(appearance) {
+    try {
+        localStorage.setItem(
+            appearanceStorageKey(),
+            JSON.stringify(appearance));
+    }
+    catch {
+        // Customization still works for the current session.
+    }
+}
+
+function setCustomizerUnavailable(message) {
+    if (interiorOptionsHost) {
+        interiorOptionsHost.innerHTML = '';
+    }
+
+    if (wheelFinishHost) {
+        wheelFinishHost.innerHTML = '';
+    }
+
+    if (wheelStyleHost) {
+        wheelStyleHost.innerHTML = '';
+    }
+
+    if (interiorStatus) {
+        interiorStatus.textContent =
+            message ||
+            'Interior customization requires a PonyUp 3D model.';
+    }
+
+    if (wheelStatus) {
+        wheelStatus.textContent =
+            message ||
+            'Wheel customization requires a PonyUp 3D model.';
+    }
+}
+
+function renderColorOptions(
+    host,
+    options,
+    selectedId,
+    onSelect) {
+
+    if (!host) {
+        return;
+    }
+
+    host.innerHTML = '';
+
+    options.forEach(option => {
+        const button =
+            document.createElement('button');
+
+        button.type = 'button';
+        button.className =
+            'garage-option-swatch';
+
+        if (option.id === selectedId) {
+            button.classList.add('selected');
+        }
+
+        button.title =
+            option.label || option.id;
+
+        button.setAttribute(
+            'aria-label',
+            option.label || option.id);
+
+        const color =
+            document.createElement('span');
+
+        color.style.background =
+            option.hex || '#888888';
+
+        const label =
+            document.createElement('small');
+
+        label.textContent =
+            option.label || option.id;
+
+        button.appendChild(color);
+        button.appendChild(label);
+
+        button.addEventListener(
+            'click',
+            () => onSelect(
+                option,
+                button));
+
+        host.appendChild(button);
+    });
+}
+
+function renderWheelStyles(
+    host,
+    styles,
+    selectedId,
+    onSelect) {
+
+    if (!host) {
+        return;
+    }
+
+    host.innerHTML = '';
+
+    if (!Array.isArray(styles) ||
+        styles.length <= 1) {
+        return;
+    }
+
+    const label =
+        document.createElement('p');
+
+    label.className =
+        'garage-customizer-note';
+
+    label.textContent =
+        'Wheel style';
+
+    host.appendChild(label);
+
+    const row =
+        document.createElement('div');
+
+    row.className =
+        'garage-wheel-style-row';
+
+    styles.forEach(style => {
+        const button =
+            document.createElement('button');
+
+        button.type = 'button';
+        button.className =
+            'garage-wheel-style-button';
+
+        if (style.id === selectedId) {
+            button.classList.add('selected');
+        }
+
+        button.textContent =
+            style.label || style.id;
+
+        button.addEventListener(
+            'click',
+            () => onSelect(
+                style,
+                button));
+
+        row.appendChild(button);
+    });
+
+    host.appendChild(row);
+}
+
+function markSelected(
+    host,
+    selectedButton) {
+
+    if (!host) {
+        return;
+    }
+
+    host.querySelectorAll(
+        'button.selected')
+        .forEach(button =>
+            button.classList.remove(
+                'selected'));
+
+    selectedButton.classList.add(
+        'selected');
+}
 
 function setQuality(text, state) {
     if (!qualityBadge) {
@@ -55,6 +273,8 @@ function showUnavailable(message) {
     setQuality(
         'MODEL NEEDED',
         'fallback');
+
+    setCustomizerUnavailable();
 }
 
 function loadCarImagesScript(apiKey) {
@@ -183,6 +403,9 @@ async function showCatalogFallback(identity, apiKey) {
     setQuality(
         'CATALOG 3D',
         'fallback');
+
+    setCustomizerUnavailable(
+        'Customization is available when a PonyUp-owned 3D model is loaded.');
 
     try {
         await loadCarImagesScript(
@@ -463,6 +686,185 @@ async function showPonyUpModel(identity, asset, paint) {
         model,
         paint,
         asset);
+
+    const customization =
+        getCustomizationOptions(
+            asset);
+
+    const appearance =
+        readAppearance();
+
+    const selectedInterior =
+        customization.interiorColors.find(
+            option =>
+                option.id ===
+                appearance.interiorId) ||
+        customization.interiorColors[0] ||
+        null;
+
+    const selectedWheelFinish =
+        customization.wheelFinishes.find(
+            option =>
+                option.id ===
+                appearance.wheelFinishId) ||
+        customization.wheelFinishes[0] ||
+        null;
+
+    const selectedWheelStyle =
+        customization.wheelStyles.find(
+            option =>
+                option.id ===
+                appearance.wheelStyleId) ||
+        customization.wheelStyles[0] ||
+        null;
+
+    let interiorMatches = 0;
+    let wheelMatches = 0;
+
+    if (selectedInterior) {
+        interiorMatches =
+            applyInteriorColor(
+                model,
+                selectedInterior.hex,
+                asset);
+    }
+
+    if (selectedWheelFinish) {
+        wheelMatches =
+            applyWheelFinish(
+                model,
+                selectedWheelFinish.hex,
+                asset);
+    }
+
+    if (selectedWheelStyle) {
+        applyWheelVariant(
+            model,
+            selectedWheelStyle.id,
+            asset);
+    }
+
+    if (interiorMatches > 0 &&
+        customization.interiorColors.length > 0) {
+
+        if (interiorStatus) {
+            interiorStatus.textContent =
+                selectedInterior?.label ||
+                'Interior';
+        }
+
+        renderColorOptions(
+            interiorOptionsHost,
+            customization.interiorColors,
+            selectedInterior?.id,
+            (option, button) => {
+                const changed =
+                    applyInteriorColor(
+                        model,
+                        option.hex,
+                        asset);
+
+                if (changed <= 0) {
+                    return;
+                }
+
+                markSelected(
+                    interiorOptionsHost,
+                    button);
+
+                appearance.interiorId =
+                    option.id;
+
+                saveAppearance(
+                    appearance);
+
+                if (interiorStatus) {
+                    interiorStatus.textContent =
+                        option.label;
+                }
+            });
+    }
+    else if (interiorStatus) {
+        interiorStatus.textContent =
+            'Interior material mapping is still needed for this model.';
+    }
+
+    if (wheelMatches > 0 &&
+        customization.wheelFinishes.length > 0) {
+
+        if (wheelStatus) {
+            wheelStatus.textContent =
+                selectedWheelStyle?.label
+                    ? `${selectedWheelStyle.label} · ${selectedWheelFinish?.label || ''}`
+                    : selectedWheelFinish?.label || 'Wheels';
+        }
+
+        renderColorOptions(
+            wheelFinishHost,
+            customization.wheelFinishes,
+            selectedWheelFinish?.id,
+            (option, button) => {
+                const changed =
+                    applyWheelFinish(
+                        model,
+                        option.hex,
+                        asset);
+
+                if (changed <= 0) {
+                    return;
+                }
+
+                markSelected(
+                    wheelFinishHost,
+                    button);
+
+                appearance.wheelFinishId =
+                    option.id;
+
+                saveAppearance(
+                    appearance);
+
+                if (wheelStatus) {
+                    wheelStatus.textContent =
+                        option.label;
+                }
+            });
+
+        renderWheelStyles(
+            wheelStyleHost,
+            customization.wheelStyles,
+            selectedWheelStyle?.id,
+            (style, button) => {
+                if (!applyWheelVariant(
+                        model,
+                        style.id,
+                        asset)) {
+                    return;
+                }
+
+                const row =
+                    button.parentElement;
+
+                markSelected(
+                    row,
+                    button);
+
+                appearance.wheelStyleId =
+                    style.id;
+
+                saveAppearance(
+                    appearance);
+
+                if (wheelStatus) {
+                    wheelStatus.textContent =
+                        style.label;
+                }
+            });
+    }
+    else if (wheelStatus) {
+        wheelStatus.textContent =
+            'Wheel material mapping is still needed for this model.';
+    }
 
     turntable.add(model);
 
