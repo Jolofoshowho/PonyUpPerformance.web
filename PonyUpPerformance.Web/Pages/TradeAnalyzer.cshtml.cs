@@ -12,12 +12,14 @@ public class TradeAnalyzerModel : PageModel
     private readonly IVinDecoderService _vinDecoderService;
     private readonly IVehicleSpecEnrichmentService _vehicleSpecEnrichmentService;
     private readonly IMarketValueService _marketValueService;
+    private readonly AnalysisHistoryService _analysisHistoryService;
 
     public TradeAnalyzerModel(
         ITradeScoringService tradeScoringService,
         IVinDecoderService vinDecoderService,
         IVehicleSpecEnrichmentService vehicleSpecEnrichmentService,
-        IMarketValueService marketValueService)
+        IMarketValueService marketValueService,
+        AnalysisHistoryService analysisHistoryService)
     {
         _tradeScoringService =
             tradeScoringService;
@@ -30,6 +32,9 @@ public class TradeAnalyzerModel : PageModel
 
         _marketValueService =
             marketValueService;
+
+        _analysisHistoryService =
+            analysisHistoryService;
     }
 
     [BindProperty]
@@ -69,7 +74,7 @@ public class TradeAnalyzerModel : PageModel
             cancellationToken);
     }
 
-    public IActionResult OnPostAnalyze()
+    public async Task<IActionResult> OnPostAnalyzeAsync()
     {
         if (!ModelState.IsValid)
         {
@@ -79,6 +84,20 @@ public class TradeAnalyzerModel : PageModel
         Result =
             _tradeScoringService.Analyze(
                 Input);
+
+        await _analysisHistoryService.SaveAnalysisAsync(
+            User,
+            "Trade",
+            Input.YourYear,
+            Input.YourMake,
+            Input.YourModel,
+            Input.YourMileage,
+            Input.YourValue,
+            Result,
+            vehicleCondition:
+                Input.YourCondition == MechanicalCondition.NotProvided
+                    ? string.Empty
+                    : Input.YourCondition.ToString());
 
         return Page();
     }
