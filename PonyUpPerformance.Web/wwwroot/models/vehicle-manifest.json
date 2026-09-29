@@ -1,6 +1,74 @@
 {
-  "version": 2,
+  "version": 3,
   "vehicles": [
+    {
+      "id": "ford-mustang-gt-2005",
+      "enabled": true,
+      "match": {
+        "year": 2005,
+        "make": "Ford",
+        "model": "Mustang",
+        "trim": "GT"
+      },
+      "asset": "https://raw.githubusercontent.com/nesdesignco/FormDrive/main/public/models/mustang-2005.glb",
+      "targetLength": 5.45,
+      "scale": 1.0,
+      "rotationY": -0.08,
+      "position": [0, 0, 0],
+      "paintMaterialHints": [
+        "carpaint"
+      ],
+      "source": {
+        "type": "cc-by",
+        "reference": "https://sketchfab.com/3d-models/2005-ford-mustang-gt-26b6b60cf2804370ac3c64424242dc1f",
+        "mirror": "https://github.com/nesdesignco/FormDrive",
+        "creator": "Ricy",
+        "license": "CC-BY-4.0",
+        "attribution": "2005 Ford Mustang GT 3D model by Ricy, licensed CC BY 4.0."
+      },
+      "quality": {
+        "generationCorrect": true,
+        "paintReady": true,
+        "webOptimized": true,
+        "approved": true
+      },
+      "notes": "Licensed exact-year model. Served from the FormDrive mirror until PonyUp mirrors the binary."
+    },
+    {
+      "id": "tesla-model-3-2018",
+      "enabled": true,
+      "match": {
+        "year": 2018,
+        "make": "Tesla",
+        "model": "Model 3"
+      },
+      "asset": "https://raw.githubusercontent.com/nesdesignco/FormDrive/main/public/models/tesla-model-3-2018.glb",
+      "targetLength": 5.45,
+      "scale": 1.0,
+      "rotationY": 3.141592653589793,
+      "position": [0, 0, 0],
+      "paintMaterialHints": [
+        "primary",
+        "paint_black",
+        "putih_putih0_0",
+        "putih002_putih0_0"
+      ],
+      "source": {
+        "type": "cc-by",
+        "reference": "https://sketchfab.com/3d-models/tesla-2018-model-3-5ef9b845aaf44203b6d04e2c677e444f",
+        "mirror": "https://github.com/nesdesignco/FormDrive",
+        "creator": "Ameer Studio",
+        "license": "CC-BY-4.0",
+        "attribution": "Tesla 2018 Model 3 3D model by Ameer Studio, licensed CC BY 4.0."
+      },
+      "quality": {
+        "generationCorrect": true,
+        "paintReady": true,
+        "webOptimized": false,
+        "approved": true
+      },
+      "notes": "Licensed exact-year model. Larger payload; candidate for later compression."
+    },
     {
       "id": "pontiac-grand-prix-2004-2008",
       "enabled": false,
