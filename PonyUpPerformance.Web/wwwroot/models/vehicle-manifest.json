@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "vehicles": [
     {
       "id": "ford-mustang-gt-2005",
@@ -12,9 +12,13 @@
       },
       "asset": "https://raw.githubusercontent.com/nesdesignco/FormDrive/main/public/models/mustang-2005.glb",
       "targetLength": 5.45,
-      "scale": 1.0,
+      "scale": 1,
       "rotationY": -0.08,
-      "position": [0, 0, 0],
+      "position": [
+        0,
+        0,
+        0
+      ],
       "paintMaterialHints": [
         "carpaint"
       ],
@@ -32,7 +36,88 @@
         "webOptimized": true,
         "approved": true
       },
-      "notes": "Licensed exact-year model. Served from the FormDrive mirror until PonyUp mirrors the binary."
+      "notes": "Licensed exact-year model. Served from the FormDrive mirror until PonyUp mirrors the binary.",
+      "customization": {
+        "paintMaterialHints": [
+          "carpaint"
+        ],
+        "interiorMaterialHints": [
+          "interior",
+          "seat",
+          "seats",
+          "leather",
+          "dashboard",
+          "dash",
+          "doortrim",
+          "carpet"
+        ],
+        "wheelMaterialHints": [
+          "frdperofrmcrim",
+          "aluminium_clean2",
+          "aluminium_clean3"
+        ],
+        "interiorColors": [
+          {
+            "id": "black",
+            "label": "Black",
+            "hex": "#111111"
+          },
+          {
+            "id": "charcoal",
+            "label": "Charcoal",
+            "hex": "#2a2a2a"
+          },
+          {
+            "id": "saddle",
+            "label": "Saddle",
+            "hex": "#8a5d3b"
+          },
+          {
+            "id": "tan",
+            "label": "Tan",
+            "hex": "#b79a72"
+          },
+          {
+            "id": "red",
+            "label": "Red",
+            "hex": "#6e1418"
+          }
+        ],
+        "wheelFinishes": [
+          {
+            "id": "silver",
+            "label": "Satin Silver",
+            "hex": "#a9adb2"
+          },
+          {
+            "id": "black",
+            "label": "Gloss Black",
+            "hex": "#111214"
+          },
+          {
+            "id": "gunmetal",
+            "label": "Gunmetal",
+            "hex": "#4a4d50"
+          },
+          {
+            "id": "bronze",
+            "label": "Bronze",
+            "hex": "#80633e"
+          },
+          {
+            "id": "chrome",
+            "label": "Chrome",
+            "hex": "#d7dce1"
+          }
+        ],
+        "wheelStyles": [
+          {
+            "id": "stock",
+            "label": "Factory GT",
+            "meshHints": []
+          }
+        ]
+      }
     },
     {
       "id": "tesla-model-3-2018",
@@ -44,9 +129,13 @@
       },
       "asset": "https://raw.githubusercontent.com/nesdesignco/FormDrive/main/public/models/tesla-model-3-2018.glb",
       "targetLength": 5.45,
-      "scale": 1.0,
+      "scale": 1,
       "rotationY": 3.141592653589793,
-      "position": [0, 0, 0],
+      "position": [
+        0,
+        0,
+        0
+      ],
       "paintMaterialHints": [
         "primary",
         "paint_black",
@@ -67,7 +156,79 @@
         "webOptimized": false,
         "approved": true
       },
-      "notes": "Licensed exact-year model. Larger payload; candidate for later compression."
+      "notes": "Licensed exact-year model. Larger payload; candidate for later compression.",
+      "customization": {
+        "paintMaterialHints": [
+          "primary",
+          "paint_black",
+          "putih_putih0_0",
+          "putih002_putih0_0"
+        ],
+        "interiorMaterialHints": [
+          "interior",
+          "seat",
+          "seats",
+          "leather",
+          "dashboard",
+          "dash",
+          "doortrim",
+          "carpet"
+        ],
+        "wheelMaterialHints": [
+          "wheels"
+        ],
+        "interiorColors": [
+          {
+            "id": "black",
+            "label": "Black",
+            "hex": "#111111"
+          },
+          {
+            "id": "white",
+            "label": "White",
+            "hex": "#e8e5df"
+          },
+          {
+            "id": "charcoal",
+            "label": "Charcoal",
+            "hex": "#303236"
+          },
+          {
+            "id": "tan",
+            "label": "Tan",
+            "hex": "#b79a72"
+          }
+        ],
+        "wheelFinishes": [
+          {
+            "id": "silver",
+            "label": "Silver",
+            "hex": "#a9adb2"
+          },
+          {
+            "id": "black",
+            "label": "Black",
+            "hex": "#111214"
+          },
+          {
+            "id": "gunmetal",
+            "label": "Gunmetal",
+            "hex": "#4a4d50"
+          },
+          {
+            "id": "darkchrome",
+            "label": "Dark Chrome",
+            "hex": "#767c81"
+          }
+        ],
+        "wheelStyles": [
+          {
+            "id": "stock",
+            "label": "Factory",
+            "meshHints": []
+          }
+        ]
+      }
     },
     {
       "id": "pontiac-grand-prix-2004-2008",
@@ -80,9 +241,13 @@
       },
       "asset": "/models/vehicles/pontiac-grand-prix-2004-2008.glb",
       "targetLength": 5.7,
-      "scale": 1.0,
+      "scale": 1,
       "rotationY": 0,
-      "position": [0, 0, 0],
+      "position": [
+        0,
+        0,
+        0
+      ],
       "paintMaterialHints": [
         "body",
         "paint",
@@ -101,7 +266,74 @@
         "webOptimized": false,
         "approved": false
       },
-      "notes": "Planned first-party generation entry. Do not enable until a reviewed production GLB exists."
+      "notes": "Planned first-party generation entry. Do not enable until a reviewed production GLB exists.",
+      "customization": {
+        "paintMaterialHints": [
+          "body",
+          "paint",
+          "carpaint",
+          "exterior"
+        ],
+        "interiorMaterialHints": [
+          "interior",
+          "seat",
+          "seats",
+          "leather",
+          "dashboard",
+          "dash",
+          "doortrim",
+          "carpet"
+        ],
+        "wheelMaterialHints": [
+          "wheel",
+          "rim"
+        ],
+        "interiorColors": [
+          {
+            "id": "ebony",
+            "label": "Ebony",
+            "hex": "#151515"
+          },
+          {
+            "id": "darkgray",
+            "label": "Dark Gray",
+            "hex": "#424448"
+          },
+          {
+            "id": "neutral",
+            "label": "Neutral",
+            "hex": "#b6a58d"
+          }
+        ],
+        "wheelFinishes": [
+          {
+            "id": "silver",
+            "label": "Silver",
+            "hex": "#a9adb2"
+          },
+          {
+            "id": "black",
+            "label": "Gloss Black",
+            "hex": "#111214"
+          },
+          {
+            "id": "gunmetal",
+            "label": "Gunmetal",
+            "hex": "#4a4d50"
+          },
+          {
+            "id": "bronze",
+            "label": "Bronze",
+            "hex": "#80633e"
+          },
+          {
+            "id": "chrome",
+            "label": "Chrome",
+            "hex": "#d7dce1"
+          }
+        ],
+        "wheelStyles": []
+      }
     }
   ]
 }
