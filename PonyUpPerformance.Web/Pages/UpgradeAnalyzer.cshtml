@@ -115,6 +115,18 @@
                 <p style="font-weight:700;">
                     @Model.VinDecodeMessage
                 </p>
+
+                @if (!string.IsNullOrWhiteSpace(Model.Input.Vin) &&
+                     Model.Input.Vin.Length == 17)
+                {
+                    <span hidden
+                          data-vin-history-record
+                          data-vin="@Model.Input.Vin"
+                          data-year="@(Model.Input.Year?.ToString() ?? "")"
+                          data-make="@Model.Input.Make"
+                          data-model="@Model.Input.Model">
+                    </span>
+                }
             }
 
             <div class="form-row">
