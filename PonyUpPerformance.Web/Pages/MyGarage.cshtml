@@ -254,44 +254,23 @@
                         }
 
                         <div class="garage-viewer-wrap">
-                            @if (!string.IsNullOrWhiteSpace(carImagesApiKey) &&
-                                 !string.IsNullOrWhiteSpace(vehicle.Make) &&
-                                 !string.IsNullOrWhiteSpace(vehicle.Model) &&
-                                 vehicle.Year > 0)
-                            {
-                                <model-viewer id="garageCatalogViewer"
-                                              class="garage-catalog-viewer"
-                                              data-ci-type="car"
-                                              data-ci-make="@vehicle.Make"
-                                              data-ci-model="@vehicle.Model"
-                                              data-ci-year="@vehicle.Year"
-                                              data-ci-view="front34"
-                                              data-ci-speed="12"
-                                              data-ci-light="7"
-                                              data-ci-backdrop="radial-gradient(120% 120% at 50% 28%, #22272b, #090c0e)"
-                                              camera-controls
-                                              auto-rotate
-                                              shadow-intensity="1"
-                                              exposure="1.05"
-                                              aria-label="@VehicleName(vehicle) interactive 3D model">
-                                </model-viewer>
+                            <div id="garage3dViewer"
+                                 class="garage-3d-viewer"
+                                 data-vin="@vehicle.Vin"
+                                 data-year="@vehicle.Year"
+                                 data-make="@vehicle.Make"
+                                 data-model="@vehicle.Model"
+                                 data-trim="@vehicle.Trim"
+                                 data-paint="@vehicle.SelectedPaintHex"
+                                 data-car-images-key="@carImagesApiKey"
+                                 aria-label="@VehicleName(vehicle) interactive 3D model">
+                            </div>
 
-                                <div id="garageModelQuality"
-                                     class="garage-model-quality exact"
-                                     aria-live="polite">
-                                    CATALOG 3D
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="garage-model-unavailable">
-                                    <div class="garage-model-unavailable-mark">3D</div>
-                                    <strong>VEHICLE MODEL READY WHEN IDENTIFIED</strong>
-                                    <span>
-                                        Add Year, Make, and Model to load the correct vehicle.
-                                    </span>
-                                </div>
-                            }
+                            <div id="garageModelQuality"
+                                 class="garage-model-quality"
+                                 aria-live="polite">
+                                FINDING VEHICLE
+                            </div>
 
                             <div class="garage-viewer-hint">
                                 Drag to rotate · Scroll to zoom · Auto-spin resumes when released
@@ -697,12 +676,6 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-
-    @if (!string.IsNullOrWhiteSpace(carImagesApiKey))
-    {
-        <script src="https://carimagesapi.com/assets/js/carimages.js"
-                data-api-key="@carImagesApiKey"></script>
-    }
 
     <script type="module"
             src="~/js/garageVehicleViewer.js"
