@@ -41,6 +41,8 @@ namespace PonyUpPerformance.Web.Pages
 
         public string SelectedVehicleSvg { get; set; } = "";
 
+        public Dictionary<int, string> VehicleThumbnailSvgs { get; set; } = new();
+
         public int? PreviousVehicleId { get; set; }
         public int? NextVehicleId { get; set; }
 
@@ -300,6 +302,10 @@ namespace PonyUpPerformance.Web.Pages
                 .Where(x => x.UserId == user.Id)
                 .OrderByDescending(x => x.CreatedOn)
                 .ToListAsync();
+
+            VehicleThumbnailSvgs = Vehicles.ToDictionary(
+                vehicle => vehicle.Id,
+                vehicle => _vehicleRenderService.BuildVehicleSvg(vehicle));
 
             SelectedVehicle = vehicleId.HasValue
                 ? Vehicles.FirstOrDefault(
