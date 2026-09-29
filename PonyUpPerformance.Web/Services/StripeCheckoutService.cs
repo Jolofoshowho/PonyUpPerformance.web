@@ -23,21 +23,39 @@ namespace PonyUpPerformance.Web.Services
             string secretKey = _config["Stripe:SecretKey"] ?? throw new InvalidOperationException("Stripe SecretKey missing.");
             StripeConfiguration.ApiKey = secretKey;
 
-            string priceId = GetPriceId(planKey);
-            string mode = planKey == "quickpack" ? "payment" : "subscription";
+            string normalizedPlan =
+                planKey.Trim().ToLowerInvariant();
+
+            string priceId =
+                GetPriceId(normalizedPlan);
+
+            string mode =
+                normalizedPlan == "quickpack"
+                    ? "payment"
+                    : "subscription";
+
+            var metadata =
+                new Dictionary<string, string>
+                {
+                    { "UserId", user.Id },
+                    { "PlanKey", normalizedPlan }
+                };
 
             var options = new SessionCreateOptions
             {
                 Mode = mode,
                 SuccessUrl = $"{baseUrl}/CheckoutSuccess?session_id={{CHECKOUT_SESSION_ID}}",
-                CancelUrl = $"{baseUrl}/#pricing",
+                CancelUrl = $"{baseUrl}/Pricing",
                 CustomerEmail = user.Email,
                 ClientReferenceId = user.Id,
-                Metadata = new Dictionary<string, string>
-                {
-                    { "UserId", user.Id },
-                    { "PlanKey", planKey }
-                },
+                Metadata = metadata,
+                SubscriptionData =
+                    mode == "subscription"
+                        ? new SessionSubscriptionDataOptions
+                        {
+                            Metadata = metadata
+                        }
+                        : null,
                 LineItems = new List<SessionLineItemOptions>
                 {
                     new()
