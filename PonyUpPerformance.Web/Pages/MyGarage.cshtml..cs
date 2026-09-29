@@ -15,19 +15,22 @@ namespace PonyUpPerformance.Web.Pages
         private readonly VehiclePaintPaletteService _paintPaletteService;
         private readonly IVinDecoderService _vinDecoderService;
         private readonly VehicleRenderService _vehicleRenderService;
+        private readonly UsageCreditService _usageCreditService;
 
         public MyGarageModel(
             ApplicationDbContext dbContext,
             UserManager<ApplicationUser> userManager,
             VehiclePaintPaletteService paintPaletteService,
             IVinDecoderService vinDecoderService,
-            VehicleRenderService vehicleRenderService)
+            VehicleRenderService vehicleRenderService,
+            UsageCreditService usageCreditService)
         {
             _dbContext = dbContext;
             _userManager = userManager;
             _paintPaletteService = paintPaletteService;
             _vinDecoderService = vinDecoderService;
             _vehicleRenderService = vehicleRenderService;
+            _usageCreditService = usageCreditService;
         }
 
         [BindProperty]
@@ -38,6 +41,7 @@ namespace PonyUpPerformance.Web.Pages
 
         public List<VehiclePaintColor> PaintColors { get; set; } = new();
         public List<AnalysisHistory> RecentAnalyses { get; set; } = new();
+        public List<AnalysisHistory> AllAnalyses { get; set; } = new();
 
         public string SelectedVehicleSvg { get; set; } = "";
 
@@ -49,6 +53,8 @@ namespace PonyUpPerformance.Web.Pages
         public string UserEmail { get; set; } = "";
         public string CurrentPlan { get; set; } = "Free";
         public int RemainingCredits { get; set; }
+        public string AnalysisAccessLabel { get; set; } = "0";
+        public bool IsOwnerAccess { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int? vehicleId)
         {
@@ -293,10 +299,36 @@ namespace PonyUpPerformance.Web.Pages
             int? vehicleId)
         {
             UserEmail = user.Email ?? user.UserName ?? "";
-            CurrentPlan = string.IsNullOrWhiteSpace(user.CurrentPlan)
+
+            UsageCreditStatus access =
+                await _usageCreditService.GetStatusAsync(User);
+
+            CurrentPlan = string.IsNullOrWhiteSpace(access.CurrentPlan)
                 ? "Free"
-                : user.CurrentPlan;
-            RemainingCredits = user.RemainingCredits;
+                : access.CurrentPlan;
+
+            RemainingCredits = access.RemainingCredits;
+            IsOwnerAccess = string.Equals(
+                CurrentPlan,
+                "Owner",
+                StringComparison.OrdinalIgnoreCase);
+
+            AnalysisAccessLabel =
+                IsOwnerAccess
+                    ? "👑 ☁️ ∞"
+                    : string.Equals(
+                        CurrentPlan,
+                        "Unlimited",
+                        StringComparison.OrdinalIgnoreCase)
+                        ? "∞"
+                        : RemainingCredits.ToString();
+
+            AllAnalyses =
+                await _dbContext.AnalysisHistories
+                    .Where(x => x.UserId == user.Id)
+                    .OrderByDescending(x => x.CreatedOn)
+                    .Take(50)
+                    .ToListAsync();
 
             Vehicles = await _dbContext.GarageVehicles
                 .Where(x => x.UserId == user.Id)
