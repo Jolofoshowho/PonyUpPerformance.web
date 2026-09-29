@@ -406,6 +406,15 @@
                                     bubbles: true
                                 }));
 
+                        const decodeButton =
+                            document.querySelector(
+                                "[data-garage-decode]");
+
+                        if (decodeButton) {
+                            decodeButton.click();
+                            return;
+                        }
+
                         vinInput.focus();
                     });
 
