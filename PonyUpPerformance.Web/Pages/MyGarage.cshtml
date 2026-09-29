@@ -380,7 +380,7 @@
                         <h3>VEHICLE DETAILS</h3>
 
                         <dl class="garage-detail-list">
-                            <div><dt>Year</dt><dd>@(vehicle.Year > 0 ? vehicle.Year : "—")</dd></div>
+                            <div><dt>Year</dt><dd>@(vehicle.Year > 0 ? vehicle.Year.ToString() : "—")</dd></div>
                             <div><dt>Make</dt><dd>@(string.IsNullOrWhiteSpace(vehicle.Make) ? "—" : vehicle.Make)</dd></div>
                             <div><dt>Model</dt><dd>@(string.IsNullOrWhiteSpace(vehicle.Model) ? "—" : vehicle.Model)</dd></div>
                             <div><dt>Trim</dt><dd>@(string.IsNullOrWhiteSpace(vehicle.Trim) ? "—" : vehicle.Trim)</dd></div>
