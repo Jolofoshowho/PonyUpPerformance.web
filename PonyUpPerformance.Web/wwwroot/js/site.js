@@ -71,7 +71,7 @@
         const vin =
             normalizeVin(vehicle.vin);
 
-        if (vin.length !== 17) {
+        if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) {
             return;
         }
 
@@ -211,6 +211,25 @@
         input.addEventListener(
             "focus",
             refreshSuggestions);
+
+        input.addEventListener(
+            "change",
+            function () {
+
+                const vin =
+                    normalizeVin(
+                        input.value);
+
+                if (/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) {
+
+                    recordVin({
+                        vin: vin
+                    });
+
+                    refreshSuggestions();
+                    renderGarageVinHistory();
+                }
+            });
 
         input.addEventListener(
             "input",
