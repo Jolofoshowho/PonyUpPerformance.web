@@ -171,6 +171,8 @@
                         <input asp-for="Input.YourVin"
                                maxlength="17"
                                aria-label="Your vehicle VIN"
+                               data-vin-history="true"
+                               autocomplete="off"
                                placeholder="VIN" />
 
                         <button type="submit"
@@ -194,6 +196,18 @@
                         <div class="trade-mini-message">
                             @Model.YourVinMessage
                         </div>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Input.YourVin) &&
+                             Model.Input.YourVin.Length == 17)
+                        {
+                            <span hidden
+                                  data-vin-history-record
+                                  data-vin="@Model.Input.YourVin"
+                                  data-year="@(Model.Input.YourYear?.ToString() ?? "")"
+                                  data-make="@Model.Input.YourMake"
+                                  data-model="@Model.Input.YourModel">
+                            </span>
+                        }
                     }
 
                     @if (!string.IsNullOrWhiteSpace(
@@ -398,6 +412,8 @@
                         <input asp-for="Input.TheirVin"
                                maxlength="17"
                                aria-label="Their vehicle VIN"
+                               data-vin-history="true"
+                               autocomplete="off"
                                placeholder="VIN" />
 
                         <button type="submit"
@@ -421,6 +437,18 @@
                         <div class="trade-mini-message">
                             @Model.TheirVinMessage
                         </div>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Input.TheirVin) &&
+                             Model.Input.TheirVin.Length == 17)
+                        {
+                            <span hidden
+                                  data-vin-history-record
+                                  data-vin="@Model.Input.TheirVin"
+                                  data-year="@(Model.Input.TheirYear?.ToString() ?? "")"
+                                  data-make="@Model.Input.TheirMake"
+                                  data-model="@Model.Input.TheirModel">
+                            </span>
+                        }
                     }
 
                     @if (!string.IsNullOrWhiteSpace(
