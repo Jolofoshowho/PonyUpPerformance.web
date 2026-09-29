@@ -1,347 +1,609 @@
-﻿import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+
+const addVehiclePanel = document.getElementById('garageAddVehicle');
+
+document.querySelectorAll('[data-open-add-vehicle]').forEach(button => {
+    button.addEventListener('click', () => {
+        if (!addVehiclePanel) {
+            return;
+        }
+
+        addVehiclePanel.open = true;
+        addVehiclePanel.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+
+        window.setTimeout(() => {
+            addVehiclePanel.querySelector('input')?.focus();
+        }, 350);
+    });
+});
+
+document.querySelectorAll('[data-focus-mileage]').forEach(button => {
+    button.addEventListener('click', () => {
+        const mileage = document.getElementById('garageMileage');
+
+        if (!mileage) {
+            return;
+        }
+
+        mileage.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+
+        window.setTimeout(() => {
+            mileage.focus();
+            mileage.select();
+        }, 350);
+    });
+});
 
 const mount = document.getElementById('garage3dViewer');
 
 if (mount) {
     const paint = mount.dataset.paint || '#b8b8b8';
     const bodyStyle = (mount.dataset.body || 'Sedan').toLowerCase();
+    const renderType = (mount.dataset.render || bodyStyle).toLowerCase();
+    const fallback = mount.querySelector('.garage-render-fallback');
 
-    const scene = new THREE.Scene();
+    try {
+        const scene = new THREE.Scene();
 
-    const camera = new THREE.PerspectiveCamera(
-        30,
-        mount.clientWidth / mount.clientHeight,
-        0.1,
-        1000
-    );
-
-    camera.position.set(4.8, 2.15, 6.9);
-    camera.lookAt(0, 0.32, 0);
-
-    const renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true
-    });
-
-    renderer.setPixelRatio(window.devicePixelRatio || 1);
-    renderer.setSize(mount.clientWidth, mount.clientHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    mount.appendChild(renderer.domElement);
-
-    const vehicle = new THREE.Group();
-    vehicle.rotation.y = -0.55;
-    scene.add(vehicle);
-
-    const bodyMaterial = new THREE.MeshStandardMaterial({
-        color: paint,
-        metalness: 0.72,
-        roughness: 0.21
-    });
-
-    const glassMaterial = new THREE.MeshStandardMaterial({
-        color: 0x101b25,
-        metalness: 0.35,
-        roughness: 0.06,
-        transparent: true,
-        opacity: 0.86
-    });
-
-    const tireMaterial = new THREE.MeshStandardMaterial({
-        color: 0x030303,
-        metalness: 0.12,
-        roughness: 0.76
-    });
-
-    const wheelMaterial = new THREE.MeshStandardMaterial({
-        color: 0xc9ced2,
-        metalness: 0.88,
-        roughness: 0.16
-    });
-
-    const trimMaterial = new THREE.MeshStandardMaterial({
-        color: 0x070707,
-        metalness: 0.55,
-        roughness: 0.28
-    });
-
-    const headlightMaterial = new THREE.MeshStandardMaterial({
-        color: 0xfff3c0,
-        emissive: 0x4a3a12,
-        metalness: 0.1,
-        roughness: 0.18
-    });
-
-    const taillightMaterial = new THREE.MeshStandardMaterial({
-        color: 0xff3131,
-        emissive: 0x5d0808,
-        metalness: 0.1,
-        roughness: 0.2
-    });
-
-    function addLightSet() {
-        const ambient = new THREE.AmbientLight(0xffffff, 1.2);
-        scene.add(ambient);
-
-        const key = new THREE.DirectionalLight(0xffffff, 2.8);
-        key.position.set(5.5, 7.2, 5.8);
-        key.castShadow = true;
-        scene.add(key);
-
-        const leftRed = new THREE.PointLight(0xff3131, 2.8, 11);
-        leftRed.position.set(-3.8, 1.1, 3.4);
-        scene.add(leftRed);
-
-        const floorGlow = new THREE.PointLight(0xff3b2f, 2.1, 7);
-        floorGlow.position.set(0, -0.55, 1.8);
-        scene.add(floorGlow);
-    }
-
-    function box(width, height, depth, x, y, z, material) {
-        const geometry = new THREE.BoxGeometry(width, height, depth, 3, 3, 3);
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(x, y, z);
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        vehicle.add(mesh);
-        return mesh;
-    }
-
-    function roundedBody(width, height, depth, x, y, z, material) {
-        const geometry = new THREE.BoxGeometry(width, height, depth, 6, 3, 3);
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(x, y, z);
-        mesh.scale.y = 0.92;
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        vehicle.add(mesh);
-        return mesh;
-    }
-
-    function wheel(x, z, scale) {
-        const tire = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.42 * scale, 0.42 * scale, 0.34 * scale, 56),
-            tireMaterial
+        const camera = new THREE.PerspectiveCamera(
+            30,
+            Math.max(mount.clientWidth, 1) / Math.max(mount.clientHeight, 1),
+            0.1,
+            100
         );
 
-        tire.rotation.z = Math.PI / 2;
-        tire.position.set(x, -0.52, z);
-        tire.castShadow = true;
-        vehicle.add(tire);
+        camera.position.set(6.9, 3.0, 8.8);
+        camera.lookAt(0, 0.35, 0);
 
-        const rim = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.23 * scale, 0.23 * scale, 0.38 * scale, 56),
-            wheelMaterial
+        const renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true,
+            powerPreference: 'high-performance'
+        });
+
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.setSize(
+            Math.max(mount.clientWidth, 1),
+            Math.max(mount.clientHeight, 1)
         );
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.05;
 
-        rim.rotation.z = Math.PI / 2;
-        rim.position.set(x, -0.52, z);
-        rim.castShadow = true;
-        vehicle.add(rim);
-    }
-
-    function headlight(x, z) {
-        box(0.13, 0.15, 0.46, x, -0.02, z, headlightMaterial);
-    }
-
-    function taillight(x, z) {
-        box(0.13, 0.15, 0.38, x, -0.02, z, taillightMaterial);
-    }
-
-    function buildSedan() {
-        roundedBody(5.35, 0.56, 1.76, 0, -0.05, 0, bodyMaterial);
-
-        box(1.35, 0.20, 1.67, -2.12, 0.02, 0, bodyMaterial);
-        box(1.18, 0.17, 1.62, 2.14, 0.00, 0, bodyMaterial);
-
-        box(2.15, 0.46, 1.48, -0.14, 0.47, 0, bodyMaterial);
-        box(1.76, 0.32, 1.38, -0.14, 0.60, 0, glassMaterial);
-
-        box(0.04, 0.40, 1.52, -0.88, 0.36, 0, trimMaterial);
-        box(0.04, 0.34, 1.52, 0.58, 0.32, 0, trimMaterial);
-
-        box(0.08, 0.08, 1.58, -2.58, -0.11, 0, trimMaterial);
-        box(0.08, 0.08, 1.56, 2.56, -0.11, 0, trimMaterial);
-
-        headlight(2.73, 0.53);
-        headlight(2.73, -0.53);
-        taillight(-2.73, 0.50);
-        taillight(-2.73, -0.50);
-
-        wheel(-1.76, 0.96, 1);
-        wheel(1.76, 0.96, 1);
-        wheel(-1.76, -0.96, 1);
-        wheel(1.76, -0.96, 1);
-    }
-
-    function buildCoupe() {
-        roundedBody(5.15, 0.52, 1.70, 0, -0.07, 0, bodyMaterial);
-
-        box(1.66, 0.17, 1.58, -2.14, -0.02, 0, bodyMaterial);
-        box(1.25, 0.14, 1.54, 2.05, -0.04, 0, bodyMaterial);
-
-        box(1.58, 0.38, 1.38, -0.08, 0.38, 0, bodyMaterial);
-        box(1.15, 0.26, 1.28, -0.08, 0.49, 0, glassMaterial);
-
-        headlight(2.62, 0.51);
-        headlight(2.62, -0.51);
-        taillight(-2.62, 0.48);
-        taillight(-2.62, -0.48);
-
-        wheel(-1.70, 0.93, 0.98);
-        wheel(1.70, 0.93, 0.98);
-        wheel(-1.70, -0.93, 0.98);
-        wheel(1.70, -0.93, 0.98);
-    }
-
-    function buildTruck() {
-        roundedBody(5.78, 0.72, 2.02, 0, -0.03, 0, bodyMaterial);
-
-        box(1.58, 0.78, 1.70, -1.08, 0.64, 0, bodyMaterial);
-        box(1.16, 0.46, 1.58, -1.08, 0.81, 0, glassMaterial);
-
-        box(2.02, 0.30, 1.90, 1.43, 0.28, 0, bodyMaterial);
-        box(0.06, 0.36, 1.94, 0.42, 0.23, 0, trimMaterial);
-
-        headlight(2.92, 0.66);
-        headlight(2.92, -0.66);
-        taillight(-2.92, 0.64);
-        taillight(-2.92, -0.64);
-
-        wheel(-1.98, 1.08, 1.08);
-        wheel(1.98, 1.08, 1.08);
-        wheel(-1.98, -1.08, 1.08);
-        wheel(1.98, -1.08, 1.08);
-    }
-
-    function buildSuv() {
-        roundedBody(5.38, 0.74, 1.94, 0, -0.03, 0, bodyMaterial);
-
-        box(2.95, 0.88, 1.70, -0.12, 0.66, 0, bodyMaterial);
-        box(2.45, 0.50, 1.58, -0.12, 0.84, 0, glassMaterial);
-
-        box(0.05, 0.52, 1.68, -1.08, 0.56, 0, trimMaterial);
-        box(0.05, 0.46, 1.68, 0.44, 0.54, 0, trimMaterial);
-
-        headlight(2.75, 0.63);
-        headlight(2.75, -0.63);
-        taillight(-2.75, 0.60);
-        taillight(-2.75, -0.60);
-
-        wheel(-1.82, 1.03, 1.04);
-        wheel(1.82, 1.03, 1.04);
-        wheel(-1.82, -1.03, 1.04);
-        wheel(1.82, -1.03, 1.04);
-    }
-
-    function buildVan() {
-        roundedBody(5.45, 0.86, 1.96, 0, -0.02, 0, bodyMaterial);
-
-        box(3.45, 0.95, 1.72, -0.35, 0.70, 0, bodyMaterial);
-        box(3.05, 0.52, 1.58, -0.35, 0.88, 0, glassMaterial);
-
-        headlight(2.78, 0.62);
-        headlight(2.78, -0.62);
-        taillight(-2.78, 0.60);
-        taillight(-2.78, -0.60);
-
-        wheel(-1.78, 1.02, 1.03);
-        wheel(1.78, 1.02, 1.03);
-        wheel(-1.78, -1.02, 1.03);
-        wheel(1.78, -1.02, 1.03);
-    }
-
-    addLightSet();
-
-    if (bodyStyle.includes('truck')) {
-        buildTruck();
-    } else if (bodyStyle.includes('suv')) {
-        buildSuv();
-    } else if (bodyStyle.includes('coupe')) {
-        buildCoupe();
-    } else if (bodyStyle.includes('van')) {
-        buildVan();
-    } else {
-        buildSedan();
-    }
-
-    const floor = new THREE.Mesh(
-        new THREE.CylinderGeometry(3.82, 3.82, 0.08, 160),
-        new THREE.MeshStandardMaterial({
-            color: 0x090909,
-            metalness: 0.55,
-            roughness: 0.36
-        })
-    );
-
-    floor.position.y = -0.94;
-    floor.receiveShadow = true;
-    scene.add(floor);
-
-    const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(3.62, 0.026, 16, 220),
-        new THREE.MeshStandardMaterial({
-            color: 0xff3131,
-            emissive: 0x661010,
-            metalness: 0.45,
-            roughness: 0.16
-        })
-    );
-
-    ring.rotation.x = Math.PI / 2;
-    ring.position.y = -0.875;
-    scene.add(ring);
-
-    let dragging = false;
-    let lastX = 0;
-
-    mount.addEventListener('pointerdown', e => {
-        dragging = true;
-        lastX = e.clientX;
-        mount.setPointerCapture(e.pointerId);
-    });
-
-    mount.addEventListener('pointermove', e => {
-        if (!dragging) return;
-
-        const delta = e.clientX - lastX;
-        vehicle.rotation.y += delta * 0.008;
-        lastX = e.clientX;
-    });
-
-    mount.addEventListener('pointerup', () => {
-        dragging = false;
-    });
-
-    mount.addEventListener('pointercancel', () => {
-        dragging = false;
-    });
-
-    mount.addEventListener('wheel', e => {
-        e.preventDefault();
-
-        camera.position.z += e.deltaY * 0.004;
-        camera.position.z = Math.max(5.2, Math.min(9.2, camera.position.z));
-        camera.lookAt(0, 0.32, 0);
-    }, { passive: false });
-
-    function resize() {
-        if (!mount.clientWidth || !mount.clientHeight) {
-            return;
+        if (fallback) {
+            fallback.style.display = 'none';
         }
 
-        camera.aspect = mount.clientWidth / mount.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(mount.clientWidth, mount.clientHeight);
+        mount.appendChild(renderer.domElement);
+
+        const turntable = new THREE.Group();
+        turntable.rotation.y = -0.55;
+        scene.add(turntable);
+
+        const vehicle = new THREE.Group();
+        vehicle.position.y = 0.12;
+        turntable.add(vehicle);
+
+        const bodyMaterial = new THREE.MeshPhysicalMaterial({
+            color: new THREE.Color(paint),
+            metalness: 0.82,
+            roughness: 0.2,
+            clearcoat: 0.9,
+            clearcoatRoughness: 0.12
+        });
+
+        const lowerBodyMaterial = new THREE.MeshStandardMaterial({
+            color: new THREE.Color(paint).multiplyScalar(0.78),
+            metalness: 0.7,
+            roughness: 0.25
+        });
+
+        const glassMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0x14202a,
+            metalness: 0.08,
+            roughness: 0.08,
+            transparent: true,
+            opacity: 0.84,
+            transmission: 0.12
+        });
+
+        const tireMaterial = new THREE.MeshStandardMaterial({
+            color: 0x020202,
+            metalness: 0.03,
+            roughness: 0.88
+        });
+
+        const wheelMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0x9ea4aa,
+            metalness: 0.95,
+            roughness: 0.12,
+            clearcoat: 0.42
+        });
+
+        const darkTrimMaterial = new THREE.MeshStandardMaterial({
+            color: 0x050607,
+            metalness: 0.62,
+            roughness: 0.26
+        });
+
+        const grilleMaterial = new THREE.MeshStandardMaterial({
+            color: 0x020202,
+            metalness: 0.35,
+            roughness: 0.38
+        });
+
+        const headlightMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0xf7fbff,
+            emissive: 0x8cc8ff,
+            emissiveIntensity: 0.75,
+            metalness: 0.08,
+            roughness: 0.08
+        });
+
+        const taillightMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0xff3030,
+            emissive: 0xff1111,
+            emissiveIntensity: 0.82,
+            metalness: 0.06,
+            roughness: 0.15
+        });
+
+        function meshBox(width, height, depth, x, y, z, material, parent = vehicle) {
+            const geometry = new THREE.BoxGeometry(width, height, depth, 4, 2, 2);
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            parent.add(mesh);
+            return mesh;
+        }
+
+        function meshWedge(width, height, depth, x, y, z, material, tilt = 0) {
+            const mesh = meshBox(width, height, depth, x, y, z, material);
+            mesh.rotation.z = tilt;
+            return mesh;
+        }
+
+        function wheel(x, z, scale = 1) {
+            const wheelGroup = new THREE.Group();
+            wheelGroup.position.set(x, -0.44, z);
+
+            const tire = new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                    0.48 * scale,
+                    0.48 * scale,
+                    0.34 * scale,
+                    56
+                ),
+                tireMaterial
+            );
+
+            tire.rotation.z = Math.PI / 2;
+            tire.castShadow = true;
+            wheelGroup.add(tire);
+
+            const rim = new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                    0.28 * scale,
+                    0.28 * scale,
+                    0.37 * scale,
+                    32
+                ),
+                wheelMaterial
+            );
+
+            rim.rotation.z = Math.PI / 2;
+            rim.castShadow = true;
+            wheelGroup.add(rim);
+
+            const hub = new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                    0.08 * scale,
+                    0.08 * scale,
+                    0.4 * scale,
+                    24
+                ),
+                darkTrimMaterial
+            );
+
+            hub.rotation.z = Math.PI / 2;
+            wheelGroup.add(hub);
+
+            vehicle.add(wheelGroup);
+        }
+
+        function lightPair(x, z, rear = false, spread = 0.58) {
+            const material = rear
+                ? taillightMaterial
+                : headlightMaterial;
+
+            [-spread, spread].forEach(side => {
+                const lamp = meshBox(
+                    0.10,
+                    0.17,
+                    0.5,
+                    x,
+                    -0.01,
+                    side * z,
+                    material
+                );
+
+                lamp.rotation.z = rear ? -0.02 : 0.02;
+            });
+        }
+
+        function addCommonDetails(length, width, wheelX, wheelScale) {
+            meshBox(
+                length * 0.91,
+                0.10,
+                width * 0.98,
+                0,
+                -0.35,
+                0,
+                darkTrimMaterial
+            );
+
+            meshBox(
+                0.08,
+                0.34,
+                width * 0.6,
+                length / 2 + 0.035,
+                -0.06,
+                0,
+                grilleMaterial
+            );
+
+            meshBox(
+                0.07,
+                0.25,
+                width * 0.62,
+                -(length / 2 + 0.03),
+                -0.05,
+                0,
+                darkTrimMaterial
+            );
+
+            lightPair(length / 2 + 0.07, width * 0.37, false);
+            lightPair(-(length / 2 + 0.06), width * 0.35, true);
+
+            wheel(-wheelX, width * 0.56, wheelScale);
+            wheel(wheelX, width * 0.56, wheelScale);
+            wheel(-wheelX, -width * 0.56, wheelScale);
+            wheel(wheelX, -width * 0.56, wheelScale);
+        }
+
+        function buildSedan(longNose = false) {
+            const length = longNose ? 5.8 : 5.45;
+            const width = 1.86;
+            const wheelX = longNose ? 1.96 : 1.82;
+
+            meshBox(length, 0.58, width, 0, -0.02, 0, bodyMaterial);
+            meshWedge(1.38, 0.20, width * 0.94, length * 0.35, 0.18, 0, bodyMaterial, -0.015);
+            meshWedge(1.05, 0.17, width * 0.91, -length * 0.39, 0.14, 0, lowerBodyMaterial, 0.01);
+
+            const cabin = meshBox(
+                longNose ? 2.25 : 2.42,
+                0.72,
+                width * 0.83,
+                longNose ? -0.24 : -0.06,
+                0.54,
+                0,
+                bodyMaterial
+            );
+            cabin.scale.y = 0.9;
+
+            const glass = meshBox(
+                longNose ? 1.82 : 1.98,
+                0.49,
+                width * 0.75,
+                longNose ? -0.24 : -0.06,
+                0.68,
+                0,
+                glassMaterial
+            );
+            glass.scale.y = 0.9;
+
+            meshBox(0.05, 0.55, width * 0.87, -0.84, 0.48, 0, darkTrimMaterial);
+            meshBox(0.05, 0.48, width * 0.87, 0.68, 0.45, 0, darkTrimMaterial);
+
+            addCommonDetails(length, width, wheelX, 1.02);
+        }
+
+        function buildCoupe() {
+            const length = 5.35;
+            const width = 1.88;
+
+            meshBox(length, 0.54, width, 0, -0.05, 0, bodyMaterial);
+            meshWedge(1.65, 0.18, width * 0.94, 1.95, 0.15, 0, bodyMaterial, -0.018);
+            meshWedge(1.08, 0.14, width * 0.89, -2.08, 0.09, 0, lowerBodyMaterial, 0.012);
+
+            const cabin = meshBox(
+                1.72,
+                0.61,
+                width * 0.79,
+                -0.22,
+                0.48,
+                0,
+                bodyMaterial
+            );
+            cabin.scale.y = 0.88;
+
+            const glass = meshBox(
+                1.38,
+                0.41,
+                width * 0.71,
+                -0.22,
+                0.59,
+                0,
+                glassMaterial
+            );
+            glass.scale.y = 0.88;
+
+            meshBox(0.9, 0.08, width * 0.72, 2.12, 0.33, 0, darkTrimMaterial);
+
+            addCommonDetails(length, width, 1.78, 1.02);
+        }
+
+        function buildTruck() {
+            const length = 5.95;
+            const width = 2.08;
+
+            meshBox(length, 0.72, width, 0, -0.02, 0, bodyMaterial);
+            meshBox(1.72, 0.88, width * 0.84, 1.08, 0.64, 0, bodyMaterial);
+            meshBox(1.32, 0.54, width * 0.76, 1.08, 0.8, 0, glassMaterial);
+
+            meshBox(2.05, 0.31, width * 0.93, -1.72, 0.27, 0, lowerBodyMaterial);
+            meshBox(0.06, 0.38, width * 0.96, -0.66, 0.24, 0, darkTrimMaterial);
+
+            addCommonDetails(length, width, 2.05, 1.12);
+        }
+
+        function buildSuv() {
+            const length = 5.55;
+            const width = 2.02;
+
+            meshBox(length, 0.72, width, 0, -0.02, 0, bodyMaterial);
+            meshBox(3.15, 1.0, width * 0.85, -0.12, 0.67, 0, bodyMaterial);
+            meshBox(2.65, 0.62, width * 0.77, -0.08, 0.83, 0, glassMaterial);
+
+            meshBox(0.05, 0.66, width * 0.88, -1.02, 0.62, 0, darkTrimMaterial);
+            meshBox(0.05, 0.58, width * 0.88, 0.5, 0.58, 0, darkTrimMaterial);
+
+            addCommonDetails(length, width, 1.88, 1.08);
+        }
+
+        function buildVan() {
+            const length = 5.65;
+            const width = 2.02;
+
+            meshBox(length, 0.78, width, 0, 0.0, 0, bodyMaterial);
+            meshBox(3.65, 1.14, width * 0.86, -0.3, 0.75, 0, bodyMaterial);
+            meshBox(3.1, 0.65, width * 0.78, -0.28, 0.95, 0, glassMaterial);
+
+            addCommonDetails(length, width, 1.86, 1.08);
+        }
+
+        if (renderType.includes('truck') || bodyStyle.includes('truck')) {
+            buildTruck();
+        } else if (renderType.includes('suv') || bodyStyle.includes('suv')) {
+            buildSuv();
+        } else if (renderType.includes('coupe') || bodyStyle.includes('coupe')) {
+            buildCoupe();
+        } else if (renderType.includes('van') || bodyStyle.includes('van')) {
+            buildVan();
+        } else {
+            buildSedan(renderType.includes('long nose'));
+        }
+
+        const turntableTop = new THREE.Mesh(
+            new THREE.CylinderGeometry(3.95, 3.95, 0.12, 160),
+            new THREE.MeshPhysicalMaterial({
+                color: 0x171a1c,
+                metalness: 0.88,
+                roughness: 0.24,
+                clearcoat: 0.4
+            })
+        );
+
+        turntableTop.position.y = -0.93;
+        turntableTop.receiveShadow = true;
+        turntable.add(turntableTop);
+
+        const turntableInnerRing = new THREE.Mesh(
+            new THREE.TorusGeometry(3.72, 0.028, 18, 240),
+            new THREE.MeshStandardMaterial({
+                color: 0xff3131,
+                emissive: 0xff1818,
+                emissiveIntensity: 2.0,
+                metalness: 0.4,
+                roughness: 0.15
+            })
+        );
+
+        turntableInnerRing.rotation.x = Math.PI / 2;
+        turntableInnerRing.position.y = -0.855;
+        turntable.add(turntableInnerRing);
+
+        const base = new THREE.Mesh(
+            new THREE.CylinderGeometry(4.1, 4.15, 0.34, 160),
+            new THREE.MeshStandardMaterial({
+                color: 0x080a0b,
+                metalness: 0.78,
+                roughness: 0.28
+            })
+        );
+
+        base.position.y = -1.1;
+        base.receiveShadow = true;
+        scene.add(base);
+
+        const baseLip = new THREE.Mesh(
+            new THREE.TorusGeometry(4.06, 0.055, 20, 240),
+            new THREE.MeshStandardMaterial({
+                color: 0x2a2c2e,
+                metalness: 0.95,
+                roughness: 0.12
+            })
+        );
+
+        baseLip.rotation.x = Math.PI / 2;
+        baseLip.position.y = -0.95;
+        scene.add(baseLip);
+
+        const floor = new THREE.Mesh(
+            new THREE.CircleGeometry(9.8, 128),
+            new THREE.MeshStandardMaterial({
+                color: 0x090b0c,
+                metalness: 0.42,
+                roughness: 0.42
+            })
+        );
+
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = -1.28;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        const floorGlow = new THREE.Mesh(
+            new THREE.RingGeometry(4.35, 6.5, 160),
+            new THREE.MeshBasicMaterial({
+                color: 0x601010,
+                transparent: true,
+                opacity: 0.16,
+                side: THREE.DoubleSide
+            })
+        );
+
+        floorGlow.rotation.x = -Math.PI / 2;
+        floorGlow.position.y = -1.265;
+        scene.add(floorGlow);
+
+        const ambient = new THREE.HemisphereLight(
+            0xf4f8ff,
+            0x08090a,
+            1.65
+        );
+        scene.add(ambient);
+
+        const key = new THREE.DirectionalLight(0xffffff, 4.1);
+        key.position.set(4.8, 7.5, 5.8);
+        key.castShadow = true;
+        key.shadow.mapSize.width = 2048;
+        key.shadow.mapSize.height = 2048;
+        scene.add(key);
+
+        const rimLeft = new THREE.PointLight(0xff3131, 24, 14, 2);
+        rimLeft.position.set(-4.8, 1.1, 3.8);
+        scene.add(rimLeft);
+
+        const rimRight = new THREE.PointLight(0xff3131, 18, 14, 2);
+        rimRight.position.set(4.4, 1.0, -3.0);
+        scene.add(rimRight);
+
+        const softFront = new THREE.PointLight(0xffffff, 16, 18, 2);
+        softFront.position.set(3.7, 4.0, 6.0);
+        scene.add(softFront);
+
+        const softBack = new THREE.PointLight(0x9cc8ff, 9, 16, 2);
+        softBack.position.set(-4.8, 3.0, -4.0);
+        scene.add(softBack);
+
+        let dragging = false;
+        let lastX = 0;
+        let lastInteraction = performance.now();
+
+        mount.addEventListener('pointerdown', event => {
+            dragging = true;
+            lastX = event.clientX;
+            lastInteraction = performance.now();
+            mount.setPointerCapture(event.pointerId);
+        });
+
+        mount.addEventListener('pointermove', event => {
+            if (!dragging) {
+                return;
+            }
+
+            const delta = event.clientX - lastX;
+            turntable.rotation.y += delta * 0.008;
+            lastX = event.clientX;
+            lastInteraction = performance.now();
+        });
+
+        function stopDragging(event) {
+            dragging = false;
+            lastInteraction = performance.now();
+
+            if (event?.pointerId !== undefined &&
+                mount.hasPointerCapture?.(event.pointerId)) {
+                mount.releasePointerCapture(event.pointerId);
+            }
+        }
+
+        mount.addEventListener('pointerup', stopDragging);
+        mount.addEventListener('pointercancel', stopDragging);
+        mount.addEventListener('pointerleave', event => {
+            if (dragging) {
+                stopDragging(event);
+            }
+        });
+
+        mount.addEventListener('wheel', event => {
+            event.preventDefault();
+            lastInteraction = performance.now();
+
+            camera.position.z += event.deltaY * 0.006;
+            camera.position.z = Math.max(
+                6.5,
+                Math.min(11.4, camera.position.z)
+            );
+            camera.lookAt(0, 0.35, 0);
+        }, { passive: false });
+
+        function resize() {
+            const width = Math.max(mount.clientWidth, 1);
+            const height = Math.max(mount.clientHeight, 1);
+
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
+
+        window.addEventListener('resize', resize);
+
+        const resizeObserver = new ResizeObserver(resize);
+        resizeObserver.observe(mount);
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const delta = Math.min(clock.getDelta(), 0.04);
+            const idleFor = performance.now() - lastInteraction;
+
+            if (!dragging && idleFor > 1800) {
+                turntable.rotation.y += delta * 0.16;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        resize();
+        animate();
+    } catch (error) {
+        console.error('PonyUp Garage 3D viewer failed to initialize.', error);
+
+        if (fallback) {
+            fallback.style.display = 'flex';
+        }
     }
-
-    window.addEventListener('resize', resize);
-
-    function animate() {
-        requestAnimationFrame(animate);
-        renderer.render(scene, camera);
-    }
-
-    resize();
-    animate();
 }
