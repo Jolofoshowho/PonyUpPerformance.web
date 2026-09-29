@@ -65,9 +65,6 @@
                     @foreach (var vehicle in Model.Vehicles)
                     {
                         var active = Model.SelectedVehicle?.Id == vehicle.Id;
-                        var thumbnailSvg = Model.VehicleThumbnailSvgs.ContainsKey(vehicle.Id)
-                            ? Model.VehicleThumbnailSvgs[vehicle.Id]
-                            : "";
 
                         <a class="garage-vehicle-row @(active ? "active" : "")"
                            asp-page="/MyGarage"
@@ -75,7 +72,26 @@
 
                             <span class="garage-vehicle-thumb"
                                   aria-hidden="true">
-                                @Html.Raw(thumbnailSvg)
+                                @if (!string.IsNullOrWhiteSpace(carImagesApiKey) &&
+                                     !string.IsNullOrWhiteSpace(vehicle.Make) &&
+                                     !string.IsNullOrWhiteSpace(vehicle.Model) &&
+                                     vehicle.Year > 0)
+                                {
+                                    <img class="garage-vehicle-thumb-image"
+                                         data-ci-type="car"
+                                         data-ci-make="@vehicle.Make"
+                                         data-ci-model="@vehicle.Model"
+                                         data-ci-year="@vehicle.Year"
+                                         data-ci-view="front34"
+                                         data-ci-width="256"
+                                         alt="" />
+                                }
+                                else
+                                {
+                                    <span class="garage-vehicle-thumb-placeholder">
+                                        AUTO
+                                    </span>
+                                }
                             </span>
 
                             <span class="garage-vehicle-copy">
