@@ -124,8 +124,17 @@ public class ModelCatalogModel : PageModel
                     match,
                     "yearMax");
 
+            bool remoteAsset =
+                Uri.TryCreate(
+                    asset,
+                    UriKind.Absolute,
+                    out Uri? assetUri) &&
+                (assetUri.Scheme == Uri.UriSchemeHttp ||
+                 assetUri.Scheme == Uri.UriSchemeHttps);
+
             string physicalAsset =
-                string.IsNullOrWhiteSpace(asset)
+                string.IsNullOrWhiteSpace(asset) ||
+                remoteAsset
                     ? string.Empty
                     : Path.Combine(
                         _environment.WebRootPath,
@@ -174,10 +183,11 @@ public class ModelCatalogModel : PageModel
                         enabled,
 
                     AssetExists =
-                        !string.IsNullOrWhiteSpace(
+                        remoteAsset ||
+                        (!string.IsNullOrWhiteSpace(
                             physicalAsset) &&
-                        System.IO.File.Exists(
-                            physicalAsset),
+                         System.IO.File.Exists(
+                            physicalAsset)),
 
                     Notes =
                         GetString(
