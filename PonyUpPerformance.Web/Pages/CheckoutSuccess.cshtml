@@ -1,13 +1,21 @@
-﻿@page
+@page
 @model PonyUpPerformance.Web.Pages.CheckoutSuccessModel
 
 <section class="page-section">
-    <h1 class="section-title">Payment Successful</h1>
+    <h1 class="section-title">PAYMENT COMPLETE</h1>
     <p class="section-subtitle">
-        Your PonyUp purchase is complete.
+        @Model.Message
     </p>
 
-    <div style="text-align:center;">
-        <a class="btn-red" asp-page="/Index">Return Home</a>
+    <div class="checkout-success-actions">
+        <a class="btn-red"
+           asp-page="/MyGarage">
+            OPEN MY GARAGE
+        </a>
+
+        <a class="btn-dark"
+           asp-page="/DecisionCenter">
+            DECISION CENTER
+        </a>
     </div>
 </section>
