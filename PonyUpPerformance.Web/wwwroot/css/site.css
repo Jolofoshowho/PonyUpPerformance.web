@@ -2539,3 +2539,79 @@ body::before {
     }
 }
 
+/* =========================================================
+   DECISION CENTER
+   The artwork is the UI. These links are intentionally invisible.
+   ========================================================= */
+
+.decision-center-page {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #050505 !important;
+}
+
+.decision-center-stage {
+    position: relative;
+    width: 100%;
+    margin: 0;
+    line-height: 0;
+    overflow: hidden;
+}
+
+.decision-center-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.decision-center-hotspot {
+    position: absolute;
+    top: 21.5%;
+    height: 36.5%;
+    display: block;
+    background: transparent;
+    border: 0;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.decision-center-hotspot:hover,
+.decision-center-hotspot:active {
+    background: transparent;
+}
+
+.decision-center-hotspot:focus-visible {
+    outline: 3px solid rgba(255, 49, 49, .9);
+    outline-offset: -4px;
+}
+
+.decision-center-repair {
+    left: 0;
+    width: 21%;
+}
+
+.decision-center-buy {
+    left: 21%;
+    width: 18.5%;
+}
+
+.decision-center-sell {
+    left: 39.5%;
+    width: 17%;
+}
+
+.decision-center-trade {
+    left: 56.5%;
+    width: 25.5%;
+}
+
+.decision-center-upgrade {
+    left: 82%;
+    width: 18%;
+}
+
