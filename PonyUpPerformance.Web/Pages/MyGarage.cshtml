@@ -262,6 +262,7 @@
                             <div id="garage3dViewer"
                                  class="garage-3d-viewer"
                                  data-vehicle-id="@vehicle.Id"
+                                 data-appearance="@vehicle.AppearanceJson"
                                  data-vin="@vehicle.Vin"
                                  data-year="@vehicle.Year"
                                  data-make="@vehicle.Make"
@@ -281,6 +282,15 @@
                             <div class="garage-viewer-hint">
                                 Drag to rotate · Scroll to zoom · Auto-spin resumes when released
                             </div>
+
+                            <form id="garageAppearancePersistence"
+                                  method="post"
+                                  asp-page-handler="SaveAppearance"
+                                  hidden>
+                                <input type="hidden"
+                                       name="vehicleId"
+                                       value="@vehicle.Id" />
+                            </form>
                         </div>
 
                         @if (Model.NextVehicleId.HasValue)
