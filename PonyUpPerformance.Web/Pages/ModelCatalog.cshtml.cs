@@ -234,18 +234,37 @@ public class ModelCatalogModel : PageModel
 
         return garageRows
             .Concat(analysisRows)
-            .GroupBy(
-                x => new
-                {
-                    x.Year,
-                    Make =
-                        x.Make.Trim(),
-                    Model =
-                        x.Model.Trim()
-                },
-                VehicleKeyComparer.Instance)
+            .Select(x => new
+            {
+                x.Year,
+
+                Make =
+                    x.Make.Trim(),
+
+                Model =
+                    x.Model.Trim(),
+
+                NormalizedMake =
+                    x.Make
+                        .Trim()
+                        .ToUpperInvariant(),
+
+                NormalizedModel =
+                    x.Model
+                        .Trim()
+                        .ToUpperInvariant()
+            })
+            .GroupBy(x => new
+            {
+                x.Year,
+                x.NormalizedMake,
+                x.NormalizedModel
+            })
             .Select(group =>
             {
+                var sample =
+                    group.First();
+
                 bool hasModel =
                     catalog.Any(entry =>
                         entry.Enabled &&
@@ -253,8 +272,8 @@ public class ModelCatalogModel : PageModel
                         Matches(
                             entry,
                             group.Key.Year,
-                            group.Key.Make,
-                            group.Key.Model));
+                            sample.Make,
+                            sample.Model));
 
                 return new DemandEntry
                 {
@@ -262,10 +281,10 @@ public class ModelCatalogModel : PageModel
                         group.Key.Year,
 
                     Make =
-                        group.Key.Make,
+                        sample.Make,
 
                     Model =
-                        group.Key.Model,
+                        sample.Model,
 
                     Uses =
                         group.Count(),
@@ -396,42 +415,4 @@ public class ModelCatalogModel : PageModel
         public bool HasPonyUpModel { get; set; }
     }
 
-    private sealed class VehicleKeyComparer :
-        IEqualityComparer<dynamic>
-    {
-        public static readonly VehicleKeyComparer
-            Instance = new();
-
-        public new bool Equals(
-            dynamic? x,
-            dynamic? y)
-        {
-            if (x == null ||
-                y == null)
-            {
-                return false;
-            }
-
-            return x.Year == y.Year &&
-                string.Equals(
-                    (string)x.Make,
-                    (string)y.Make,
-                    StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(
-                    (string)x.Model,
-                    (string)y.Model,
-                    StringComparison.OrdinalIgnoreCase);
-        }
-
-        public int GetHashCode(
-            dynamic obj)
-        {
-            return HashCode.Combine(
-                (int)obj.Year,
-                ((string)obj.Make)
-                    .ToUpperInvariant(),
-                ((string)obj.Model)
-                    .ToUpperInvariant());
-        }
-    }
 }
