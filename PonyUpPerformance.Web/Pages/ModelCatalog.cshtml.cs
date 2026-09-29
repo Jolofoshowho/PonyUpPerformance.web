@@ -193,7 +193,25 @@ public class ModelCatalogModel : PageModel
                     Notes =
                         GetString(
                             element,
-                            "notes")
+                            "notes"),
+
+                    InteriorReady =
+                        GetBool(
+                            element,
+                            "quality",
+                            "interiorReady"),
+
+                    WheelsReady =
+                        GetBool(
+                            element,
+                            "quality",
+                            "wheelsReady"),
+
+                    PaintReady =
+                        GetBool(
+                            element,
+                            "quality",
+                            "paintReady")
                 });
         }
 
@@ -407,6 +425,14 @@ public class ModelCatalogModel : PageModel
         public bool Enabled { get; set; }
         public bool AssetExists { get; set; }
         public string Notes { get; set; } = "";
+        public bool PaintReady { get; set; }
+        public bool InteriorReady { get; set; }
+        public bool WheelsReady { get; set; }
+
+        public bool CustomizationReady =>
+            PaintReady &&
+            InteriorReady &&
+            WheelsReady;
 
         public string YearLabel =>
             Year.HasValue
