@@ -3937,3 +3937,31 @@ body.garage-modal-open {
     }
 }
 
+/* Exact vehicle model status */
+.garage-model-quality {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 6;
+    padding: 6px 9px;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 999px;
+    background: rgba(0,0,0,.56);
+    color: #d9dde0;
+    font-size: .62rem;
+    font-weight: 900;
+    letter-spacing: .08em;
+    pointer-events: none;
+    backdrop-filter: blur(4px);
+}
+
+.garage-model-quality.exact {
+    border-color: rgba(255,49,49,.72);
+    color: #ff5656;
+    box-shadow: 0 0 16px rgba(255,49,49,.18);
+}
+
+.garage-model-quality.fallback {
+    color: #9aa2a8;
+}
+
