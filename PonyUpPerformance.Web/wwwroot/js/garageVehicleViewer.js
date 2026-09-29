@@ -43,12 +43,23 @@ function appearanceStorageKey() {
 
 function readAppearance() {
     try {
-        const raw =
+        const accountValue =
+            mount?.dataset.appearance;
+
+        if (accountValue &&
+            accountValue.trim() &&
+            accountValue.trim() !== '{}') {
+
+            return JSON.parse(
+                accountValue);
+        }
+
+        const localValue =
             localStorage.getItem(
                 appearanceStorageKey());
 
-        return raw
-            ? JSON.parse(raw)
+        return localValue
+            ? JSON.parse(localValue)
             : {};
     }
     catch {
@@ -57,14 +68,63 @@ function readAppearance() {
 }
 
 function saveAppearance(appearance) {
+    const serialized =
+        JSON.stringify(appearance);
+
+    if (mount) {
+        mount.dataset.appearance =
+            serialized;
+    }
+
     try {
         localStorage.setItem(
             appearanceStorageKey(),
-            JSON.stringify(appearance));
+            serialized);
     }
     catch {
-        // Customization still works for the current session.
+        // Server persistence below remains the primary account copy.
     }
+
+    const form =
+        document.getElementById(
+            'garageAppearancePersistence');
+
+    if (!form) {
+        return;
+    }
+
+    const data =
+        new FormData(form);
+
+    data.set(
+        'appearanceJson',
+        serialized);
+
+    fetch(
+        form.action ||
+        window.location.href,
+        {
+            method: 'POST',
+            body: data,
+            credentials: 'same-origin',
+            headers: {
+                'X-Requested-With':
+                    'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(
+                    `Appearance save failed: ${response.status}`);
+            }
+
+            return response.json();
+        })
+        .catch(error => {
+            console.warn(
+                'PonyUp Garage appearance could not be saved to the account.',
+                error);
+        });
 }
 
 function setCustomizerUnavailable(message) {
