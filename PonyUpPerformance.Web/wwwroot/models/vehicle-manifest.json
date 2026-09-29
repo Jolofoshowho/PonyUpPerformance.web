@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "vehicles": [
     {
       "id": "ford-mustang-gt-2005",
@@ -34,7 +34,9 @@
         "generationCorrect": true,
         "paintReady": true,
         "webOptimized": true,
-        "approved": true
+        "approved": true,
+        "interiorReady": false,
+        "wheelsReady": true
       },
       "notes": "Licensed exact-year model. Served from the FormDrive mirror until PonyUp mirrors the binary.",
       "customization": {
@@ -154,7 +156,9 @@
         "generationCorrect": true,
         "paintReady": true,
         "webOptimized": false,
-        "approved": true
+        "approved": true,
+        "interiorReady": false,
+        "wheelsReady": true
       },
       "notes": "Licensed exact-year model. Larger payload; candidate for later compression.",
       "customization": {
@@ -264,7 +268,9 @@
         "generationCorrect": false,
         "paintReady": false,
         "webOptimized": false,
-        "approved": false
+        "approved": false,
+        "interiorReady": false,
+        "wheelsReady": false
       },
       "notes": "Planned first-party generation entry. Do not enable until a reviewed production GLB exists.",
       "customization": {
