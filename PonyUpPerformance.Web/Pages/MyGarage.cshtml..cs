@@ -14,21 +14,24 @@ namespace PonyUpPerformance.Web.Pages
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly VehiclePaintPaletteService _paintPaletteService;
         private readonly IVinDecoderService _vinDecoderService;
+        private readonly VehicleRenderService _vehicleRenderService;
 
         public MyGarageModel(
             ApplicationDbContext dbContext,
             UserManager<ApplicationUser> userManager,
             VehiclePaintPaletteService paintPaletteService,
-            IVinDecoderService vinDecoderService)
+            IVinDecoderService vinDecoderService,
+            VehicleRenderService vehicleRenderService)
         {
             _dbContext = dbContext;
             _userManager = userManager;
             _paintPaletteService = paintPaletteService;
             _vinDecoderService = vinDecoderService;
+            _vehicleRenderService = vehicleRenderService;
         }
 
         [BindProperty]
-        public GarageVehicle NewVehicle { get; set; } = new GarageVehicle();
+        public GarageVehicle NewVehicle { get; set; } = new();
 
         public List<GarageVehicle> Vehicles { get; set; } = new();
         public GarageVehicle? SelectedVehicle { get; set; }
@@ -41,10 +44,13 @@ namespace PonyUpPerformance.Web.Pages
         public int? PreviousVehicleId { get; set; }
         public int? NextVehicleId { get; set; }
 
+        public string UserEmail { get; set; } = "";
+        public string CurrentPlan { get; set; } = "Free";
+        public int RemainingCredits { get; set; }
+
         public async Task<IActionResult> OnGetAsync(int? vehicleId)
         {
-            ApplicationUser? user =
-                await _userManager.GetUserAsync(User);
+            ApplicationUser? user = await _userManager.GetUserAsync(User);
 
             if (user == null)
             {
@@ -53,44 +59,37 @@ namespace PonyUpPerformance.Web.Pages
                     new { area = "Identity" });
             }
 
-            Vehicles = await _dbContext.GarageVehicles
-                .Where(x => x.UserId == user.Id)
-                .OrderByDescending(x => x.CreatedOn)
-                .ToListAsync();
-
-            SelectedVehicle = vehicleId.HasValue
-                ? Vehicles.FirstOrDefault(
-                    x => x.Id == vehicleId.Value)
-                : Vehicles.FirstOrDefault();
-
-            SetPreviousAndNextVehicleIds();
-
-            if (SelectedVehicle != null)
-            {
-                PaintColors =
-                    _paintPaletteService.GetPaletteForMake(
-                        SelectedVehicle.Make);
-
-                RecentAnalyses =
-                    await _dbContext.AnalysisHistories
-                        .Where(x =>
-                            x.UserId == user.Id &&
-                            x.VehicleYear == SelectedVehicle.Year &&
-                            x.VehicleMake == SelectedVehicle.Make &&
-                            x.VehicleModel == SelectedVehicle.Model)
-                        .OrderByDescending(x => x.CreatedOn)
-                        .Take(5)
-                        .ToListAsync();
-            }
+            await LoadGarageAsync(user, vehicleId);
 
             return Page();
         }
 
         public async Task<IActionResult> OnPostDecodeVinAsync()
         {
+            ApplicationUser? user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                return RedirectToPage(
+                    "/Account/Login",
+                    new { area = "Identity" });
+            }
+
+            NewVehicle.Vin = (NewVehicle.Vin ?? "").Trim();
+
+            if (string.IsNullOrWhiteSpace(NewVehicle.Vin))
+            {
+                ModelState.AddModelError(
+                    "NewVehicle.Vin",
+                    "Enter a VIN to decode, or fill the vehicle in manually.");
+
+                await LoadGarageAsync(user, null);
+
+                return Page();
+            }
+
             VehicleProfile decoded =
-                await _vinDecoderService.DecodeAsync(
-                    NewVehicle.Vin);
+                await _vinDecoderService.DecodeAsync(NewVehicle.Vin);
 
             if (decoded.DecodeSuccessful)
             {
@@ -101,24 +100,25 @@ namespace PonyUpPerformance.Web.Pages
                     NewVehicle.Year = decoded.Year.Value;
                 }
 
-                NewVehicle.Make = decoded.Make;
-                NewVehicle.Model = decoded.Model;
-                NewVehicle.Trim = decoded.Trim;
+                NewVehicle.Make = decoded.Make ?? "";
+                NewVehicle.Model = decoded.Model ?? "";
+                NewVehicle.Trim = decoded.Trim ?? "";
+                NewVehicle.BodyStyle = decoded.BodyStyle ?? "";
+                NewVehicle.Drivetrain = decoded.Drivetrain ?? "";
+                NewVehicle.FuelType = decoded.FuelType ?? "";
+                NewVehicle.Engine = decoded.Engine ?? "";
 
-                NewVehicle.BodyStyle =
-                    decoded.BodyStyle;
+                VehicleRenderProfile render =
+                    _vehicleRenderService.GetRenderProfile(NewVehicle);
 
-                NewVehicle.Drivetrain =
-                    decoded.Drivetrain;
+                NewVehicle.RenderType = render.RenderType;
 
-                NewVehicle.FuelType =
-                    decoded.FuelType;
+                if (string.IsNullOrWhiteSpace(NewVehicle.SelectedPaintHex))
+                {
+                    NewVehicle.SelectedPaintHex = "#b8b8b8";
+                }
 
-                NewVehicle.Engine =
-                    decoded.Engine;
-
-                NewVehicle.SelectedPaintHex =
-                    "#b8b8b8";
+                ModelState.Clear();
             }
             else
             {
@@ -131,13 +131,14 @@ namespace PonyUpPerformance.Web.Pages
                     warning);
             }
 
-            return await OnGetAsync(null);
+            await LoadGarageAsync(user, null);
+
+            return Page();
         }
 
         public async Task<IActionResult> OnPostAddVehicleAsync()
         {
-            ApplicationUser? user =
-                await _userManager.GetUserAsync(User);
+            ApplicationUser? user = await _userManager.GetUserAsync(User);
 
             if (user == null)
             {
@@ -146,62 +147,22 @@ namespace PonyUpPerformance.Web.Pages
                     new { area = "Identity" });
             }
 
+            NormalizeNewVehicle();
+
             NewVehicle.UserId = user.Id;
             NewVehicle.CreatedOn = DateTime.UtcNow;
 
-            if (string.IsNullOrWhiteSpace(
-                NewVehicle.SelectedPaintHex))
-            {
-                NewVehicle.SelectedPaintHex =
-                    "#b8b8b8";
-            }
+            VehicleRenderProfile render =
+                _vehicleRenderService.GetRenderProfile(NewVehicle);
 
-            if (string.IsNullOrWhiteSpace(
-                NewVehicle.BodyStyle))
-            {
-                NewVehicle.BodyStyle =
-                    "Sedan";
-            }
+            NewVehicle.RenderType = render.RenderType;
 
-            if (string.IsNullOrWhiteSpace(
-                NewVehicle.FuelType))
-            {
-                NewVehicle.FuelType =
-                    "Gasoline";
-            }
-
-            if (string.IsNullOrWhiteSpace(
-                NewVehicle.Engine))
-            {
-                NewVehicle.Engine =
-                    "Unknown";
-            }
-
-            if (string.IsNullOrWhiteSpace(
-                NewVehicle.Trim))
-            {
-                NewVehicle.Trim =
-                    "Base";
-            }
-
-            if (string.IsNullOrWhiteSpace(
-                NewVehicle.SelectedPaintName))
-            {
-                NewVehicle.SelectedPaintName =
-                    "Unselected Color";
-            }
-
-            if (string.IsNullOrWhiteSpace(
-                NewVehicle.SelectedPaintCode))
-            {
-                NewVehicle.SelectedPaintCode =
-                    "";
-            }
-
-            _dbContext.GarageVehicles.Add(
-                NewVehicle);
+            _dbContext.GarageVehicles.Add(NewVehicle);
 
             await _dbContext.SaveChangesAsync();
+
+            TempData["GarageMessage"] =
+                "Vehicle added to your PonyUp Garage.";
 
             return RedirectToPage(
                 "/MyGarage",
@@ -214,8 +175,7 @@ namespace PonyUpPerformance.Web.Pages
             string paintCode,
             string paintHex)
         {
-            ApplicationUser? user =
-                await _userManager.GetUserAsync(User);
+            ApplicationUser? user = await _userManager.GetUserAsync(User);
 
             if (user == null)
             {
@@ -233,24 +193,199 @@ namespace PonyUpPerformance.Web.Pages
 
             if (vehicle == null)
             {
-                return RedirectToPage(
-                    "/MyGarage");
+                return RedirectToPage("/MyGarage");
             }
 
             vehicle.SelectedPaintName =
-                paintName ?? "";
+                (paintName ?? "").Trim();
 
             vehicle.SelectedPaintCode =
-                paintCode ?? "";
+                (paintCode ?? "").Trim();
 
             vehicle.SelectedPaintHex =
-                paintHex ?? "#b8b8b8";
+                string.IsNullOrWhiteSpace(paintHex)
+                    ? "#b8b8b8"
+                    : paintHex.Trim();
 
             await _dbContext.SaveChangesAsync();
+
+            TempData["GarageMessage"] =
+                $"Paint updated to {vehicle.SelectedPaintName}.";
 
             return RedirectToPage(
                 "/MyGarage",
                 new { vehicleId = vehicle.Id });
+        }
+
+        public async Task<IActionResult> OnPostUpdateMileageAsync(
+            int vehicleId,
+            int mileage)
+        {
+            ApplicationUser? user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                return RedirectToPage(
+                    "/Account/Login",
+                    new { area = "Identity" });
+            }
+
+            GarageVehicle? vehicle =
+                await _dbContext.GarageVehicles
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id == vehicleId &&
+                            x.UserId == user.Id);
+
+            if (vehicle == null)
+            {
+                return RedirectToPage("/MyGarage");
+            }
+
+            vehicle.Mileage = Math.Max(0, mileage);
+
+            await _dbContext.SaveChangesAsync();
+
+            TempData["GarageMessage"] =
+                "Mileage updated.";
+
+            return RedirectToPage(
+                "/MyGarage",
+                new { vehicleId = vehicle.Id });
+        }
+
+        public async Task<IActionResult> OnPostDeleteVehicleAsync(
+            int vehicleId)
+        {
+            ApplicationUser? user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                return RedirectToPage(
+                    "/Account/Login",
+                    new { area = "Identity" });
+            }
+
+            GarageVehicle? vehicle =
+                await _dbContext.GarageVehicles
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id == vehicleId &&
+                            x.UserId == user.Id);
+
+            if (vehicle != null)
+            {
+                _dbContext.GarageVehicles.Remove(vehicle);
+
+                await _dbContext.SaveChangesAsync();
+
+                TempData["GarageMessage"] =
+                    "Vehicle removed from your PonyUp Garage.";
+            }
+
+            return RedirectToPage("/MyGarage");
+        }
+
+        private async Task LoadGarageAsync(
+            ApplicationUser user,
+            int? vehicleId)
+        {
+            UserEmail = user.Email ?? user.UserName ?? "";
+            CurrentPlan = string.IsNullOrWhiteSpace(user.CurrentPlan)
+                ? "Free"
+                : user.CurrentPlan;
+            RemainingCredits = user.RemainingCredits;
+
+            Vehicles = await _dbContext.GarageVehicles
+                .Where(x => x.UserId == user.Id)
+                .OrderByDescending(x => x.CreatedOn)
+                .ToListAsync();
+
+            SelectedVehicle = vehicleId.HasValue
+                ? Vehicles.FirstOrDefault(
+                    x => x.Id == vehicleId.Value)
+                : Vehicles.FirstOrDefault();
+
+            if (vehicleId.HasValue &&
+                SelectedVehicle == null)
+            {
+                SelectedVehicle = Vehicles.FirstOrDefault();
+            }
+
+            SetPreviousAndNextVehicleIds();
+
+            if (SelectedVehicle == null)
+            {
+                PaintColors = new List<VehiclePaintColor>();
+                RecentAnalyses = new List<AnalysisHistory>();
+                SelectedVehicleSvg = "";
+                return;
+            }
+
+            PaintColors =
+                _paintPaletteService.GetPaletteForMake(
+                    SelectedVehicle.Make);
+
+            SelectedVehicleSvg =
+                _vehicleRenderService.BuildVehicleSvg(
+                    SelectedVehicle);
+
+            RecentAnalyses =
+                await _dbContext.AnalysisHistories
+                    .Where(x =>
+                        x.UserId == user.Id &&
+                        x.VehicleYear == SelectedVehicle.Year &&
+                        x.VehicleMake == SelectedVehicle.Make &&
+                        x.VehicleModel == SelectedVehicle.Model)
+                    .OrderByDescending(x => x.CreatedOn)
+                    .Take(5)
+                    .ToListAsync();
+        }
+
+        private void NormalizeNewVehicle()
+        {
+            NewVehicle.Vin =
+                (NewVehicle.Vin ?? "").Trim();
+
+            NewVehicle.Make =
+                (NewVehicle.Make ?? "").Trim();
+
+            NewVehicle.Model =
+                (NewVehicle.Model ?? "").Trim();
+
+            NewVehicle.Trim =
+                (NewVehicle.Trim ?? "").Trim();
+
+            NewVehicle.BodyStyle =
+                (NewVehicle.BodyStyle ?? "").Trim();
+
+            NewVehicle.Drivetrain =
+                (NewVehicle.Drivetrain ?? "").Trim();
+
+            NewVehicle.FuelType =
+                (NewVehicle.FuelType ?? "").Trim();
+
+            NewVehicle.Engine =
+                (NewVehicle.Engine ?? "").Trim();
+
+            NewVehicle.SelectedPaintName =
+                (NewVehicle.SelectedPaintName ?? "").Trim();
+
+            NewVehicle.SelectedPaintCode =
+                (NewVehicle.SelectedPaintCode ?? "").Trim();
+
+            if (string.IsNullOrWhiteSpace(
+                NewVehicle.SelectedPaintHex))
+            {
+                NewVehicle.SelectedPaintHex =
+                    "#b8b8b8";
+            }
+
+            NewVehicle.Year =
+                Math.Max(0, NewVehicle.Year);
+
+            NewVehicle.Mileage =
+                Math.Max(0, NewVehicle.Mileage);
         }
 
         private void SetPreviousAndNextVehicleIds()
@@ -268,6 +403,13 @@ namespace PonyUpPerformance.Web.Pages
                     x => x.Id == SelectedVehicle.Id);
 
             if (index < 0)
+            {
+                PreviousVehicleId = null;
+                NextVehicleId = null;
+                return;
+            }
+
+            if (Vehicles.Count == 1)
             {
                 PreviousVehicleId = null;
                 NextVehicleId = null;
