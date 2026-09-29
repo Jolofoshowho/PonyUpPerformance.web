@@ -68,3 +68,22 @@ Use the private `/ModelCatalog` owner page. It combines saved Garage vehicles
 and analysis history, puts missing models first, and ranks repeated
 year/make/model demand above one-off vehicles. This keeps first-party catalog
 work focused on actual PonyUp traffic.
+
+
+## 500-model production target
+
+The current production target is 500 realistic vehicle-generation models.
+
+A model does not count toward the 500 until it has:
+
+- Approved realistic vehicle geometry for its declared generation/body style.
+- Exterior body-paint material mapping.
+- Interior material mapping suitable for customer color/material selection.
+- Wheel/rim material mapping for finish changes.
+- Wheel-style geometry variants when alternate wheels are supplied for that vehicle.
+- Saved appearance compatibility in My Garage.
+- Mobile/web performance approval.
+- Source, license, and required attribution recorded in the manifest.
+
+The owner `/ModelCatalog` page remains the build queue. User demand determines
+which missing vehicles are built first.
