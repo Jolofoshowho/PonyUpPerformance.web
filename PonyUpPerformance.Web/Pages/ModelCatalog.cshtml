@@ -1,0 +1,146 @@
+@page
+@model PonyUpPerformance.Web.Pages.ModelCatalogModel
+
+@{
+    ViewData["Title"] = "3D Model Catalog";
+}
+
+<section class="model-catalog-page">
+    <header class="model-catalog-header">
+        <div>
+            <p>PONYUP OWNER TOOLS</p>
+            <h1>3D VEHICLE CATALOG</h1>
+            <span>
+                First-party realistic vehicle coverage and demand queue.
+            </span>
+        </div>
+
+        <a asp-page="/MyGarage">
+            BACK TO GARAGE
+        </a>
+    </header>
+
+    <div class="model-catalog-stats">
+        <div>
+            <span>LIVE PONYUP MODELS</span>
+            <strong>@Model.LiveModelCount</strong>
+        </div>
+
+        <div>
+            <span>CATALOG ENTRIES</span>
+            <strong>@Model.PlannedModelCount</strong>
+        </div>
+
+        <div>
+            <span>MISSING DEMAND</span>
+            <strong>@Model.MissingDemandCount</strong>
+        </div>
+    </div>
+
+    <section class="model-catalog-panel">
+        <div class="model-catalog-panel-head">
+            <div>
+                <h2>DEMAND QUEUE</h2>
+                <p>
+                    Vehicles users have actually saved or analyzed.
+                    Missing models stay at the top.
+                </p>
+            </div>
+        </div>
+
+        @if (Model.Demand.Count == 0)
+        {
+            <p class="model-catalog-empty">
+                No vehicle demand has been recorded yet.
+            </p>
+        }
+        else
+        {
+            <div class="model-catalog-table-wrap">
+                <table class="model-catalog-table">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Year</th>
+                            <th>Make</th>
+                            <th>Model</th>
+                            <th>Uses</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var vehicle in Model.Demand)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="model-status @(vehicle.HasPonyUpModel ? "live" : "missing")">
+                                        @(vehicle.HasPonyUpModel ? "PONYUP 3D" : "NEEDS MODEL")
+                                    </span>
+                                </td>
+                                <td>@vehicle.Year</td>
+                                <td>@vehicle.Make</td>
+                                <td>@vehicle.Model</td>
+                                <td>@vehicle.Uses</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <section class="model-catalog-panel">
+        <div class="model-catalog-panel-head">
+            <div>
+                <h2>FIRST-PARTY MANIFEST</h2>
+                <p>
+                    An entry is live only when enabled and its GLB exists in the repository.
+                </p>
+            </div>
+        </div>
+
+        @if (Model.Catalog.Count == 0)
+        {
+            <p class="model-catalog-empty">
+                The PonyUp vehicle manifest is empty.
+            </p>
+        }
+        else
+        {
+            <div class="model-catalog-table-wrap">
+                <table class="model-catalog-table">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Years</th>
+                            <th>Make</th>
+                            <th>Model</th>
+                            <th>Trim</th>
+                            <th>Asset</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var entry in Model.Catalog)
+                        {
+                            var live =
+                                entry.Enabled &&
+                                entry.AssetExists;
+
+                            <tr>
+                                <td>
+                                    <span class="model-status @(live ? "live" : "missing")">
+                                        @(live ? "LIVE" : entry.Enabled ? "FILE MISSING" : "PLANNED")
+                                    </span>
+                                </td>
+                                <td>@entry.YearLabel</td>
+                                <td>@entry.Make</td>
+                                <td>@entry.Model</td>
+                                <td>@(string.IsNullOrWhiteSpace(entry.Trim) ? "—" : entry.Trim)</td>
+                                <td class="model-asset-path">@entry.Asset</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</section>
