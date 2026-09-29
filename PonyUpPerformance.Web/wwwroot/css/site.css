@@ -4055,3 +4055,212 @@ body.garage-modal-open {
     letter-spacing: .08em;
 }
 
+/* =========================================================
+   OWNER 3D MODEL CATALOG
+   ========================================================= */
+
+.garage-model-catalog-link {
+    display: block;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255,49,49,.55);
+    border-radius: 4px;
+    background: rgba(255,49,49,.045);
+    color: #ff5151;
+    text-align: center;
+    text-decoration: none;
+    font-size: .72rem;
+    font-weight: 950;
+    letter-spacing: .055em;
+}
+
+.garage-model-catalog-link:hover {
+    color: #fff;
+    border-color: #ff3131;
+    background: rgba(255,49,49,.1);
+}
+
+.model-catalog-page {
+    width: min(1500px, calc(100% - 28px));
+    margin: 0 auto;
+    padding: 30px 0 50px;
+}
+
+.model-catalog-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 22px 24px;
+    border: 1px solid rgba(255,255,255,.13);
+    border-radius: 8px;
+    background:
+        radial-gradient(circle at 12% 0%, rgba(255,49,49,.08), transparent 34%),
+        linear-gradient(180deg, rgba(16,20,23,.97), rgba(7,10,12,.98));
+}
+
+.model-catalog-header p {
+    margin: 0 0 5px;
+    color: #ff4c4c;
+    font-size: .68rem;
+    font-weight: 950;
+    letter-spacing: .12em;
+}
+
+.model-catalog-header h1 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(1.7rem, 3vw, 2.6rem);
+    font-weight: 1000;
+}
+
+.model-catalog-header span {
+    display: block;
+    margin-top: 7px;
+    color: #aeb5ba;
+}
+
+.model-catalog-header > a {
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 4px;
+    color: #fff;
+    text-decoration: none;
+    font-size: .72rem;
+    font-weight: 900;
+}
+
+.model-catalog-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.model-catalog-stats > div {
+    padding: 17px 18px;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 6px;
+    background: rgba(255,255,255,.018);
+}
+
+.model-catalog-stats span,
+.model-catalog-stats strong {
+    display: block;
+}
+
+.model-catalog-stats span {
+    color: #889198;
+    font-size: .66rem;
+    font-weight: 850;
+    letter-spacing: .08em;
+}
+
+.model-catalog-stats strong {
+    margin-top: 6px;
+    color: #fff;
+    font-size: 1.7rem;
+}
+
+.model-catalog-panel {
+    margin-top: 14px;
+    padding: 20px;
+    border: 1px solid rgba(255,255,255,.13);
+    border-radius: 7px;
+    background: linear-gradient(180deg, rgba(13,17,20,.95), rgba(7,10,12,.96));
+}
+
+.model-catalog-panel-head h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 950;
+}
+
+.model-catalog-panel-head p {
+    margin: 5px 0 0;
+    color: #929aa0;
+    font-size: .78rem;
+}
+
+.model-catalog-table-wrap {
+    margin-top: 16px;
+    overflow-x: auto;
+}
+
+.model-catalog-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.model-catalog-table th,
+.model-catalog-table td {
+    padding: 10px 11px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    text-align: left;
+    white-space: nowrap;
+}
+
+.model-catalog-table th {
+    color: #8e969d;
+    font-size: .64rem;
+    font-weight: 900;
+    letter-spacing: .075em;
+}
+
+.model-catalog-table td {
+    color: #e8ebed;
+    font-size: .77rem;
+}
+
+.model-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 92px;
+    padding: 5px 8px;
+    border-radius: 999px;
+    font-size: .61rem;
+    font-weight: 950;
+    letter-spacing: .05em;
+}
+
+.model-status.live {
+    border: 1px solid rgba(77,219,105,.55);
+    background: rgba(77,219,105,.08);
+    color: #72e78a;
+}
+
+.model-status.missing {
+    border: 1px solid rgba(255,49,49,.5);
+    background: rgba(255,49,49,.065);
+    color: #ff5b5b;
+}
+
+.model-asset-path {
+    max-width: 420px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.model-catalog-empty {
+    margin: 16px 0 0;
+    color: #9ca4aa;
+}
+
+@media (max-width: 760px) {
+    .model-catalog-header {
+        display: block;
+    }
+
+    .model-catalog-header > a {
+        display: inline-block;
+        margin-top: 16px;
+    }
+
+    .model-catalog-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
