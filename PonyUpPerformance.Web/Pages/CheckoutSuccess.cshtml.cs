@@ -92,7 +92,6 @@ namespace PonyUpPerformance.Web.Pages
 
                 case "unlimited":
                     user.CurrentPlan = "Unlimited";
-                    user.RemainingCredits = 999999;
                     break;
             }
         }
