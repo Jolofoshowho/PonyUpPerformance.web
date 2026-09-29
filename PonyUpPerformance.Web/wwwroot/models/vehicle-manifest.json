@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "vehicles": [
     {
       "id": "pontiac-grand-prix-2004-2008",
@@ -11,6 +11,7 @@
         "model": "Grand Prix"
       },
       "asset": "/models/vehicles/pontiac-grand-prix-2004-2008.glb",
+      "targetLength": 5.7,
       "scale": 1.0,
       "rotationY": 0,
       "position": [0, 0, 0],
@@ -20,7 +21,19 @@
         "carpaint",
         "exterior"
       ],
-      "notes": "Enable when the licensed production GLB is added."
+      "source": {
+        "type": "ponyup-generated",
+        "reference": "",
+        "license": "",
+        "attribution": ""
+      },
+      "quality": {
+        "generationCorrect": false,
+        "paintReady": false,
+        "webOptimized": false,
+        "approved": false
+      },
+      "notes": "Planned first-party generation entry. Do not enable until a reviewed production GLB exists."
     }
   ]
 }
