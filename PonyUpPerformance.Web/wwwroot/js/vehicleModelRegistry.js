@@ -188,103 +188,271 @@ function includesAny(value, hints) {
             normalize(hint)));
 }
 
-export function applyVehiclePaint(
+function applyColorToMatches(
     root,
-    paintHex,
-    asset) {
+    colorHex,
+    materialHints,
+    meshHints,
+    treatment = {}) {
 
-    const colorHex =
-        paintHex ||
-        "#b8b8b8";
+    if (!root ||
+        !colorHex ||
+        ((!Array.isArray(materialHints) || materialHints.length === 0) &&
+         (!Array.isArray(meshHints) || meshHints.length === 0))) {
 
-    const materialHints =
-        Array.isArray(asset?.paintMaterialHints) &&
-        asset.paintMaterialHints.length > 0
-            ? asset.paintMaterialHints
-            : [
-                "body",
-                "paint",
-                "carpaint",
-                "exterior",
-                "bodywork",
-                "shell"
-            ];
+        return 0;
+    }
 
-    const meshHints =
-        Array.isArray(asset?.paintMeshHints)
-            ? asset.paintMeshHints
-            : [];
-
-    let painted = 0;
+    let changed = 0;
 
     root.traverse(object => {
         if (!object.isMesh || !object.material) {
             return;
         }
 
+        const objectName =
+            meshName(object);
+
+        const meshMatch =
+            Array.isArray(meshHints) &&
+            meshHints.length > 0 &&
+            includesAny(
+                objectName,
+                meshHints);
+
         const materials =
             Array.isArray(object.material)
-                ? object.material
+                ? [...object.material]
                 : [object.material];
 
         materials.forEach((material, index) => {
-            const matName = materialName(material);
-            const objName = meshName(object);
+            const matName =
+                materialName(material);
 
             const materialMatch =
+                Array.isArray(materialHints) &&
+                materialHints.length > 0 &&
                 includesAny(
                     matName,
                     materialHints);
-
-            const meshMatch =
-                meshHints.length > 0 &&
-                includesAny(
-                    objName,
-                    meshHints);
 
             if (!materialMatch && !meshMatch) {
                 return;
             }
 
-            const clone = material.clone();
+            const clone =
+                material.clone();
 
             if (clone.color) {
-                clone.color.set(colorHex);
+                clone.color.set(
+                    colorHex);
             }
 
-            if ("metalness" in clone) {
+            if ("metalness" in clone &&
+                treatment.metalness !== undefined) {
+
                 clone.metalness =
-                    Math.max(
-                        Number(clone.metalness || 0),
-                        0.55);
+                    treatment.metalness;
             }
 
-            if ("roughness" in clone) {
+            if ("roughness" in clone &&
+                treatment.roughness !== undefined) {
+
                 clone.roughness =
-                    Math.min(
-                        Number(clone.roughness ?? 0.3),
-                        0.32);
+                    treatment.roughness;
             }
 
-            if ("clearcoat" in clone) {
+            if ("clearcoat" in clone &&
+                treatment.clearcoat !== undefined) {
+
                 clone.clearcoat =
-                    Math.max(
-                        Number(clone.clearcoat || 0),
-                        0.7);
+                    treatment.clearcoat;
             }
 
             if (Array.isArray(object.material)) {
-                object.material[index] = clone;
+                materials[index] =
+                    clone;
+
+                object.material =
+                    materials;
             }
             else {
-                object.material = clone;
+                object.material =
+                    clone;
             }
 
-            painted += 1;
+            changed += 1;
         });
     });
 
-    return painted;
+    return changed;
+}
+
+export function applyVehiclePaint(
+    root,
+    paintHex,
+    asset) {
+
+    const customization =
+        asset?.customization || {};
+
+    const materialHints =
+        Array.isArray(
+            customization.paintMaterialHints) &&
+        customization.paintMaterialHints.length > 0
+            ? customization.paintMaterialHints
+            : Array.isArray(asset?.paintMaterialHints) &&
+              asset.paintMaterialHints.length > 0
+                ? asset.paintMaterialHints
+                : [
+                    "body",
+                    "paint",
+                    "carpaint",
+                    "exterior",
+                    "bodywork",
+                    "shell"
+                ];
+
+    const meshHints =
+        Array.isArray(
+            customization.paintMeshHints)
+            ? customization.paintMeshHints
+            : Array.isArray(asset?.paintMeshHints)
+                ? asset.paintMeshHints
+                : [];
+
+    return applyColorToMatches(
+        root,
+        paintHex || "#b8b8b8",
+        materialHints,
+        meshHints,
+        {
+            metalness: 0.72,
+            roughness: 0.22,
+            clearcoat: 0.88
+        });
+}
+
+export function applyInteriorColor(
+    root,
+    colorHex,
+    asset) {
+
+    const customization =
+        asset?.customization || {};
+
+    return applyColorToMatches(
+        root,
+        colorHex,
+        customization.interiorMaterialHints || [],
+        customization.interiorMeshHints || [],
+        {
+            metalness: 0.05,
+            roughness: 0.62,
+            clearcoat: 0.08
+        });
+}
+
+export function applyWheelFinish(
+    root,
+    colorHex,
+    asset) {
+
+    const customization =
+        asset?.customization || {};
+
+    return applyColorToMatches(
+        root,
+        colorHex,
+        customization.wheelMaterialHints ||
+            asset?.rimNames ||
+            [],
+        customization.wheelMeshHints || [],
+        {
+            metalness: 0.9,
+            roughness: 0.18,
+            clearcoat: 0.5
+        });
+}
+
+export function applyWheelVariant(
+    root,
+    variantId,
+    asset) {
+
+    const styles =
+        asset?.customization?.wheelStyles;
+
+    if (!Array.isArray(styles) ||
+        styles.length === 0) {
+
+        return false;
+    }
+
+    const selected =
+        styles.find(style =>
+            style.id === variantId) ||
+        styles[0];
+
+    const allHints =
+        styles
+            .flatMap(style =>
+                Array.isArray(style.meshHints)
+                    ? style.meshHints
+                    : []);
+
+    root.traverse(object => {
+        if (!object.isMesh) {
+            return;
+        }
+
+        const name =
+            meshName(object);
+
+        const isWheelVariantMesh =
+            allHints.length > 0 &&
+            includesAny(
+                name,
+                allHints);
+
+        if (!isWheelVariantMesh) {
+            return;
+        }
+
+        object.visible =
+            includesAny(
+                name,
+                selected.meshHints || []);
+    });
+
+    return true;
+}
+
+export function getCustomizationOptions(
+    asset) {
+
+    const customization =
+        asset?.customization || {};
+
+    return {
+        interiorColors:
+            Array.isArray(
+                customization.interiorColors)
+                ? customization.interiorColors
+                : [],
+
+        wheelFinishes:
+            Array.isArray(
+                customization.wheelFinishes)
+                ? customization.wheelFinishes
+                : [],
+
+        wheelStyles:
+            Array.isArray(
+                customization.wheelStyles)
+                ? customization.wheelStyles
+                : []
+    };
 }
 
 export function normalizeModelToPodium(
