@@ -4434,3 +4434,160 @@ body.garage-modal-open {
     }
 }
 
+/* =========================================================
+   GARAGE APPEARANCE CUSTOMIZER
+   ========================================================= */
+
+.garage-customizer-panel {
+    overflow-y: auto;
+}
+
+.garage-customizer-card {
+    margin-top: 12px;
+    padding: 13px;
+    border: 1px solid rgba(255,255,255,.11);
+    border-radius: 6px;
+    background: rgba(0,0,0,.19);
+}
+
+.garage-customizer-card-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 9px;
+}
+
+.garage-customizer-card-head > span {
+    display: grid;
+    place-items: center;
+    width: 27px;
+    height: 27px;
+    border: 1px solid rgba(255,49,49,.5);
+    border-radius: 50%;
+    color: #ff4a4a;
+    font-size: .61rem;
+    font-weight: 950;
+}
+
+.garage-customizer-card-head h4 {
+    margin: 0;
+    color: #fff;
+    font-size: .76rem;
+    font-weight: 950;
+    letter-spacing: .045em;
+}
+
+.garage-customizer-note {
+    margin: 0 0 9px;
+    color: #818a91;
+    font-size: .66rem;
+    line-height: 1.4;
+}
+
+.garage-option-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.garage-option-swatch {
+    min-width: 0;
+    padding: 6px 4px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    background: transparent;
+    color: #b8bfc4;
+    cursor: pointer;
+}
+
+.garage-option-swatch > span {
+    display: block;
+    width: 30px;
+    height: 30px;
+    margin: 0 auto;
+    border: 1px solid rgba(255,255,255,.45);
+    border-radius: 50%;
+    box-shadow: inset 0 0 8px rgba(255,255,255,.08);
+}
+
+.garage-option-swatch small {
+    display: block;
+    margin-top: 5px;
+    overflow: hidden;
+    color: inherit;
+    font-size: .54rem;
+    font-weight: 750;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.garage-option-swatch:hover,
+.garage-option-swatch.selected {
+    border-color: rgba(255,49,49,.55);
+    background: rgba(255,49,49,.045);
+    color: #fff;
+}
+
+.garage-option-swatch.selected > span {
+    outline: 2px solid #ff3131;
+    outline-offset: 2px;
+}
+
+.garage-wheel-style-options {
+    margin-bottom: 9px;
+}
+
+.garage-wheel-style-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.garage-wheel-style-button {
+    padding: 7px 9px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 4px;
+    background: rgba(255,255,255,.02);
+    color: #cbd0d4;
+    font-size: .62rem;
+    font-weight: 850;
+    cursor: pointer;
+}
+
+.garage-wheel-style-button:hover,
+.garage-wheel-style-button.selected {
+    border-color: #ff3131;
+    color: #fff;
+    background: rgba(255,49,49,.07);
+}
+
+.garage-customizer-status {
+    margin: 9px 0 0;
+    color: #818a91;
+    font-size: .62rem;
+    line-height: 1.4;
+}
+
+.checkout-success-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+@media (max-width: 720px) {
+    .garage-option-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .checkout-success-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .checkout-success-actions a {
+        width: min(320px, 100%);
+        text-align: center;
+    }
+}
+
