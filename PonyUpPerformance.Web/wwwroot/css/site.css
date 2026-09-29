@@ -4033,3 +4033,25 @@ body.garage-modal-open {
     opacity: .82;
 }
 
+.garage-vehicle-thumb-image {
+    display: block;
+    width: 112px;
+    max-width: 112px;
+    height: 78px;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 8px rgba(0,0,0,.38));
+}
+
+.garage-vehicle-thumb-placeholder {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 42px;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 999px 999px 12px 12px;
+    color: #7f878d;
+    font-size: .58rem;
+    font-weight: 900;
+    letter-spacing: .08em;
+}
+
