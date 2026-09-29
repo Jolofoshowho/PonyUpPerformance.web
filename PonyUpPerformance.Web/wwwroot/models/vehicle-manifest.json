@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "vehicles": [
+    {
+      "id": "pontiac-grand-prix-2004-2008",
+      "enabled": false,
+      "match": {
+        "yearMin": 2004,
+        "yearMax": 2008,
+        "make": "Pontiac",
+        "model": "Grand Prix"
+      },
+      "asset": "/models/vehicles/pontiac-grand-prix-2004-2008.glb",
+      "scale": 1.0,
+      "rotationY": 0,
+      "position": [0, 0, 0],
+      "paintMaterialHints": [
+        "body",
+        "paint",
+        "carpaint",
+        "exterior"
+      ],
+      "notes": "Enable when the licensed production GLB is added."
+    }
+  ]
+}
