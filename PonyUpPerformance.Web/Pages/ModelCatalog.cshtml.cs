@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using PonyUpPerformance.Web.Data;
+using PonyUpPerformance.Web.Models;
 using PonyUpPerformance.Web.Services;
 
 namespace PonyUpPerformance.Web.Pages;
