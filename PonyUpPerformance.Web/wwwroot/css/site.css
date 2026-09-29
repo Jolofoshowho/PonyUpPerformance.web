@@ -4264,3 +4264,173 @@ body.garage-modal-open {
     }
 }
 
+/* =========================================================
+   PRICING V2 — GARAGE + 3D CUSTOMIZER
+   ========================================================= */
+
+.pricing-page-v2,
+.pricing-home-preview {
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255,49,49,.055), transparent 34%);
+}
+
+.pricing-page-head {
+    max-width: 920px;
+    margin: 0 auto 28px;
+    text-align: center;
+}
+
+.pricing-eyebrow {
+    margin: 0 0 6px;
+    color: #ff4545;
+    font-size: .68rem;
+    font-weight: 950;
+    letter-spacing: .14em;
+}
+
+.pricing-grid-detailed {
+    align-items: stretch;
+}
+
+.pricing-plan-card {
+    display: flex;
+    min-height: 510px;
+    flex-direction: column;
+    padding: 26px 20px 20px;
+    text-align: left;
+}
+
+.pricing-plan-head {
+    text-align: center;
+}
+
+.pricing-plan-kicker {
+    display: block;
+    min-height: 1.1em;
+    margin-bottom: 6px;
+    color: #8f989f;
+    font-size: .62rem;
+    font-weight: 900;
+    letter-spacing: .1em;
+}
+
+.pricing-plan-card h3 {
+    margin-bottom: 8px;
+}
+
+.pricing-plan-card .pricing-plan-head > strong {
+    margin-bottom: 5px;
+}
+
+.pricing-plan-card .pricing-plan-head > p {
+    margin: 0;
+    color: #d7dbde;
+    font-size: .86rem;
+}
+
+.pricing-feature-list {
+    display: grid;
+    gap: 10px;
+    margin: 22px 0 24px;
+    padding: 0;
+    list-style: none;
+}
+
+.pricing-feature-list li {
+    position: relative;
+    padding-left: 20px;
+    color: #d6dade;
+    font-size: .78rem;
+    line-height: 1.45;
+}
+
+.pricing-feature-list li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #ff4141;
+    font-weight: 1000;
+}
+
+.pricing-plan-cta {
+    display: block;
+    width: 100%;
+    margin-top: auto;
+    padding: 12px 14px;
+    text-align: center;
+    text-decoration: none;
+    font-size: .76rem;
+    font-weight: 950;
+    letter-spacing: .035em;
+}
+
+.pricing-capability-section {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    max-width: 1280px;
+    margin: 22px auto 0;
+}
+
+.pricing-capability-card {
+    padding: 20px;
+    border: 1px solid rgba(255,255,255,.13);
+    border-radius: 7px;
+    background: linear-gradient(180deg, rgba(17,20,23,.92), rgba(7,9,11,.96));
+    text-align: left;
+}
+
+.pricing-capability-icon {
+    display: inline-grid;
+    place-items: center;
+    min-width: 42px;
+    height: 42px;
+    margin-bottom: 12px;
+    padding: 0 9px;
+    border: 1px solid rgba(255,49,49,.55);
+    border-radius: 6px;
+    color: #ff4a4a;
+    font-size: .78rem;
+    font-weight: 1000;
+}
+
+.pricing-capability-card h2 {
+    margin: 0;
+    color: #fff;
+    font-size: .92rem;
+    font-weight: 950;
+}
+
+.pricing-capability-card p {
+    margin: 8px 0 0;
+    color: #9fa7ad;
+    font-size: .78rem;
+    line-height: 1.5;
+}
+
+.pricing-model-note {
+    max-width: 980px;
+    margin: 18px auto 0;
+    color: #7f878d;
+    font-size: .72rem;
+    text-align: center;
+}
+
+@media (max-width: 1180px) {
+    .pricing-grid-detailed {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    .pricing-grid-detailed,
+    .pricing-capability-section {
+        grid-template-columns: 1fr;
+    }
+
+    .pricing-plan-card {
+        min-height: 0;
+    }
+}
+
