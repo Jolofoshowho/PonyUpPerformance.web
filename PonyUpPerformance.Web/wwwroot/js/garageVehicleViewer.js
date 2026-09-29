@@ -1,4 +1,11 @@
-import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+import * as THREE from 'https://esm.sh/three@0.160.0';
+import { GLTFLoader } from 'https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+import {
+    findVehicleAsset,
+    applyAssetTransform,
+    applyVehiclePaint,
+    normalizeModelToPodium
+} from './vehicleModelRegistry.js';
 
 const addVehiclePanel = document.getElementById('garageAddVehicle');
 
@@ -47,6 +54,15 @@ if (mount) {
     const bodyStyle = (mount.dataset.body || 'Sedan').toLowerCase();
     const renderType = (mount.dataset.render || bodyStyle).toLowerCase();
     const fallback = mount.querySelector('.garage-render-fallback');
+    const qualityBadge = document.getElementById('garageModelQuality');
+
+    const vehicleIdentity = {
+        vin: mount.dataset.vin || '',
+        year: mount.dataset.year || '',
+        make: mount.dataset.make || '',
+        model: mount.dataset.model || '',
+        trim: mount.dataset.trim || ''
+    };
 
     try {
         const scene = new THREE.Scene();
@@ -515,6 +531,95 @@ if (mount) {
         const softBack = new THREE.PointLight(0x9cc8ff, 9, 16, 2);
         softBack.position.set(-4.8, 3.0, -4.0);
         scene.add(softBack);
+
+        if (qualityBadge) {
+            qualityBadge.textContent = 'BODY-TYPE 3D';
+            qualityBadge.classList.add('fallback');
+        }
+
+        async function tryLoadExactVehicleModel() {
+            const asset =
+                await findVehicleAsset(
+                    vehicleIdentity);
+
+            if (!asset) {
+                return;
+            }
+
+            if (qualityBadge) {
+                qualityBadge.textContent =
+                    'LOADING EXACT MODEL';
+                qualityBadge.classList.remove(
+                    'fallback',
+                    'exact');
+            }
+
+            const loader =
+                new GLTFLoader();
+
+            loader.load(
+                asset.asset,
+                gltf => {
+                    const exactModel =
+                        gltf.scene ||
+                        gltf.scenes?.[0];
+
+                    if (!exactModel) {
+                        return;
+                    }
+
+                    exactModel.traverse(object => {
+                        if (!object.isMesh) {
+                            return;
+                        }
+
+                        object.castShadow = true;
+                        object.receiveShadow = true;
+                    });
+
+                    normalizeModelToPodium(
+                        THREE,
+                        exactModel,
+                        Number(asset.targetLength || 5.7));
+
+                    applyAssetTransform(
+                        exactModel,
+                        asset);
+
+                    applyVehiclePaint(
+                        exactModel,
+                        paint,
+                        asset);
+
+                    turntable.remove(vehicle);
+                    turntable.add(exactModel);
+
+                    if (qualityBadge) {
+                        qualityBadge.textContent =
+                            'EXACT MODEL 3D';
+                        qualityBadge.classList.remove(
+                            'fallback');
+                        qualityBadge.classList.add(
+                            'exact');
+                    }
+                },
+                undefined,
+                error => {
+                    console.warn(
+                        'PonyUp exact 3D model could not be loaded.',
+                        asset.asset,
+                        error);
+
+                    if (qualityBadge) {
+                        qualityBadge.textContent =
+                            'BODY-TYPE 3D';
+                        qualityBadge.classList.add(
+                            'fallback');
+                    }
+                });
+        }
+
+        void tryLoadExactVehicleModel();
 
         let dragging = false;
         let lastX = 0;
