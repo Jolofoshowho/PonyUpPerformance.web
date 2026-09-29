@@ -97,6 +97,13 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
     db.Database.EnsureCreated();
+
+    await db.Database.ExecuteSqlRawAsync(
+        """
+        ALTER TABLE "GarageVehicles"
+        ADD COLUMN IF NOT EXISTS "AppearanceJson"
+        text NOT NULL DEFAULT '{}';
+        """);
 }
 
 if (app.Environment.IsDevelopment())
