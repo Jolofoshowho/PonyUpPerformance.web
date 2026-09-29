@@ -145,7 +145,7 @@ export async function findVehicleAsset(vehicle) {
 export function applyAssetTransform(model, asset) {
     const scale = Number(asset?.scale ?? 1);
 
-    model.scale.setScalar(
+    model.scale.multiplyScalar(
         Number.isFinite(scale) && scale > 0
             ? scale
             : 1);
@@ -154,10 +154,14 @@ export function applyAssetTransform(model, asset) {
         ? asset.position
         : [0, 0, 0];
 
-    model.position.set(
-        Number(position[0] || 0),
-        Number(position[1] || 0),
-        Number(position[2] || 0));
+    model.position.x +=
+        Number(position[0] || 0);
+
+    model.position.y +=
+        Number(position[1] || 0);
+
+    model.position.z +=
+        Number(position[2] || 0);
 
     const rotationY = Number(asset?.rotationY || 0);
 
