@@ -11,15 +11,18 @@ namespace PonyUpPerformance.Web.Pages
         private readonly IBuyScoringService _buyScoringService;
         private readonly IVinDecoderService _vinDecoderService;
         private readonly IVehicleSpecEnrichmentService _vehicleSpecEnrichmentService;
+        private readonly AnalysisHistoryService _analysisHistoryService;
 
         public BuyAnalyzerModel(
             IBuyScoringService buyScoringService,
             IVinDecoderService vinDecoderService,
-            IVehicleSpecEnrichmentService vehicleSpecEnrichmentService)
+            IVehicleSpecEnrichmentService vehicleSpecEnrichmentService,
+            AnalysisHistoryService analysisHistoryService)
         {
             _buyScoringService = buyScoringService;
             _vinDecoderService = vinDecoderService;
             _vehicleSpecEnrichmentService = vehicleSpecEnrichmentService;
+            _analysisHistoryService = analysisHistoryService;
         }
 
         [BindProperty]
@@ -84,7 +87,7 @@ namespace PonyUpPerformance.Web.Pages
             return Page();
         }
 
-        public IActionResult OnPostAnalyze()
+        public async Task<IActionResult> OnPostAnalyzeAsync()
         {
             if (!ModelState.IsValid)
             {
@@ -93,6 +96,20 @@ namespace PonyUpPerformance.Web.Pages
 
             Result =
                 _buyScoringService.Analyze(Input);
+
+            await _analysisHistoryService.SaveAnalysisAsync(
+                User,
+                "Buy",
+                Input.Year,
+                Input.Make,
+                Input.Model,
+                Input.Mileage,
+                Input.MarketValue,
+                Result,
+                vehicleCondition:
+                    Input.MechanicalCondition == MechanicalCondition.NotProvided
+                        ? string.Empty
+                        : Input.MechanicalCondition.ToString());
 
             return Page();
         }
