@@ -261,6 +261,7 @@
                         <div class="garage-viewer-wrap">
                             <div id="garage3dViewer"
                                  class="garage-3d-viewer"
+                                 data-vehicle-id="@vehicle.Id"
                                  data-vin="@vehicle.Vin"
                                  data-year="@vehicle.Year"
                                  data-make="@vehicle.Make"
@@ -294,47 +295,91 @@
                         }
                     </div>
 
-                    <aside class="garage-paint-panel">
+                    <aside class="garage-paint-panel garage-customizer-panel">
                         <div class="garage-paint-heading">
-                            <h3>PAINT COLOR</h3>
-                            <p>@vehicle.Make Factory Colors</p>
+                            <h3>CUSTOMIZE</h3>
+                            <p>Exterior · Interior · Wheels</p>
                         </div>
 
-                        <div class="garage-paint-grid">
-                            @foreach (var paint in Model.PaintColors)
-                            {
-                                <form method="post"
-                                      asp-page-handler="SelectPaint"
-                                      class="garage-paint-form">
-                                    <input type="hidden" name="vehicleId" value="@vehicle.Id" />
-                                    <input type="hidden" name="paintName" value="@paint.Name" />
-                                    <input type="hidden" name="paintCode" value="@paint.Code" />
-                                    <input type="hidden" name="paintHex" value="@paint.Hex" />
+                        <section class="garage-customizer-card">
+                            <div class="garage-customizer-card-head">
+                                <span>01</span>
+                                <h4>EXTERIOR PAINT</h4>
+                            </div>
 
-                                    <button type="submit"
-                                            class="garage-paint-chip @(string.Equals(vehicle.SelectedPaintHex, paint.Hex, StringComparison.OrdinalIgnoreCase) ? "selected" : "")"
-                                            title="@paint.Name"
-                                            aria-label="Select @paint.Name">
-                                        <span class="garage-paint-swatch"
-                                              style="background:@paint.Hex;"></span>
-                                    </button>
-                                </form>
-                            }
-                        </div>
+                            <p class="garage-customizer-note">
+                                @vehicle.Make factory palette
+                            </p>
 
-                        <div class="garage-paint-current">
-                            <strong>
-                                @(string.IsNullOrWhiteSpace(vehicle.SelectedPaintName)
-                                    ? "UNSELECTED COLOR"
-                                    : vehicle.SelectedPaintName.ToUpperInvariant())
-                            </strong>
+                            <div class="garage-paint-grid">
+                                @foreach (var paint in Model.PaintColors)
+                                {
+                                    <form method="post"
+                                          asp-page-handler="SelectPaint"
+                                          class="garage-paint-form">
+                                        <input type="hidden" name="vehicleId" value="@vehicle.Id" />
+                                        <input type="hidden" name="paintName" value="@paint.Name" />
+                                        <input type="hidden" name="paintCode" value="@paint.Code" />
+                                        <input type="hidden" name="paintHex" value="@paint.Hex" />
 
-                            <span>
-                                @(string.IsNullOrWhiteSpace(vehicle.SelectedPaintCode)
-                                    ? "—"
-                                    : vehicle.SelectedPaintCode)
-                            </span>
-                        </div>
+                                        <button type="submit"
+                                                class="garage-paint-chip @(string.Equals(vehicle.SelectedPaintHex, paint.Hex, StringComparison.OrdinalIgnoreCase) ? "selected" : "")"
+                                                title="@paint.Name"
+                                                aria-label="Select @paint.Name">
+                                            <span class="garage-paint-swatch"
+                                                  style="background:@paint.Hex;"></span>
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+
+                            <div class="garage-paint-current">
+                                <strong>
+                                    @(string.IsNullOrWhiteSpace(vehicle.SelectedPaintName)
+                                        ? "UNSELECTED COLOR"
+                                        : vehicle.SelectedPaintName.ToUpperInvariant())
+                                </strong>
+
+                                <span>
+                                    @(string.IsNullOrWhiteSpace(vehicle.SelectedPaintCode)
+                                        ? "—"
+                                        : vehicle.SelectedPaintCode)
+                                </span>
+                            </div>
+                        </section>
+
+                        <section class="garage-customizer-card">
+                            <div class="garage-customizer-card-head">
+                                <span>02</span>
+                                <h4>INTERIOR</h4>
+                            </div>
+
+                            <div class="garage-option-grid"
+                                 data-customizer-options="interior"></div>
+
+                            <p class="garage-customizer-status"
+                               data-customizer-status="interior">
+                                Checking this model's interior materials…
+                            </p>
+                        </section>
+
+                        <section class="garage-customizer-card">
+                            <div class="garage-customizer-card-head">
+                                <span>03</span>
+                                <h4>WHEELS</h4>
+                            </div>
+
+                            <div class="garage-wheel-style-options"
+                                 data-customizer-options="wheel-style"></div>
+
+                            <div class="garage-option-grid"
+                                 data-customizer-options="wheel-finish"></div>
+
+                            <p class="garage-customizer-status"
+                               data-customizer-status="wheels">
+                                Checking this model's wheel options…
+                            </p>
+                        </section>
                     </aside>
                 </section>
 
