@@ -36,6 +36,8 @@ namespace PonyUpPerformance.Web.Models
 
         public string SelectedPaintHex { get; set; } = "#b8b8b8";
 
+        public string AppearanceJson { get; set; } = "{}";
+
         public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
     }
 }
