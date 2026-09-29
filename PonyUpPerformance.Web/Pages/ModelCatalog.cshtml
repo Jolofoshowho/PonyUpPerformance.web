@@ -115,6 +115,9 @@
                             <th>Make</th>
                             <th>Model</th>
                             <th>Trim</th>
+                            <th>Paint</th>
+                            <th>Interior</th>
+                            <th>Wheels</th>
                             <th>Asset</th>
                         </tr>
                     </thead>
@@ -135,6 +138,21 @@
                                 <td>@entry.Make</td>
                                 <td>@entry.Model</td>
                                 <td>@(string.IsNullOrWhiteSpace(entry.Trim) ? "—" : entry.Trim)</td>
+                                <td>
+                                    <span class="model-status @(entry.PaintReady ? "live" : "missing")">
+                                        @(entry.PaintReady ? "READY" : "NEEDS MAP")
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="model-status @(entry.InteriorReady ? "live" : "missing")">
+                                        @(entry.InteriorReady ? "READY" : "NEEDS MAP")
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="model-status @(entry.WheelsReady ? "live" : "missing")">
+                                        @(entry.WheelsReady ? "READY" : "NEEDS MAP")
+                                    </span>
+                                </td>
                                 <td class="model-asset-path">@entry.Asset</td>
                             </tr>
                         }
