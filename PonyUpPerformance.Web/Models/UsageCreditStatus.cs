@@ -30,6 +30,8 @@
 
         public int RevUpReportsPerBillingCycle { get; set; }
 
+        public int RevUpReportsRemaining { get; set; }
+
         public bool UnlimitedRevUpReports { get; set; }
 
         public string Message { get; set; } = "";
