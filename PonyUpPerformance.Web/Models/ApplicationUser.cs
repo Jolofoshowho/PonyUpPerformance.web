@@ -14,6 +14,10 @@ namespace PonyUpPerformance.Web.Models
 
         public string CurrentPlan { get; set; } = "Free";
 
+        public string StripeCustomerId { get; set; } = string.Empty;
+
+        public string ActiveStripeSubscriptionId { get; set; } = string.Empty;
+
         public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
     }
 }
