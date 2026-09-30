@@ -122,12 +122,7 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account.Manage
 
             string returnUrl =
                 $"{Request.Scheme}://{Request.Host}" +
-                Url.Page(
-                    "/Account/Manage/Index",
-                    values: null,
-                    protocol: null,
-                    host: null,
-                    fragment: null);
+                "/Identity/Account/Manage";
 
             try
             {
