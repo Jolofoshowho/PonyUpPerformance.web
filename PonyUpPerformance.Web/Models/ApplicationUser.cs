@@ -10,6 +10,12 @@ namespace PonyUpPerformance.Web.Models
         // Recurring-plan credits. Pro resets this bucket each paid billing cycle.
         public int SubscriptionCredits { get; set; }
 
+        public DateTime? NextSubscriptionCreditRefreshOn { get; set; }
+
+        public int RevUpReportsRemaining { get; set; }
+
+        public DateTime? NextRevUpReportRefreshOn { get; set; }
+
         public bool HasUsedFreeAnalysis { get; set; }
 
         public string CurrentPlan { get; set; } = "Free";
