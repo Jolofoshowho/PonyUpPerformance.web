@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using PonyUpPerformance.Web.Data;
 using PonyUpPerformance.Web.Models;
+using PonyUpPerformance.Web.Services;
 using Stripe;
 
 namespace PonyUpPerformance.Web.Pages
@@ -13,13 +14,16 @@ namespace PonyUpPerformance.Web.Pages
     {
         private readonly IConfiguration _configuration;
         private readonly ApplicationDbContext _dbContext;
+        private readonly PlanEntitlementService _planEntitlementService;
 
         public StripeWebhookModel(
             IConfiguration configuration,
-            ApplicationDbContext dbContext)
+            ApplicationDbContext dbContext,
+            PlanEntitlementService planEntitlementService)
         {
             _configuration = configuration;
             _dbContext = dbContext;
+            _planEntitlementService = planEntitlementService;
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -28,7 +32,8 @@ namespace PonyUpPerformance.Web.Pages
                 _configuration["Stripe:WebhookSecret"]
                 ?? string.Empty;
 
-            if (string.IsNullOrWhiteSpace(webhookSecret))
+            if (string.IsNullOrWhiteSpace(
+                    webhookSecret))
             {
                 return new StatusCodeResult(
                     StatusCodes.Status503ServiceUnavailable);
@@ -75,16 +80,22 @@ namespace PonyUpPerformance.Web.Pages
             }
 
             using JsonDocument document =
-                JsonDocument.Parse(payload);
+                JsonDocument.Parse(
+                    payload);
 
             JsonElement dataObject =
                 document.RootElement
                     .GetProperty("data")
                     .GetProperty("object");
 
-            string userId = string.Empty;
-            string planKey = string.Empty;
-            bool shouldRecord = false;
+            string userId =
+                string.Empty;
+
+            string planKey =
+                string.Empty;
+
+            bool shouldRecord =
+                false;
 
             switch (stripeEvent.Type)
             {
@@ -95,25 +106,47 @@ namespace PonyUpPerformance.Web.Pages
                             dataObject,
                             "billing_reason");
 
-                    if (string.Equals(
+                    if (!string.Equals(
                             billingReason,
                             "subscription_cycle",
                             StringComparison.OrdinalIgnoreCase))
                     {
-                        (userId, planKey) =
-                            GetSubscriptionMetadataFromInvoice(
-                                dataObject);
-
-                        if (!string.IsNullOrWhiteSpace(userId) &&
-                            !string.IsNullOrWhiteSpace(planKey))
-                        {
-                            await ApplyRecurringPlanAsync(
-                                userId,
-                                planKey);
-
-                            shouldRecord = true;
-                        }
+                        break;
                     }
+
+                    (userId, planKey) =
+                        GetSubscriptionMetadataFromInvoice(
+                            dataObject);
+
+                    if (string.IsNullOrWhiteSpace(
+                            userId) ||
+                        string.IsNullOrWhiteSpace(
+                            planKey))
+                    {
+                        break;
+                    }
+
+                    ApplicationUser? user =
+                        await _dbContext.Users
+                            .FirstOrDefaultAsync(
+                                x => x.Id == userId);
+
+                    if (user == null)
+                    {
+                        break;
+                    }
+
+                    planKey =
+                        PonyUpPlanCatalog.NormalizeKey(
+                            planKey);
+
+                    _planEntitlementService
+                        .ApplyRenewal(
+                            user,
+                            planKey);
+
+                    shouldRecord =
+                        true;
 
                     break;
                 }
@@ -126,23 +159,37 @@ namespace PonyUpPerformance.Web.Pages
                             "UserId");
 
                     planKey =
-                        GetMetadataValue(
+                        PonyUpPlanCatalog.NormalizeKey(
+                            GetMetadataValue(
+                                dataObject,
+                                "PlanKey"));
+
+                    string subscriptionId =
+                        GetString(
                             dataObject,
-                            "PlanKey");
+                            "id");
 
-                    if (!string.IsNullOrWhiteSpace(userId))
+                    if (string.IsNullOrWhiteSpace(
+                            userId))
                     {
-                        ApplicationUser? user =
-                            await _dbContext.Users
-                                .FirstOrDefaultAsync(
-                                    x => x.Id == userId);
-
-                        if (user != null)
-                        {
-                            user.CurrentPlan = "Free";
-                            shouldRecord = true;
-                        }
+                        break;
                     }
+
+                    ApplicationUser? user =
+                        await _dbContext.Users
+                            .FirstOrDefaultAsync(
+                                x => x.Id == userId);
+
+                    if (user == null)
+                    {
+                        break;
+                    }
+
+                    shouldRecord =
+                        await _planEntitlementService
+                            .ApplyCancellationAsync(
+                                user,
+                                subscriptionId);
 
                     break;
                 }
@@ -170,34 +217,6 @@ namespace PonyUpPerformance.Web.Pages
             }
 
             return new OkResult();
-        }
-
-        private async Task ApplyRecurringPlanAsync(
-            string userId,
-            string planKey)
-        {
-            ApplicationUser? user =
-                await _dbContext.Users
-                    .FirstOrDefaultAsync(
-                        x => x.Id == userId);
-
-            if (user == null)
-            {
-                return;
-            }
-
-            switch (
-                planKey.Trim().ToLowerInvariant())
-            {
-                case "pro":
-                    user.CurrentPlan = "Pro";
-                    user.RemainingCredits += 10;
-                    break;
-
-                case "unlimited":
-                    user.CurrentPlan = "Unlimited";
-                    break;
-            }
         }
 
         private static (
