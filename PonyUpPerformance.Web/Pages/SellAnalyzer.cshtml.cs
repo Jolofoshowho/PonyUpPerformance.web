@@ -13,13 +13,15 @@ public class SellAnalyzerModel : PageModel
     private readonly IVehicleSpecEnrichmentService _vehicleSpecEnrichmentService;
     private readonly IMarketValueService _marketValueService;
     private readonly AnalysisHistoryService _analysisHistoryService;
+    private readonly UsageCreditService _usageCreditService;
 
     public SellAnalyzerModel(
         ISellScoringService sellScoringService,
         IVinDecoderService vinDecoderService,
         IVehicleSpecEnrichmentService vehicleSpecEnrichmentService,
         IMarketValueService marketValueService,
-        AnalysisHistoryService analysisHistoryService)
+        AnalysisHistoryService analysisHistoryService,
+        UsageCreditService usageCreditService)
     {
         _sellScoringService =
             sellScoringService;
@@ -35,6 +37,9 @@ public class SellAnalyzerModel : PageModel
 
         _analysisHistoryService =
             analysisHistoryService;
+
+        _usageCreditService =
+            usageCreditService;
     }
 
     [BindProperty]
@@ -168,6 +173,42 @@ public class SellAnalyzerModel : PageModel
     {
         if (!ModelState.IsValid)
         {
+            return Page();
+        }
+
+        UsageCreditStatus creditStatus =
+            await _usageCreditService.GetStatusAsync(
+                User);
+
+        if (!creditStatus.IsLoggedIn)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "Create a free account to run a sell analysis.");
+
+            return Page();
+        }
+
+        if (!creditStatus.CanRunAnalysis)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "You are out of analysis credits. Upgrade to continue.");
+
+            return Page();
+        }
+
+        bool consumed =
+            await _usageCreditService.ConsumeCreditAsync(
+                User,
+                "Sell");
+
+        if (!consumed)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "Unable to consume an analysis credit.");
+
             return Page();
         }
 
