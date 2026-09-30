@@ -12,17 +12,20 @@ namespace PonyUpPerformance.Web.Pages
         private readonly IVinDecoderService _vinDecoderService;
         private readonly IVehicleSpecEnrichmentService _vehicleSpecEnrichmentService;
         private readonly AnalysisHistoryService _analysisHistoryService;
+        private readonly UsageCreditService _usageCreditService;
 
         public BuyAnalyzerModel(
             IBuyScoringService buyScoringService,
             IVinDecoderService vinDecoderService,
             IVehicleSpecEnrichmentService vehicleSpecEnrichmentService,
-            AnalysisHistoryService analysisHistoryService)
+            AnalysisHistoryService analysisHistoryService,
+            UsageCreditService usageCreditService)
         {
             _buyScoringService = buyScoringService;
             _vinDecoderService = vinDecoderService;
             _vehicleSpecEnrichmentService = vehicleSpecEnrichmentService;
             _analysisHistoryService = analysisHistoryService;
+            _usageCreditService = usageCreditService;
         }
 
         [BindProperty]
@@ -93,6 +96,42 @@ namespace PonyUpPerformance.Web.Pages
             {
                 return Page();
             }
+
+        UsageCreditStatus creditStatus =
+            await _usageCreditService.GetStatusAsync(
+                User);
+
+        if (!creditStatus.IsLoggedIn)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "Create a free account to run a buy analysis.");
+
+            return Page();
+        }
+
+        if (!creditStatus.CanRunAnalysis)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "You are out of analysis credits. Upgrade to continue.");
+
+            return Page();
+        }
+
+        bool consumed =
+            await _usageCreditService.ConsumeCreditAsync(
+                User,
+                "Buy");
+
+        if (!consumed)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "Unable to consume an analysis credit.");
+
+            return Page();
+        }
 
             Result =
                 _buyScoringService.Analyze(Input);
