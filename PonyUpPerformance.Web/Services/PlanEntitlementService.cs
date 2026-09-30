@@ -14,7 +14,7 @@ public sealed class PlanEntitlementService
         _dbContext = dbContext;
     }
 
-    public async Task ApplyCheckoutAsync(
+    public Task ApplyCheckoutAsync(
         ApplicationUser user,
         string planKey,
         string? stripeCustomerId,
@@ -24,6 +24,9 @@ public sealed class PlanEntitlementService
             PonyUpPlanCatalog.NormalizeKey(
                 planKey);
 
+        DateTime now =
+            DateTime.UtcNow;
+
         switch (normalized)
         {
             case PonyUpPlanCatalog.QuickPackKey:
@@ -32,45 +35,96 @@ public sealed class PlanEntitlementService
                 if (PlanRank(user.CurrentPlan) <
                     PlanRank(PonyUpPlanCatalog.QuickPackKey))
                 {
-                    user.CurrentPlan = "Quick Pack";
+                    user.CurrentPlan =
+                        "Quick Pack";
                 }
 
                 break;
 
             case PonyUpPlanCatalog.ProKey:
-                user.CurrentPlan = "Pro";
-                user.SubscriptionCredits = 10;
+                user.CurrentPlan =
+                    "Pro";
+
+                user.SubscriptionCredits =
+                    10;
+
+                user.NextSubscriptionCreditRefreshOn =
+                    now.AddMonths(1);
+
+                ClearRevUpAllowance(
+                    user);
+
                 SetStripeSubscription(
                     user,
                     stripeCustomerId,
                     stripeSubscriptionId);
+
                 break;
 
             case PonyUpPlanCatalog.FullThrottleKey:
-                user.CurrentPlan = "Full Throttle";
-                user.SubscriptionCredits = 0;
+                user.CurrentPlan =
+                    "Full Throttle";
+
+                user.SubscriptionCredits =
+                    0;
+
+                user.NextSubscriptionCreditRefreshOn =
+                    null;
+
+                ClearRevUpAllowance(
+                    user);
+
                 SetStripeSubscription(
                     user,
                     stripeCustomerId,
                     stripeSubscriptionId);
+
                 break;
 
             case PonyUpPlanCatalog.RedlineKey:
-                user.CurrentPlan = "Redline";
-                user.SubscriptionCredits = 0;
+                user.CurrentPlan =
+                    "Redline";
+
+                user.SubscriptionCredits =
+                    0;
+
+                user.NextSubscriptionCreditRefreshOn =
+                    null;
+
+                user.RevUpReportsRemaining =
+                    5;
+
+                user.NextRevUpReportRefreshOn =
+                    now.AddMonths(1);
+
                 SetStripeSubscription(
                     user,
                     stripeCustomerId,
                     stripeSubscriptionId);
+
                 break;
 
             case PonyUpPlanCatalog.RedlinePlusKey:
-                user.CurrentPlan = "Redline+";
-                user.SubscriptionCredits = 0;
+                user.CurrentPlan =
+                    "Redline+";
+
+                user.SubscriptionCredits =
+                    0;
+
+                user.NextSubscriptionCreditRefreshOn =
+                    null;
+
+                user.RevUpReportsRemaining =
+                    0;
+
+                user.NextRevUpReportRefreshOn =
+                    null;
+
                 SetStripeSubscription(
                     user,
                     stripeCustomerId,
                     stripeSubscriptionId);
+
                 break;
 
             default:
@@ -78,7 +132,7 @@ public sealed class PlanEntitlementService
                     "Unsupported PonyUp plan.");
         }
 
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
     public void ApplyRenewal(
@@ -89,30 +143,137 @@ public sealed class PlanEntitlementService
             PonyUpPlanCatalog.NormalizeKey(
                 planKey);
 
+        DateTime now =
+            DateTime.UtcNow;
+
         switch (normalized)
         {
             case PonyUpPlanCatalog.ProKey:
-                user.CurrentPlan = "Pro";
+                user.CurrentPlan =
+                    "Pro";
 
-                // Pro includes 10 standard analyses per paid billing cycle.
-                // Unused subscription credits do not accumulate indefinitely.
-                user.SubscriptionCredits = 10;
+                user.SubscriptionCredits =
+                    10;
+
+                user.NextSubscriptionCreditRefreshOn =
+                    now.AddMonths(1);
+
                 break;
 
             case PonyUpPlanCatalog.FullThrottleKey:
-                user.CurrentPlan = "Full Throttle";
-                user.SubscriptionCredits = 0;
+                user.CurrentPlan =
+                    "Full Throttle";
+
+                user.SubscriptionCredits =
+                    0;
+
+                user.NextSubscriptionCreditRefreshOn =
+                    null;
+
                 break;
 
             case PonyUpPlanCatalog.RedlineKey:
-                user.CurrentPlan = "Redline";
-                user.SubscriptionCredits = 0;
+                user.CurrentPlan =
+                    "Redline";
+
+                user.RevUpReportsRemaining =
+                    5;
+
+                user.NextRevUpReportRefreshOn =
+                    now.AddMonths(1);
+
                 break;
 
             case PonyUpPlanCatalog.RedlinePlusKey:
-                user.CurrentPlan = "Redline+";
-                user.SubscriptionCredits = 0;
+                user.CurrentPlan =
+                    "Redline+";
+
+                user.RevUpReportsRemaining =
+                    0;
+
+                user.NextRevUpReportRefreshOn =
+                    null;
+
                 break;
+        }
+    }
+
+    public async Task RefreshMonthlyEntitlementsAsync(
+        ApplicationUser user)
+    {
+        string planKey =
+            PonyUpPlanCatalog.NormalizeKey(
+                user.CurrentPlan);
+
+        DateTime now =
+            DateTime.UtcNow;
+
+        bool changed =
+            false;
+
+        if (planKey ==
+            PonyUpPlanCatalog.ProKey)
+        {
+            if (!user.NextSubscriptionCreditRefreshOn.HasValue)
+            {
+                user.NextSubscriptionCreditRefreshOn =
+                    now.AddMonths(1);
+
+                changed =
+                    true;
+            }
+            else if (user.NextSubscriptionCreditRefreshOn.Value <=
+                     now)
+            {
+                user.SubscriptionCredits =
+                    10;
+
+                user.NextSubscriptionCreditRefreshOn =
+                    AdvanceMonthly(
+                        user.NextSubscriptionCreditRefreshOn.Value,
+                        now);
+
+                changed =
+                    true;
+            }
+        }
+
+        if (planKey ==
+            PonyUpPlanCatalog.RedlineKey)
+        {
+            if (!user.NextRevUpReportRefreshOn.HasValue)
+            {
+                user.NextRevUpReportRefreshOn =
+                    now.AddMonths(1);
+
+                if (user.RevUpReportsRemaining <= 0)
+                {
+                    user.RevUpReportsRemaining =
+                        5;
+                }
+
+                changed =
+                    true;
+            }
+            else if (user.NextRevUpReportRefreshOn.Value <=
+                     now)
+            {
+                user.RevUpReportsRemaining =
+                    5;
+
+                user.NextRevUpReportRefreshOn =
+                    AdvanceMonthly(
+                        user.NextRevUpReportRefreshOn.Value,
+                        now);
+
+                changed =
+                    true;
+            }
+        }
+
+        if (changed)
+        {
+            await _dbContext.SaveChangesAsync();
         }
     }
 
@@ -140,8 +301,17 @@ public sealed class PlanEntitlementService
                     x.PlanKey ==
                         PonyUpPlanCatalog.QuickPackKey);
 
-        user.SubscriptionCredits = 0;
-        user.ActiveStripeSubscriptionId = string.Empty;
+        user.SubscriptionCredits =
+            0;
+
+        user.NextSubscriptionCreditRefreshOn =
+            null;
+
+        ClearRevUpAllowance(
+            user);
+
+        user.ActiveStripeSubscriptionId =
+            string.Empty;
 
         user.CurrentPlan =
             hasQuickPack
@@ -149,6 +319,33 @@ public sealed class PlanEntitlementService
                 : "Free";
 
         return true;
+    }
+
+    private static DateTime AdvanceMonthly(
+        DateTime scheduled,
+        DateTime now)
+    {
+        DateTime next =
+            scheduled;
+
+        do
+        {
+            next =
+                next.AddMonths(1);
+        }
+        while (next <= now);
+
+        return next;
+    }
+
+    private static void ClearRevUpAllowance(
+        ApplicationUser user)
+    {
+        user.RevUpReportsRemaining =
+            0;
+
+        user.NextRevUpReportRefreshOn =
+            null;
     }
 
     private static void SetStripeSubscription(
