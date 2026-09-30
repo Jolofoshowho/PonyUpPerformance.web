@@ -12,15 +12,18 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account.Manage
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UsageCreditService _usageCreditService;
+        private readonly StripeCheckoutService _stripeCheckoutService;
 
         public IndexModel(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            UsageCreditService usageCreditService)
+            UsageCreditService usageCreditService,
+            StripeCheckoutService stripeCheckoutService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _usageCreditService = usageCreditService;
+            _stripeCheckoutService = stripeCheckoutService;
         }
 
         public string Username { get; set; } = string.Empty;
@@ -34,6 +37,8 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account.Manage
         public string CurrentPlan { get; set; } = "Free";
 
         public bool HasUsedFreeAnalysis { get; set; }
+
+        public bool CanManageBilling { get; set; }
 
         [TempData]
         public string StatusMessage { get; set; } = string.Empty;
@@ -82,6 +87,10 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account.Manage
 
             HasUsedFreeAnalysis =
                 user.HasUsedFreeAnalysis;
+
+            CanManageBilling =
+                !string.IsNullOrWhiteSpace(
+                    user.StripeCustomerId);
         }
 
         public async Task<IActionResult> OnGetAsync()
@@ -98,6 +107,46 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account.Manage
             await LoadAsync(user);
 
             return Page();
+        }
+
+        public async Task<IActionResult> OnPostManageBillingAsync()
+        {
+            ApplicationUser? user =
+                await _userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                return NotFound(
+                    "Unable to load user.");
+            }
+
+            string returnUrl =
+                $"{Request.Scheme}://{Request.Host}" +
+                Url.Page(
+                    "/Account/Manage/Index",
+                    values: null,
+                    protocol: null,
+                    host: null,
+                    fragment: null);
+
+            try
+            {
+                string portalUrl =
+                    await _stripeCheckoutService
+                        .CreateCustomerPortalUrlAsync(
+                            user,
+                            returnUrl);
+
+                return Redirect(
+                    portalUrl);
+            }
+            catch (InvalidOperationException)
+            {
+                StatusMessage =
+                    "Billing management is available after a subscription purchase.";
+
+                return RedirectToPage();
+            }
         }
 
         public async Task<IActionResult> OnPostAsync()
