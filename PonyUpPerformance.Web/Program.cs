@@ -104,6 +104,13 @@ using (var scope = app.Services.CreateScope())
         ADD COLUMN IF NOT EXISTS "AppearanceJson"
         text NOT NULL DEFAULT '{}';
         """);
+
+    await db.Database.ExecuteSqlRawAsync(
+        """
+        ALTER TABLE "AspNetUsers"
+        ADD COLUMN IF NOT EXISTS "SubscriptionCredits"
+        integer NOT NULL DEFAULT 0;
+        """);
 }
 
 if (app.Environment.IsDevelopment())
