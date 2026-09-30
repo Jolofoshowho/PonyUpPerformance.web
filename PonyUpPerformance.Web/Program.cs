@@ -84,6 +84,7 @@ builder.Services.AddHttpClient<IMarketValueService, MarketValueService>(client =
     client.Timeout = TimeSpan.FromSeconds(20);
 });
 builder.Services.AddScoped<StripeCheckoutService>();
+builder.Services.AddScoped<PlanEntitlementService>();
 builder.Services.AddScoped<UsageCreditService>();
 builder.Services.AddScoped<IBuyScoringService, BuyScoringService>();
 builder.Services.AddScoped<ISellScoringService, SellScoringService>();
@@ -110,6 +111,20 @@ using (var scope = app.Services.CreateScope())
         ALTER TABLE "AspNetUsers"
         ADD COLUMN IF NOT EXISTS "SubscriptionCredits"
         integer NOT NULL DEFAULT 0;
+        """);
+
+    await db.Database.ExecuteSqlRawAsync(
+        """
+        ALTER TABLE "AspNetUsers"
+        ADD COLUMN IF NOT EXISTS "StripeCustomerId"
+        text NOT NULL DEFAULT '';
+        """);
+
+    await db.Database.ExecuteSqlRawAsync(
+        """
+        ALTER TABLE "AspNetUsers"
+        ADD COLUMN IF NOT EXISTS "ActiveStripeSubscriptionId"
+        text NOT NULL DEFAULT '';
         """);
 }
 
