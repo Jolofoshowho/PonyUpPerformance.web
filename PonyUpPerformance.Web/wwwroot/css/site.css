@@ -4912,3 +4912,113 @@ body.garage-modal-open {
     }
 }
 
+/* =========================================================
+   PRICING COMPARISON
+   ========================================================= */
+
+.pricing-comparison-section {
+    max-width: 1280px;
+    margin: 28px auto 0;
+    padding: 22px;
+    border: 1px solid rgba(255,255,255,.11);
+    border-radius: 8px;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(15,17,19,.97),
+            rgba(5,7,8,.99));
+}
+
+.pricing-comparison-heading {
+    margin-bottom: 16px;
+}
+
+.pricing-comparison-heading h2 {
+    margin: 2px 0 5px;
+    color: #fff;
+    font-size: 1.05rem;
+    font-weight: 1000;
+    letter-spacing: .055em;
+}
+
+.pricing-comparison-heading p,
+.pricing-comparison-footnote {
+    margin: 0;
+    color: #858e94;
+    font-size: .69rem;
+    line-height: 1.5;
+}
+
+.pricing-comparison-scroll {
+    overflow-x: auto;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 6px;
+}
+
+.pricing-comparison-table {
+    width: 100%;
+    min-width: 950px;
+    border-collapse: collapse;
+    background: rgba(0,0,0,.18);
+}
+
+.pricing-comparison-table th,
+.pricing-comparison-table td {
+    padding: 11px 10px;
+    border-bottom: 1px solid rgba(255,255,255,.07);
+    border-right: 1px solid rgba(255,255,255,.05);
+    color: #cbd0d4;
+    font-size: .67rem;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.pricing-comparison-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    color: #fff;
+    background: #0b0d0f;
+    font-size: .63rem;
+    font-weight: 1000;
+    letter-spacing: .04em;
+}
+
+.pricing-comparison-table th:first-child {
+    width: 26%;
+    color: #fff;
+    text-align: left;
+    font-weight: 900;
+}
+
+.pricing-comparison-table thead th:nth-child(5),
+.pricing-comparison-table td:nth-child(5) {
+    background: rgba(255,49,49,.035);
+}
+
+.pricing-comparison-table thead th:nth-child(6),
+.pricing-comparison-table thead th:nth-child(7) {
+    color: #ff5151;
+}
+
+.pricing-comparison-premium {
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,49,49,.045));
+}
+
+.pricing-yes {
+    color: #fff !important;
+    font-weight: 850;
+}
+
+.pricing-no {
+    color: #596066 !important;
+}
+
+.pricing-comparison-footnote {
+    margin-top: 12px;
+}
+
