@@ -126,6 +126,27 @@ using (var scope = app.Services.CreateScope())
         ADD COLUMN IF NOT EXISTS "ActiveStripeSubscriptionId"
         text NOT NULL DEFAULT '';
         """);
+
+    await db.Database.ExecuteSqlRawAsync(
+        """
+        ALTER TABLE "AspNetUsers"
+        ADD COLUMN IF NOT EXISTS "NextSubscriptionCreditRefreshOn"
+        timestamp with time zone NULL;
+        """);
+
+    await db.Database.ExecuteSqlRawAsync(
+        """
+        ALTER TABLE "AspNetUsers"
+        ADD COLUMN IF NOT EXISTS "RevUpReportsRemaining"
+        integer NOT NULL DEFAULT 0;
+        """);
+
+    await db.Database.ExecuteSqlRawAsync(
+        """
+        ALTER TABLE "AspNetUsers"
+        ADD COLUMN IF NOT EXISTS "NextRevUpReportRefreshOn"
+        timestamp with time zone NULL;
+        """);
 }
 
 if (app.Environment.IsDevelopment())
