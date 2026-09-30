@@ -20,11 +20,15 @@ public class UpgradeAnalyzerModel : PageModel
     private readonly AnalysisHistoryService
         _analysisHistoryService;
 
+    private readonly UsageCreditService
+        _usageCreditService;
+
     public UpgradeAnalyzerModel(
         IUpgradeScoringService upgradeScoringService,
         IVinDecoderService vinDecoderService,
         IVehicleSpecEnrichmentService vehicleSpecEnrichmentService,
-        AnalysisHistoryService analysisHistoryService)
+        AnalysisHistoryService analysisHistoryService,
+        UsageCreditService usageCreditService)
     {
         _upgradeScoringService =
             upgradeScoringService;
@@ -37,6 +41,9 @@ public class UpgradeAnalyzerModel : PageModel
 
         _analysisHistoryService =
             analysisHistoryService;
+
+        _usageCreditService =
+            usageCreditService;
     }
 
     [BindProperty]
@@ -111,6 +118,42 @@ public class UpgradeAnalyzerModel : PageModel
     {
         if (!ModelState.IsValid)
         {
+            return Page();
+        }
+
+        UsageCreditStatus creditStatus =
+            await _usageCreditService.GetStatusAsync(
+                User);
+
+        if (!creditStatus.IsLoggedIn)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "Create a free account to run a upgrade analysis.");
+
+            return Page();
+        }
+
+        if (!creditStatus.CanRunAnalysis)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "You are out of analysis credits. Upgrade to continue.");
+
+            return Page();
+        }
+
+        bool consumed =
+            await _usageCreditService.ConsumeCreditAsync(
+                User,
+                "Upgrade");
+
+        if (!consumed)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "Unable to consume an analysis credit.");
+
             return Page();
         }
 
