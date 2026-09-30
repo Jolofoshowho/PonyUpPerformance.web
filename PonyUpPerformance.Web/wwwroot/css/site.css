@@ -4862,3 +4862,53 @@ body.garage-modal-open {
     text-decoration: none;
 }
 
+/* =========================================================
+   ACCOUNT DASHBOARD
+   ========================================================= */
+
+.ponyup-account-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    max-width: 980px;
+    margin: 0 auto;
+}
+
+.ponyup-account-card {
+    min-height: 0;
+    padding: 24px;
+    text-align: left;
+}
+
+.ponyup-account-card h2 {
+    margin: 3px 0 18px;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 1000;
+    word-break: break-word;
+}
+
+.ponyup-account-actions {
+    display: grid;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.ponyup-account-actions a,
+.ponyup-account-save {
+    display: block;
+    width: 100%;
+    padding: 11px 14px;
+    text-align: center;
+    text-decoration: none;
+    font-size: .7rem;
+    font-weight: 950;
+    letter-spacing: .04em;
+}
+
+@media (max-width: 760px) {
+    .ponyup-account-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
