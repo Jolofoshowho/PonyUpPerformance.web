@@ -10,6 +10,7 @@ namespace PonyUpPerformance.Web.Services
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _dbContext;
+        private readonly PlanEntitlementService _planEntitlementService;
 
         private static readonly string[] OwnerEmails =
         {
@@ -19,10 +20,12 @@ namespace PonyUpPerformance.Web.Services
 
         public UsageCreditService(
             UserManager<ApplicationUser> userManager,
-            ApplicationDbContext dbContext)
+            ApplicationDbContext dbContext,
+            PlanEntitlementService planEntitlementService)
         {
             _userManager = userManager;
             _dbContext = dbContext;
+            _planEntitlementService = planEntitlementService;
         }
 
         public async Task<UsageCreditStatus> GetStatusAsync(
@@ -47,6 +50,10 @@ namespace PonyUpPerformance.Web.Services
                         "Create a free account to unlock your first full analysis."
                 };
             }
+
+            await _planEntitlementService
+                .RefreshMonthlyEntitlementsAsync(
+                    user);
 
             bool owner =
                 IsOwner(user);
@@ -107,6 +114,12 @@ namespace PonyUpPerformance.Web.Services
                     access.CanUseSpecialTrims,
                 RevUpReportsPerBillingCycle =
                     access.RevUpReportsPerBillingCycle,
+                RevUpReportsRemaining =
+                    access.UnlimitedRevUpReports
+                        ? int.MaxValue
+                        : Math.Max(
+                            0,
+                            user.RevUpReportsRemaining),
                 UnlimitedRevUpReports =
                     access.UnlimitedRevUpReports,
                 Message = canRun
@@ -127,6 +140,10 @@ namespace PonyUpPerformance.Web.Services
             {
                 return false;
             }
+
+            await _planEntitlementService
+                .RefreshMonthlyEntitlementsAsync(
+                    user);
 
             bool owner =
                 IsOwner(user);
