@@ -52,6 +52,17 @@
                    asp-page="/Pricing">
                     VIEW PRICING
                 </a>
+
+                @if (Model.CanManageBilling)
+                {
+                    <form method="post"
+                          asp-page-handler="ManageBilling">
+                        <button type="submit"
+                                class="btn-dark ponyup-account-billing">
+                            MANAGE BILLING
+                        </button>
+                    </form>
+                }
             </div>
         </article>
 
