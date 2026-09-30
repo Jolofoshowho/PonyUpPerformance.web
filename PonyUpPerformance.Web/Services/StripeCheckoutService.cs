@@ -116,6 +116,45 @@ namespace PonyUpPerformance.Web.Services
             return session.Url;
         }
 
+        public async Task<string> CreateCustomerPortalUrlAsync(
+            ApplicationUser user,
+            string returnUrl)
+        {
+            if (string.IsNullOrWhiteSpace(
+                    user.StripeCustomerId))
+            {
+                throw new InvalidOperationException(
+                    "No Stripe customer is attached to this PonyUp account.");
+            }
+
+            string secretKey =
+                _config["Stripe:SecretKey"]
+                ?? throw new InvalidOperationException(
+                    "Stripe SecretKey missing.");
+
+            StripeConfiguration.ApiKey =
+                secretKey;
+
+            var options =
+                new Stripe.BillingPortal.SessionCreateOptions
+                {
+                    Customer =
+                        user.StripeCustomerId,
+
+                    ReturnUrl =
+                        returnUrl
+                };
+
+            var service =
+                new Stripe.BillingPortal.SessionService();
+
+            Stripe.BillingPortal.Session session =
+                await service.CreateAsync(
+                    options);
+
+            return session.Url;
+        }
+
         public async Task<Session> GetSessionAsync(
             string sessionId)
         {
