@@ -19,25 +19,52 @@ namespace PonyUpPerformance.Web.Pages
             _stripeCheckoutService = stripeCheckoutService;
         }
 
-        public async Task<IActionResult> OnGetAsync(string plan)
+        public async Task<IActionResult> OnGetAsync(
+            string plan,
+            string billing = "monthly")
         {
-            if (string.IsNullOrWhiteSpace(plan))
+            if (string.IsNullOrWhiteSpace(
+                    plan))
             {
-                return RedirectToPage("/Pricing");
+                return RedirectToPage(
+                    "/Pricing");
             }
 
-            var user = await _userManager.GetUserAsync(User);
+            ApplicationUser? user =
+                await _userManager.GetUserAsync(
+                    User);
 
             if (user == null)
             {
-                return RedirectToPage("/Account/Login", new { area = "Identity" });
+                return RedirectToPage(
+                    "/Account/Login",
+                    new
+                    {
+                        area = "Identity"
+                    });
             }
 
-            string baseUrl = $"{Request.Scheme}://{Request.Host}";
+            string baseUrl =
+                $"{Request.Scheme}://{Request.Host}";
 
-            string checkoutUrl = await _stripeCheckoutService.CreateCheckoutUrlAsync(user, plan, baseUrl);
+            try
+            {
+                string checkoutUrl =
+                    await _stripeCheckoutService
+                        .CreateCheckoutUrlAsync(
+                            user,
+                            plan,
+                            billing,
+                            baseUrl);
 
-            return Redirect(checkoutUrl);
+                return Redirect(
+                    checkoutUrl);
+            }
+            catch (InvalidOperationException)
+            {
+                return RedirectToPage(
+                    "/Pricing");
+            }
         }
     }
 }
