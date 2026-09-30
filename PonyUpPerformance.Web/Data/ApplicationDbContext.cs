@@ -26,6 +26,8 @@ namespace PonyUpPerformance.Web.Data
 
         public DbSet<StripePurchase> StripePurchases { get; set; }
 
+        public DbSet<RevUpReport> RevUpReports { get; set; }
+
         public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
     }
 }
