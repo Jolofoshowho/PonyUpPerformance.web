@@ -14,8 +14,7 @@ namespace PonyUpPerformance.Web.Services
 
         private static readonly string[] OwnerEmails =
         {
-            "lopezkb258@gmail.com",
-            "lopez2kb258@gmail.com"
+            "lopezkb258@gmail.com"
         };
 
         public UsageCreditService(
