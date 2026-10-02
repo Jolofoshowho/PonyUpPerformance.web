@@ -50,14 +50,6 @@
                !string.IsNullOrWhiteSpace(model);
     }
 
-    string ShortYear(
-        int? year)
-    {
-        return year.HasValue
-            ? $"'{year.Value % 100:00}"
-            : string.Empty;
-    }
-
     bool hasYourIdentity =
         HasVehicleIdentity(
             Model.Input.YourYear,
