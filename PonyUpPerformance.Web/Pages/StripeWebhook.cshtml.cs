@@ -117,14 +117,12 @@ namespace PonyUpPerformance.Web.Pages
                         break;
                     }
 
-                    (userId, planKey) =
-                        GetSubscriptionMetadataFromInvoice(
+                    userId =
+                        GetSubscriptionUserIdFromInvoice(
                             dataObject);
 
                     if (string.IsNullOrWhiteSpace(
-                            userId) ||
-                        string.IsNullOrWhiteSpace(
-                            planKey))
+                            userId))
                     {
                         break;
                     }
@@ -139,9 +137,17 @@ namespace PonyUpPerformance.Web.Pages
                         break;
                     }
 
+                    /*
+                     * CurrentPlan is kept in sync by
+                     * customer.subscription.updated.
+                     * Use it here instead of stale
+                     * subscription metadata so a portal
+                     * upgrade/downgrade renews the plan
+                     * the customer actually has now.
+                     */
                     planKey =
                         PonyUpPlanCatalog.NormalizeKey(
-                            planKey);
+                            user.CurrentPlan);
 
                     _planEntitlementService
                         .ApplyRenewal(
@@ -301,36 +307,52 @@ namespace PonyUpPerformance.Web.Pages
             return new OkResult();
         }
 
-        private static (
-            string UserId,
-            string PlanKey)
-            GetSubscriptionMetadataFromInvoice(
+        private static string
+            GetSubscriptionUserIdFromInvoice(
                 JsonElement invoice)
         {
-            if (!invoice.TryGetProperty(
-                    "parent",
-                    out JsonElement parent) ||
-                parent.ValueKind !=
-                    JsonValueKind.Object ||
-                !parent.TryGetProperty(
+            /*
+             * Current Stripe invoices expose
+             * subscription_details.metadata directly.
+             * Keep the parent.subscription_details
+             * fallback for compatibility with event
+             * shapes used by earlier API versions.
+             */
+            if (invoice.TryGetProperty(
                     "subscription_details",
-                    out JsonElement subscriptionDetails) ||
-                subscriptionDetails.ValueKind !=
+                    out JsonElement directDetails) &&
+                directDetails.ValueKind ==
                     JsonValueKind.Object)
             {
-                return (
-                    string.Empty,
-                    string.Empty);
+                string directUserId =
+                    GetMetadataValue(
+                        directDetails,
+                        "UserId");
+
+                if (!string.IsNullOrWhiteSpace(
+                        directUserId))
+                {
+                    return directUserId;
+                }
             }
 
-            return (
-                GetMetadataValue(
-                    subscriptionDetails,
-                    "UserId"),
+            if (invoice.TryGetProperty(
+                    "parent",
+                    out JsonElement parent) &&
+                parent.ValueKind ==
+                    JsonValueKind.Object &&
+                parent.TryGetProperty(
+                    "subscription_details",
+                    out JsonElement parentDetails) &&
+                parentDetails.ValueKind ==
+                    JsonValueKind.Object)
+            {
+                return GetMetadataValue(
+                    parentDetails,
+                    "UserId");
+            }
 
-                GetMetadataValue(
-                    subscriptionDetails,
-                    "PlanKey"));
+            return string.Empty;
         }
 
         private static string GetSubscriptionPriceId(
