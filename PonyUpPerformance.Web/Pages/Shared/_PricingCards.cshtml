@@ -1,3 +1,14 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    bool proAnnualReady =
+        !string.IsNullOrWhiteSpace(
+            Configuration["Stripe:ProAnnualPriceId"]);
+
+    bool fullThrottleAnnualReady =
+        !string.IsNullOrWhiteSpace(
+            Configuration["Stripe:FullThrottleAnnualPriceId"]);
+}
+
 <div class="pricing-starter-grid">
     <article class="price-card pricing-plan-card pricing-starter-card">
         <div class="pricing-plan-head">
@@ -50,7 +61,11 @@
             <span class="pricing-plan-kicker">REGULAR DRIVER</span>
             <h3>PRO</h3>
             <strong>$9.99<span>/mo</span></strong>
-            <p>or $79.99/year</p>
+            <p>
+                @(proAnnualReady
+                    ? "or $79.99/year"
+                    : "Annual billing coming soon")
+            </p>
         </div>
 
         <ul class="pricing-feature-list">
@@ -68,10 +83,19 @@
                 MONTHLY
             </a>
 
-            <a class="btn-dark pricing-plan-cta"
-               href="/Checkout?plan=pro&amp;billing=annual">
-                ANNUAL
-            </a>
+            @if (proAnnualReady)
+            {
+                <a class="btn-dark pricing-plan-cta"
+                   href="/Checkout?plan=pro&amp;billing=annual">
+                    ANNUAL
+                </a>
+            }
+            else
+            {
+                <span class="pricing-plan-cta pricing-plan-disabled">
+                    ANNUAL SOON
+                </span>
+            }
         </div>
     </article>
 
@@ -80,7 +104,11 @@
             <span class="pricing-plan-kicker">OPEN IT UP</span>
             <h3>FULL THROTTLE</h3>
             <strong>$19.99<span>/mo</span></strong>
-            <p>or $159.99/year</p>
+            <p>
+                @(fullThrottleAnnualReady
+                    ? "or $159.99/year"
+                    : "Annual billing coming soon")
+            </p>
         </div>
 
         <ul class="pricing-feature-list">
@@ -99,10 +127,19 @@
                 MONTHLY
             </a>
 
-            <a class="btn-red pricing-plan-cta"
-               href="/Checkout?plan=fullthrottle&amp;billing=annual">
-                ANNUAL
-            </a>
+            @if (fullThrottleAnnualReady)
+            {
+                <a class="btn-red pricing-plan-cta"
+                   href="/Checkout?plan=fullthrottle&amp;billing=annual">
+                    ANNUAL
+                </a>
+            }
+            else
+            {
+                <span class="pricing-plan-cta pricing-plan-disabled">
+                    ANNUAL SOON
+                </span>
+            }
         </div>
     </article>
 
