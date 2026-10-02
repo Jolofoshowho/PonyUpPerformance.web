@@ -15,15 +15,18 @@ namespace PonyUpPerformance.Web.Pages
         private readonly IConfiguration _configuration;
         private readonly ApplicationDbContext _dbContext;
         private readonly PlanEntitlementService _planEntitlementService;
+        private readonly StripeCheckoutService _stripeCheckoutService;
 
         public StripeWebhookModel(
             IConfiguration configuration,
             ApplicationDbContext dbContext,
-            PlanEntitlementService planEntitlementService)
+            PlanEntitlementService planEntitlementService,
+            StripeCheckoutService stripeCheckoutService)
         {
             _configuration = configuration;
             _dbContext = dbContext;
             _planEntitlementService = planEntitlementService;
+            _stripeCheckoutService = stripeCheckoutService;
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -151,6 +154,85 @@ namespace PonyUpPerformance.Web.Pages
                     break;
                 }
 
+                case "customer.subscription.updated":
+                {
+                    userId =
+                        GetMetadataValue(
+                            dataObject,
+                            "UserId");
+
+                    string subscriptionId =
+                        GetString(
+                            dataObject,
+                            "id");
+
+                    string customerId =
+                        GetString(
+                            dataObject,
+                            "customer");
+
+                    string priceId =
+                        GetSubscriptionPriceId(
+                            dataObject);
+
+                    planKey =
+                        _stripeCheckoutService
+                            .ResolvePlanKeyFromPriceId(
+                                priceId);
+
+                    if (string.IsNullOrWhiteSpace(
+                            userId) ||
+                        planKey ==
+                            PonyUpPlanCatalog.FreeKey)
+                    {
+                        break;
+                    }
+
+                    ApplicationUser? user =
+                        await _dbContext.Users
+                            .FirstOrDefaultAsync(
+                                x => x.Id == userId);
+
+                    if (user == null)
+                    {
+                        break;
+                    }
+
+                    string currentPlanKey =
+                        PonyUpPlanCatalog.NormalizeKey(
+                            user.CurrentPlan);
+
+                    if (!string.Equals(
+                            currentPlanKey,
+                            planKey,
+                            StringComparison.Ordinal))
+                    {
+                        _planEntitlementService
+                            .ApplyRenewal(
+                                user,
+                                planKey);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(
+                            subscriptionId))
+                    {
+                        user.ActiveStripeSubscriptionId =
+                            subscriptionId;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(
+                            customerId))
+                    {
+                        user.StripeCustomerId =
+                            customerId;
+                    }
+
+                    shouldRecord =
+                        true;
+
+                    break;
+                }
+
                 case "customer.subscription.deleted":
                 {
                     userId =
@@ -249,6 +331,43 @@ namespace PonyUpPerformance.Web.Pages
                 GetMetadataValue(
                     subscriptionDetails,
                     "PlanKey"));
+        }
+
+        private static string GetSubscriptionPriceId(
+            JsonElement subscription)
+        {
+            if (!subscription.TryGetProperty(
+                    "items",
+                    out JsonElement items) ||
+                items.ValueKind !=
+                    JsonValueKind.Object ||
+                !items.TryGetProperty(
+                    "data",
+                    out JsonElement data) ||
+                data.ValueKind !=
+                    JsonValueKind.Array)
+            {
+                return string.Empty;
+            }
+
+            JsonElement firstItem =
+                data.EnumerateArray()
+                    .FirstOrDefault();
+
+            if (firstItem.ValueKind !=
+                    JsonValueKind.Object ||
+                !firstItem.TryGetProperty(
+                    "price",
+                    out JsonElement price) ||
+                price.ValueKind !=
+                    JsonValueKind.Object)
+            {
+                return string.Empty;
+            }
+
+            return GetString(
+                price,
+                "id");
         }
 
         private static string GetMetadataValue(
