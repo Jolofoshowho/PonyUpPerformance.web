@@ -82,8 +82,16 @@ namespace PonyUpPerformance.Web.Services
                         $"{baseUrl}/CheckoutSuccess?session_id={{CHECKOUT_SESSION_ID}}",
                     CancelUrl =
                         $"{baseUrl}/Pricing",
+                    Customer =
+                        string.IsNullOrWhiteSpace(
+                            user.StripeCustomerId)
+                            ? null
+                            : user.StripeCustomerId,
                     CustomerEmail =
-                        user.Email,
+                        string.IsNullOrWhiteSpace(
+                            user.StripeCustomerId)
+                            ? user.Email
+                            : null,
                     ClientReferenceId =
                         user.Id,
                     Metadata =
@@ -171,6 +179,66 @@ namespace PonyUpPerformance.Web.Services
 
             return await service.GetAsync(
                 sessionId);
+        }
+
+        public string ResolvePlanKeyFromPriceId(
+            string? priceId)
+        {
+            if (string.IsNullOrWhiteSpace(
+                    priceId))
+            {
+                return PonyUpPlanCatalog.FreeKey;
+            }
+
+            if (MatchesConfiguredPrice(
+                    priceId,
+                    "Stripe:QuickPackPriceId"))
+            {
+                return PonyUpPlanCatalog.QuickPackKey;
+            }
+
+            if (MatchesConfiguredPrice(
+                    priceId,
+                    "Stripe:ProMonthlyPriceId",
+                    "Stripe:ProPriceId",
+                    "Stripe:ProAnnualPriceId"))
+            {
+                return PonyUpPlanCatalog.ProKey;
+            }
+
+            if (MatchesConfiguredPrice(
+                    priceId,
+                    "Stripe:FullThrottleMonthlyPriceId",
+                    "Stripe:UnlimitedPriceId",
+                    "Stripe:FullThrottleAnnualPriceId"))
+            {
+                return PonyUpPlanCatalog.FullThrottleKey;
+            }
+
+            return PonyUpPlanCatalog.FreeKey;
+        }
+
+        private bool MatchesConfiguredPrice(
+            string priceId,
+            params string[] keys)
+        {
+            foreach (string key in keys)
+            {
+                string? configured =
+                    _config[key];
+
+                if (!string.IsNullOrWhiteSpace(
+                        configured) &&
+                    string.Equals(
+                        configured,
+                        priceId,
+                        StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private string GetPriceId(
