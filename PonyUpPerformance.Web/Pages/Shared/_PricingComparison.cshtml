@@ -1,3 +1,14 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    bool proAnnualReady =
+        !string.IsNullOrWhiteSpace(
+            Configuration["Stripe:ProAnnualPriceId"]);
+
+    bool fullThrottleAnnualReady =
+        !string.IsNullOrWhiteSpace(
+            Configuration["Stripe:FullThrottleAnnualPriceId"]);
+}
+
 <section class="pricing-comparison-section">
     <div class="pricing-comparison-heading">
         <span class="pricing-plan-kicker">WHAT CHANGES AS YOU STEP UP</span>
@@ -25,8 +36,20 @@
                     <th>Price</th>
                     <td>$0</td>
                     <td>$5.99 once</td>
-                    <td>$9.99/mo<br />$79.99/yr</td>
-                    <td>$19.99/mo<br />$159.99/yr</td>
+                    <td>
+                        $9.99/mo
+                        <br />
+                        @(proAnnualReady
+                            ? "$79.99/yr"
+                            : "Annual soon")
+                    </td>
+                    <td>
+                        $19.99/mo
+                        <br />
+                        @(fullThrottleAnnualReady
+                            ? "$159.99/yr"
+                            : "Annual soon")
+                    </td>
                     <td>Coming soon</td>
                     <td>Coming soon</td>
                 </tr>
