@@ -5022,3 +5022,15 @@ body.garage-modal-open {
     margin-top: 12px;
 }
 
+.pricing-plan-disabled {
+    display: grid;
+    place-items: center;
+    min-height: 40px;
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 4px;
+    color: #666d72;
+    background: rgba(255,255,255,.025);
+    cursor: not-allowed;
+    user-select: none;
+}
+
