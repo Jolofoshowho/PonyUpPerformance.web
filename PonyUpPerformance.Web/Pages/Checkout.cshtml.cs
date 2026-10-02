@@ -44,6 +44,37 @@ namespace PonyUpPerformance.Web.Pages
                     });
             }
 
+            string normalizedPlan =
+                PonyUpPlanCatalog.NormalizeKey(
+                    plan);
+
+            if (normalizedPlan !=
+                    PonyUpPlanCatalog.QuickPackKey &&
+                !string.IsNullOrWhiteSpace(
+                    user.ActiveStripeSubscriptionId))
+            {
+                string returnUrl =
+                    $"{Request.Scheme}://{Request.Host}" +
+                    "/Identity/Account/Manage";
+
+                try
+                {
+                    string portalUrl =
+                        await _stripeCheckoutService
+                            .CreateCustomerPortalUrlAsync(
+                                user,
+                                returnUrl);
+
+                    return Redirect(
+                        portalUrl);
+                }
+                catch (InvalidOperationException)
+                {
+                    return RedirectToPage(
+                        "/Pricing");
+                }
+            }
+
             string baseUrl =
                 $"{Request.Scheme}://{Request.Host}";
 
