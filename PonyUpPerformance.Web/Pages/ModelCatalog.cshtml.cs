@@ -412,6 +412,29 @@ public class ModelCatalogModel : PageModel
         return result;
     }
 
+    private static bool GetBool(
+        JsonElement element,
+        string objectPropertyName,
+        string boolPropertyName)
+    {
+        if (element.ValueKind !=
+                JsonValueKind.Object ||
+            !element.TryGetProperty(
+                objectPropertyName,
+                out JsonElement nested) ||
+            nested.ValueKind !=
+                JsonValueKind.Object ||
+            !nested.TryGetProperty(
+                boolPropertyName,
+                out JsonElement value))
+        {
+            return false;
+        }
+
+        return value.ValueKind ==
+            JsonValueKind.True;
+    }
+
     public sealed class CatalogEntry
     {
         public string Id { get; set; } = "";
