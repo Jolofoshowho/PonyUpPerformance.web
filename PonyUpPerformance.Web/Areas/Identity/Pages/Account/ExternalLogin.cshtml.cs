@@ -87,7 +87,7 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account
                     info.LoginProvider,
                     info.ProviderKey,
                     isPersistent: false,
-                    bypassTwoFactor: true);
+                    bypassTwoFactor: false);
 
             if (result.Succeeded)
             {
