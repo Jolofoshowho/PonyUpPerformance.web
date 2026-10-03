@@ -26,13 +26,17 @@ public class RepairAnalyzerModel : PageModel
     private readonly AnalysisHistoryService
         _analysisHistoryService;
 
+    private readonly RepairEstimateCreditTokenService
+        _estimateCreditTokenService;
+
     public RepairAnalyzerModel(
         IRepairScoringService repairScoringService,
         RepairCostEstimatorService repairCostEstimatorService,
         UsageCreditService usageCreditService,
         IVinDecoderService vinDecoderService,
         IVehicleSpecEnrichmentService vehicleSpecEnrichmentService,
-        AnalysisHistoryService analysisHistoryService)
+        AnalysisHistoryService analysisHistoryService,
+        RepairEstimateCreditTokenService estimateCreditTokenService)
     {
         _repairScoringService =
             repairScoringService;
@@ -51,6 +55,9 @@ public class RepairAnalyzerModel : PageModel
 
         _analysisHistoryService =
             analysisHistoryService;
+
+        _estimateCreditTokenService =
+            estimateCreditTokenService;
     }
 
     [BindProperty]
@@ -62,7 +69,8 @@ public class RepairAnalyzerModel : PageModel
         new();
 
     [BindProperty]
-    public bool EstimateCreditConsumed { get; set; }
+    public string EstimateCreditToken { get; set; } =
+        string.Empty;
 
     [BindProperty]
     public int WorkflowStage { get; set; } = 1;
@@ -216,7 +224,16 @@ public class RepairAnalyzerModel : PageModel
         ModelState.Remove(
             "Input.RepairCost");
 
-        EstimateCreditConsumed = true;
+        string? userId =
+            User.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier)
+                ?.Value;
+
+        EstimateCreditToken =
+            string.IsNullOrWhiteSpace(userId)
+                ? string.Empty
+                : _estimateCreditTokenService.Issue(
+                    userId);
 
         CreditStatus =
             await _usageCreditService.GetStatusAsync(
@@ -285,7 +302,17 @@ public class RepairAnalyzerModel : PageModel
          * second credit for the decision immediately
          * following that estimate.
          */
-        if (!EstimateCreditConsumed)
+        string? currentUserId =
+            User.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier)
+                ?.Value;
+
+        bool estimateCreditAlreadyConsumed =
+            _estimateCreditTokenService.IsValid(
+                EstimateCreditToken,
+                currentUserId);
+
+        if (!estimateCreditAlreadyConsumed)
         {
             if (!CreditStatus.CanRunAnalysis)
             {
@@ -335,7 +362,8 @@ public class RepairAnalyzerModel : PageModel
                 : Input.Condition.ToString(),
             Input.OwnershipYears);
 
-        EstimateCreditConsumed = false;
+        EstimateCreditToken =
+            string.Empty;
 
         CreditStatus =
             await _usageCreditService.GetStatusAsync(
