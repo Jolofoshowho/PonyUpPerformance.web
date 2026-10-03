@@ -18,11 +18,16 @@ public sealed class PlanEntitlementService
         ApplicationUser user,
         string planKey,
         string? stripeCustomerId,
-        string? stripeSubscriptionId)
+        string? stripeSubscriptionId,
+        string? billingInterval = null)
     {
         string normalized =
             PonyUpPlanCatalog.NormalizeKey(
                 planKey);
+
+        string normalizedBilling =
+            NormalizeBillingInterval(
+                billingInterval);
 
         DateTime now =
             DateTime.UtcNow;
@@ -48,8 +53,13 @@ public sealed class PlanEntitlementService
                 user.SubscriptionCredits =
                     10;
 
+                user.SubscriptionBillingInterval =
+                    normalizedBilling;
+
                 user.NextSubscriptionCreditRefreshOn =
-                    now.AddMonths(1);
+                    normalizedBilling == "annual"
+                        ? now.AddMonths(1)
+                        : null;
 
                 ClearRevUpAllowance(
                     user);
@@ -67,6 +77,9 @@ public sealed class PlanEntitlementService
 
                 user.SubscriptionCredits =
                     0;
+
+                user.SubscriptionBillingInterval =
+                    normalizedBilling;
 
                 user.NextSubscriptionCreditRefreshOn =
                     null;
@@ -91,11 +104,16 @@ public sealed class PlanEntitlementService
                 user.NextSubscriptionCreditRefreshOn =
                     null;
 
+                user.SubscriptionBillingInterval =
+                    normalizedBilling;
+
                 user.RevUpReportsRemaining =
                     5;
 
                 user.NextRevUpReportRefreshOn =
-                    now.AddMonths(1);
+                    normalizedBilling == "annual"
+                        ? now.AddMonths(1)
+                        : null;
 
                 SetStripeSubscription(
                     user,
@@ -113,6 +131,9 @@ public sealed class PlanEntitlementService
 
                 user.NextSubscriptionCreditRefreshOn =
                     null;
+
+                user.SubscriptionBillingInterval =
+                    normalizedBilling;
 
                 user.RevUpReportsRemaining =
                     0;
@@ -156,7 +177,9 @@ public sealed class PlanEntitlementService
                     10;
 
                 user.NextSubscriptionCreditRefreshOn =
-                    now.AddMonths(1);
+                    IsAnnual(user)
+                        ? now.AddMonths(1)
+                        : null;
 
                 break;
 
@@ -180,7 +203,9 @@ public sealed class PlanEntitlementService
                     5;
 
                 user.NextRevUpReportRefreshOn =
-                    now.AddMonths(1);
+                    IsAnnual(user)
+                        ? now.AddMonths(1)
+                        : null;
 
                 break;
 
@@ -212,7 +237,8 @@ public sealed class PlanEntitlementService
             false;
 
         if (planKey ==
-            PonyUpPlanCatalog.ProKey)
+                PonyUpPlanCatalog.ProKey &&
+            IsAnnual(user))
         {
             if (!user.NextSubscriptionCreditRefreshOn.HasValue)
             {
@@ -239,7 +265,8 @@ public sealed class PlanEntitlementService
         }
 
         if (planKey ==
-            PonyUpPlanCatalog.RedlineKey)
+                PonyUpPlanCatalog.RedlineKey &&
+            IsAnnual(user))
         {
             if (!user.NextRevUpReportRefreshOn.HasValue)
             {
@@ -313,6 +340,9 @@ public sealed class PlanEntitlementService
         user.ActiveStripeSubscriptionId =
             string.Empty;
 
+        user.SubscriptionBillingInterval =
+            string.Empty;
+
         user.CurrentPlan =
             hasQuickPack
                 ? "Quick Pack"
@@ -366,6 +396,26 @@ public sealed class PlanEntitlementService
             user.ActiveStripeSubscriptionId =
                 stripeSubscriptionId;
         }
+    }
+
+    private static string NormalizeBillingInterval(
+        string? billingInterval)
+    {
+        return string.Equals(
+                billingInterval,
+                "annual",
+                StringComparison.OrdinalIgnoreCase)
+            ? "annual"
+            : "monthly";
+    }
+
+    private static bool IsAnnual(
+        ApplicationUser user)
+    {
+        return string.Equals(
+            user.SubscriptionBillingInterval,
+            "annual",
+            StringComparison.OrdinalIgnoreCase);
     }
 
     private static int PlanRank(
