@@ -151,6 +151,7 @@ builder.Services.AddHttpClient<IMarketValueService, MarketValueService>(client =
 });
 builder.Services.AddScoped<StripeCheckoutService>();
 builder.Services.AddScoped<PlanEntitlementService>();
+builder.Services.AddScoped<StripeFulfillmentService>();
 builder.Services.AddScoped<UsageCreditService>();
 builder.Services.AddScoped<IRevUpReportProvider, UnavailableRevUpReportProvider>();
 builder.Services.AddScoped<RevUpReportService>();
