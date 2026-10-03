@@ -45,7 +45,7 @@ namespace PonyUpPerformance.Web.Pages
             if (alreadyProcessed)
             {
                 Message =
-                    "Purchase already processed.";
+                    "Payment complete. Your PonyUp access is active.";
 
                 return;
             }
