@@ -152,6 +152,8 @@ builder.Services.AddHttpClient<IMarketValueService, MarketValueService>(client =
 builder.Services.AddScoped<StripeCheckoutService>();
 builder.Services.AddScoped<PlanEntitlementService>();
 builder.Services.AddScoped<StripeFulfillmentService>();
+builder.Services.AddScoped<PonyUpIdentityEmailSender>();
+builder.Services.AddScoped<IEmailSender<ApplicationUser>, PonyUpIdentityEmailSender>();
 builder.Services.AddScoped<UsageCreditService>();
 builder.Services.AddScoped<IRevUpReportProvider, UnavailableRevUpReportProvider>();
 builder.Services.AddScoped<RevUpReportService>();
