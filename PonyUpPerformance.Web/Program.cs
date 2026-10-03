@@ -91,17 +91,46 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 })
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
-builder.Services.AddAuthentication()
-    .AddGoogle(options =>
+var authenticationBuilder =
+    builder.Services.AddAuthentication();
+
+string? googleClientId =
+    builder.Configuration["Authentication:Google:ClientId"];
+
+string? googleClientSecret =
+    builder.Configuration["Authentication:Google:ClientSecret"];
+
+if (!string.IsNullOrWhiteSpace(googleClientId) &&
+    !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    authenticationBuilder.AddGoogle(options =>
     {
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? string.Empty;
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? string.Empty;
-    })
-    .AddFacebook(options =>
-    {
-        options.AppId = builder.Configuration["Authentication:Facebook:AppId"] ?? string.Empty;
-        options.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"] ?? string.Empty;
+        options.ClientId =
+            googleClientId;
+
+        options.ClientSecret =
+            googleClientSecret;
     });
+}
+
+string? facebookAppId =
+    builder.Configuration["Authentication:Facebook:AppId"];
+
+string? facebookAppSecret =
+    builder.Configuration["Authentication:Facebook:AppSecret"];
+
+if (!string.IsNullOrWhiteSpace(facebookAppId) &&
+    !string.IsNullOrWhiteSpace(facebookAppSecret))
+{
+    authenticationBuilder.AddFacebook(options =>
+    {
+        options.AppId =
+            facebookAppId;
+
+        options.AppSecret =
+            facebookAppSecret;
+    });
+}
 
 builder.Services.AddDataProtection()
     .PersistKeysToDbContext<ApplicationDbContext>();
