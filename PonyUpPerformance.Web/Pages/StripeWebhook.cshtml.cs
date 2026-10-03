@@ -184,7 +184,10 @@ namespace PonyUpPerformance.Web.Pages
                                 "customer"),
                             GetString(
                                 dataObject,
-                                "subscription"));
+                                "subscription"),
+                            GetMetadataValue(
+                                dataObject,
+                                "BillingInterval"));
 
                     recordKey =
                         sessionId;
@@ -285,6 +288,11 @@ namespace PonyUpPerformance.Web.Pages
                             .ResolvePlanKeyFromPriceId(
                                 priceId);
 
+                    string billingInterval =
+                        _stripeCheckoutService
+                            .ResolveBillingIntervalFromPriceId(
+                                priceId);
+
                     if (string.IsNullOrWhiteSpace(
                             userId) ||
                         planKey ==
@@ -307,10 +315,29 @@ namespace PonyUpPerformance.Web.Pages
                         PonyUpPlanCatalog.NormalizeKey(
                             user.CurrentPlan);
 
-                    if (!string.Equals(
+                    bool planChanged =
+                        !string.Equals(
                             currentPlanKey,
                             planKey,
-                            StringComparison.Ordinal))
+                            StringComparison.Ordinal);
+
+                    bool cadenceChanged =
+                        !string.IsNullOrWhiteSpace(
+                            billingInterval) &&
+                        !string.Equals(
+                            user.SubscriptionBillingInterval,
+                            billingInterval,
+                            StringComparison.OrdinalIgnoreCase);
+
+                    if (!string.IsNullOrWhiteSpace(
+                            billingInterval))
+                    {
+                        user.SubscriptionBillingInterval =
+                            billingInterval;
+                    }
+
+                    if (planChanged ||
+                        cadenceChanged)
                     {
                         _planEntitlementService
                             .ApplyRenewal(
