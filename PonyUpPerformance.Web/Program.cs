@@ -142,6 +142,9 @@ builder.Services.AddRazorPages();
 
 builder.Services.AddRateLimiter(options =>
 {
+    options.RejectionStatusCode =
+        StatusCodes.Status429TooManyRequests;
+
     options.AddFixedWindowLimiter(
         "owner-login",
         limiter =>
