@@ -16,17 +16,20 @@ namespace PonyUpPerformance.Web.Pages
         private readonly ApplicationDbContext _dbContext;
         private readonly PlanEntitlementService _planEntitlementService;
         private readonly StripeCheckoutService _stripeCheckoutService;
+        private readonly StripeFulfillmentService _stripeFulfillmentService;
 
         public StripeWebhookModel(
             IConfiguration configuration,
             ApplicationDbContext dbContext,
             PlanEntitlementService planEntitlementService,
-            StripeCheckoutService stripeCheckoutService)
+            StripeCheckoutService stripeCheckoutService,
+            StripeFulfillmentService stripeFulfillmentService)
         {
             _configuration = configuration;
             _dbContext = dbContext;
             _planEntitlementService = planEntitlementService;
             _stripeCheckoutService = stripeCheckoutService;
+            _stripeFulfillmentService = stripeFulfillmentService;
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -154,49 +157,28 @@ namespace PonyUpPerformance.Web.Pages
                         break;
                     }
 
-                    bool sessionAlreadyProcessed =
-                        await _dbContext.StripePurchases
-                            .AnyAsync(x =>
-                                x.StripeSessionId ==
-                                sessionId);
+                    CheckoutFulfillmentResult result =
+                        await _stripeFulfillmentService
+                            .FulfillCheckoutAsync(
+                                sessionId,
+                                userId,
+                                planKey,
+                                GetString(
+                                    dataObject,
+                                    "customer"),
+                                GetString(
+                                    dataObject,
+                                    "subscription"),
+                                GetMetadataValue(
+                                    dataObject,
+                                    "BillingInterval"));
 
-                    if (sessionAlreadyProcessed)
+                    if (result is
+                        CheckoutFulfillmentResult.Applied or
+                        CheckoutFulfillmentResult.AlreadyProcessed)
                     {
                         return new OkResult();
                     }
-
-                    ApplicationUser? user =
-                        await _dbContext.Users
-                            .FirstOrDefaultAsync(
-                                x => x.Id == userId);
-
-                    if (user == null)
-                    {
-                        break;
-                    }
-
-                    await _planEntitlementService
-                        .ApplyCheckoutAsync(
-                            user,
-                            planKey,
-                            GetString(
-                                dataObject,
-                                "customer"),
-                            GetString(
-                                dataObject,
-                                "subscription"),
-                            GetMetadataValue(
-                                dataObject,
-                                "BillingInterval"));
-
-                    recordKey =
-                        sessionId;
-
-                    recordPlanKey =
-                        planKey;
-
-                    shouldRecord =
-                        true;
 
                     break;
                 }
