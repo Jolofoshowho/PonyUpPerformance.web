@@ -70,6 +70,29 @@ public sealed class SiteSmokeTests :
     }
 
     [Fact]
+    public async Task Home_RoutesDecisionCardsToAnalyzerPages()
+    {
+        string html =
+            await _client.GetStringAsync(
+                "/");
+
+        foreach (string route in new[]
+        {
+            "/RepairAnalyzer",
+            "/BuyAnalyzer",
+            "/SellAnalyzer",
+            "/TradeAnalyzer",
+            "/UpgradeAnalyzer"
+        })
+        {
+            Assert.Contains(
+                $"href=\"{route}\"",
+                html,
+                StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    [Fact]
     public async Task DecisionCenter_RendersAllFiveActions()
     {
         string html =
