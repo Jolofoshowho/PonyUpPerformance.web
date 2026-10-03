@@ -98,12 +98,17 @@ namespace PonyUpPerformance.Web.Pages
                 PonyUpPlanCatalog.NormalizeKey(
                     rawPlanKey);
 
+            session.Metadata.TryGetValue(
+                "BillingInterval",
+                out string? billingInterval);
+
             await _planEntitlementService
                 .ApplyCheckoutAsync(
                     user,
                     planKey,
                     session.CustomerId,
-                    session.SubscriptionId);
+                    session.SubscriptionId,
+                    billingInterval);
 
             _dbContext.StripePurchases.Add(
                 new StripePurchase
