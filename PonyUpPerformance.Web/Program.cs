@@ -141,6 +141,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddScoped<IRepairScoringService, RepairScoringService>();
 builder.Services.AddScoped<AnalysisHistoryService>();
 builder.Services.AddScoped<RepairCostEstimatorService>();
+builder.Services.AddScoped<RepairEstimateCreditTokenService>();
 builder.Services.AddScoped<VehiclePaintPaletteService>();
 builder.Services.AddScoped<VehicleRenderService>();
 builder.Services.AddHttpClient<IVinDecoderService, NhtsaVehicleService>();
