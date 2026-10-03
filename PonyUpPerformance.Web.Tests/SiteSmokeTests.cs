@@ -1,5 +1,8 @@
 using System.Net;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
+using PonyUpPerformance.Web.Models;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
@@ -48,6 +51,40 @@ public sealed class SiteSmokeTests :
         Assert.True(
             (int)response.StatusCode < 500,
             $"{path} returned {(int)response.StatusCode} {response.StatusCode}.");
+    }
+
+    [Fact]
+    public async Task Login_UsesSupportLinkWhenEmailDeliveryIsNotConfigured()
+    {
+        string html =
+            await _client.GetStringAsync(
+                "/Identity/Account/Login");
+
+        Assert.Contains(
+            "Need account help?",
+            html,
+            StringComparison.OrdinalIgnoreCase);
+
+        Assert.DoesNotContain(
+            "Forgot your password?",
+            html,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void IdentityEmailSender_IsRegistered(
+        PonyUpFactory factory)
+    {
+        using IServiceScope scope =
+            factory.Services.CreateScope();
+
+        var sender =
+            scope.ServiceProvider
+                .GetService<IEmailSender<ApplicationUser>>();
+
+        Assert.NotNull(sender);
+        Assert.IsType<PonyUpPerformance.Web.Services.PonyUpIdentityEmailSender>(
+            sender);
     }
 
     [Fact]
