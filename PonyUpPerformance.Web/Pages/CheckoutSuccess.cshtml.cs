@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using PonyUpPerformance.Web.Data;
 using PonyUpPerformance.Web.Models;
 using PonyUpPerformance.Web.Services;
 
@@ -8,44 +6,27 @@ namespace PonyUpPerformance.Web.Pages
 {
     public class CheckoutSuccessModel : PageModel
     {
-        private readonly ApplicationDbContext _dbContext;
         private readonly StripeCheckoutService _stripeCheckoutService;
-        private readonly PlanEntitlementService _planEntitlementService;
+        private readonly StripeFulfillmentService _stripeFulfillmentService;
 
         public string Message { get; set; } = "";
 
         public CheckoutSuccessModel(
-            ApplicationDbContext dbContext,
             StripeCheckoutService stripeCheckoutService,
-            PlanEntitlementService planEntitlementService)
+            StripeFulfillmentService stripeFulfillmentService)
         {
-            _dbContext = dbContext;
             _stripeCheckoutService = stripeCheckoutService;
-            _planEntitlementService = planEntitlementService;
+            _stripeFulfillmentService = stripeFulfillmentService;
         }
 
         public async Task OnGetAsync(
             string session_id)
         {
             if (string.IsNullOrWhiteSpace(
-                session_id))
+                    session_id))
             {
                 Message =
                     "Missing checkout session.";
-
-                return;
-            }
-
-            bool alreadyProcessed =
-                await _dbContext.StripePurchases
-                    .AnyAsync(x =>
-                        x.StripeSessionId ==
-                        session_id);
-
-            if (alreadyProcessed)
-            {
-                Message =
-                    "Payment complete. Your PonyUp access is active.";
 
                 return;
             }
@@ -55,8 +36,14 @@ namespace PonyUpPerformance.Web.Pages
                     .GetSessionAsync(
                         session_id);
 
-            if (session.PaymentStatus !=
-                "paid")
+            if (!string.Equals(
+                    session.PaymentStatus,
+                    "paid",
+                    StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(
+                    session.PaymentStatus,
+                    "no_payment_required",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 Message =
                     "Payment has not completed.";
@@ -81,19 +68,6 @@ namespace PonyUpPerformance.Web.Pages
                 return;
             }
 
-            ApplicationUser? user =
-                await _dbContext.Users
-                    .FirstOrDefaultAsync(
-                        x => x.Id == userId);
-
-            if (user == null)
-            {
-                Message =
-                    "User not found.";
-
-                return;
-            }
-
             string planKey =
                 PonyUpPlanCatalog.NormalizeKey(
                     rawPlanKey);
@@ -102,31 +76,33 @@ namespace PonyUpPerformance.Web.Pages
                 "BillingInterval",
                 out string? billingInterval);
 
-            await _planEntitlementService
-                .ApplyCheckoutAsync(
-                    user,
-                    planKey,
-                    session.CustomerId,
-                    session.SubscriptionId,
-                    billingInterval);
-
-            _dbContext.StripePurchases.Add(
-                new StripePurchase
-                {
-                    UserId =
-                        user.Id,
-
-                    StripeSessionId =
+            CheckoutFulfillmentResult result =
+                await _stripeFulfillmentService
+                    .FulfillCheckoutAsync(
                         session_id,
-
-                    PlanKey =
+                        userId,
                         planKey,
+                        session.CustomerId,
+                        session.SubscriptionId,
+                        billingInterval);
 
-                    CreatedOn =
-                        DateTime.UtcNow
-                });
+            if (result ==
+                CheckoutFulfillmentResult.UserNotFound)
+            {
+                Message =
+                    "Payment completed, but the PonyUp account could not be matched.";
 
-            await _dbContext.SaveChangesAsync();
+                return;
+            }
+
+            if (result ==
+                CheckoutFulfillmentResult.InvalidRequest)
+            {
+                Message =
+                    "Payment completed, but the checkout details were incomplete.";
+
+                return;
+            }
 
             PonyUpPlanAccess access =
                 PonyUpPlanCatalog.Resolve(
@@ -135,7 +111,7 @@ namespace PonyUpPerformance.Web.Pages
             Message =
                 access.UnlimitedStandardAnalyses
                     ? $"Payment complete. {access.DisplayName} is active."
-                    : $"Payment complete. Your PonyUp access is active.";
+                    : "Payment complete. Your PonyUp access is active.";
         }
     }
 }
