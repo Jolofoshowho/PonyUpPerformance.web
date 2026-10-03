@@ -97,11 +97,107 @@ namespace PonyUpPerformance.Web.Pages
             string planKey =
                 string.Empty;
 
+            string recordKey =
+                stripeEvent.Id;
+
+            string recordPlanKey =
+                string.Empty;
+
             bool shouldRecord =
                 false;
 
             switch (stripeEvent.Type)
             {
+                case "checkout.session.completed":
+                case "checkout.session.async_payment_succeeded":
+                {
+                    string paymentStatus =
+                        GetString(
+                            dataObject,
+                            "payment_status");
+
+                    if (!string.Equals(
+                            paymentStatus,
+                            "paid",
+                            StringComparison.OrdinalIgnoreCase) &&
+                        !string.Equals(
+                            paymentStatus,
+                            "no_payment_required",
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        break;
+                    }
+
+                    string sessionId =
+                        GetString(
+                            dataObject,
+                            "id");
+
+                    userId =
+                        GetMetadataValue(
+                            dataObject,
+                            "UserId");
+
+                    planKey =
+                        PonyUpPlanCatalog.NormalizeKey(
+                            GetMetadataValue(
+                                dataObject,
+                                "PlanKey"));
+
+                    if (string.IsNullOrWhiteSpace(
+                            sessionId) ||
+                        string.IsNullOrWhiteSpace(
+                            userId) ||
+                        planKey ==
+                            PonyUpPlanCatalog.FreeKey)
+                    {
+                        break;
+                    }
+
+                    bool sessionAlreadyProcessed =
+                        await _dbContext.StripePurchases
+                            .AnyAsync(x =>
+                                x.StripeSessionId ==
+                                sessionId);
+
+                    if (sessionAlreadyProcessed)
+                    {
+                        return new OkResult();
+                    }
+
+                    ApplicationUser? user =
+                        await _dbContext.Users
+                            .FirstOrDefaultAsync(
+                                x => x.Id == userId);
+
+                    if (user == null)
+                    {
+                        break;
+                    }
+
+                    await _planEntitlementService
+                        .ApplyCheckoutAsync(
+                            user,
+                            planKey,
+                            GetString(
+                                dataObject,
+                                "customer"),
+                            GetString(
+                                dataObject,
+                                "subscription"));
+
+                    recordKey =
+                        sessionId;
+
+                    recordPlanKey =
+                        planKey;
+
+                    shouldRecord =
+                        true;
+
+                    break;
+                }
+
                 case "invoice.paid":
                 {
                     string billingReason =
@@ -153,6 +249,9 @@ namespace PonyUpPerformance.Web.Pages
                         .ApplyRenewal(
                             user,
                             planKey);
+
+                    recordPlanKey =
+                        $"webhook:{stripeEvent.Type}:{planKey}";
 
                     shouldRecord =
                         true;
@@ -233,6 +332,9 @@ namespace PonyUpPerformance.Web.Pages
                             customerId;
                     }
 
+                    recordPlanKey =
+                        $"webhook:{stripeEvent.Type}:{planKey}";
+
                     shouldRecord =
                         true;
 
@@ -279,6 +381,12 @@ namespace PonyUpPerformance.Web.Pages
                                 user,
                                 subscriptionId);
 
+                    if (shouldRecord)
+                    {
+                        recordPlanKey =
+                            $"webhook:{stripeEvent.Type}:{planKey}";
+                    }
+
                     break;
                 }
             }
@@ -292,10 +400,13 @@ namespace PonyUpPerformance.Web.Pages
                             userId,
 
                         StripeSessionId =
-                            stripeEvent.Id,
+                            recordKey,
 
                         PlanKey =
-                            $"webhook:{stripeEvent.Type}:{planKey}",
+                            string.IsNullOrWhiteSpace(
+                                recordPlanKey)
+                                ? planKey
+                                : recordPlanKey,
 
                         CreatedOn =
                             DateTime.UtcNow
