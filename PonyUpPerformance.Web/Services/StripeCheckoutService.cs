@@ -181,6 +181,36 @@ namespace PonyUpPerformance.Web.Services
                 sessionId);
         }
 
+        public string ResolveBillingIntervalFromPriceId(
+            string? priceId)
+        {
+            if (string.IsNullOrWhiteSpace(
+                    priceId))
+            {
+                return string.Empty;
+            }
+
+            if (MatchesConfiguredPrice(
+                    priceId,
+                    "Stripe:ProAnnualPriceId",
+                    "Stripe:FullThrottleAnnualPriceId"))
+            {
+                return "annual";
+            }
+
+            if (MatchesConfiguredPrice(
+                    priceId,
+                    "Stripe:ProMonthlyPriceId",
+                    "Stripe:ProPriceId",
+                    "Stripe:FullThrottleMonthlyPriceId",
+                    "Stripe:UnlimitedPriceId"))
+            {
+                return "monthly";
+            }
+
+            return string.Empty;
+        }
+
         public string ResolvePlanKeyFromPriceId(
             string? priceId)
         {
