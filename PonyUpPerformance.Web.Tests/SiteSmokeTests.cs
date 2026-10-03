@@ -35,6 +35,7 @@ public sealed class SiteSmokeTests :
     [InlineData("/Resources")]
     [InlineData("/Privacy")]
     [InlineData("/Terms")]
+    [InlineData("/DataDeletion")]
     [InlineData("/OwnerLogin")]
     public async Task PublicPages_RenderWithoutServerError(
         string path)
