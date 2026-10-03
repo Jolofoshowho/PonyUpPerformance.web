@@ -50,39 +50,6 @@
                !string.IsNullOrWhiteSpace(model);
     }
 
-    string ShortYear(
-        int? year)
-    {
-        return year.HasValue
-            ? $"'{year.Value % 100:00}"
-            : string.Empty;
-    }
-
-    string VehicleTopLine(
-        int? year,
-        string? make)
-    {
-        string yearText =
-            ShortYear(year);
-
-        string makeText =
-            make?.Trim()
-            ?? string.Empty;
-
-        if (!string.IsNullOrWhiteSpace(yearText) &&
-            !string.IsNullOrWhiteSpace(makeText))
-        {
-            return $"{yearText} {makeText}";
-        }
-
-        if (!string.IsNullOrWhiteSpace(yearText))
-        {
-            return yearText;
-        }
-
-        return makeText;
-    }
-
     bool hasYourIdentity =
         HasVehicleIdentity(
             Model.Input.YourYear,

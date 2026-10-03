@@ -87,7 +87,7 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account
                     info.LoginProvider,
                     info.ProviderKey,
                     isPersistent: false,
-                    bypassTwoFactor: true);
+                    bypassTwoFactor: false);
 
             if (result.Succeeded)
             {
@@ -251,12 +251,22 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account
 
             ReturnUrl = returnUrl;
 
-            if (!ModelState.IsValid)
+            string? providerEmail =
+                info.Principal.FindFirstValue(
+                    ClaimTypes.Email);
+
+            if (string.IsNullOrWhiteSpace(
+                    providerEmail))
             {
-                return Page();
+                ErrorMessage =
+                    "Your external sign-in provider did not return an email address. For account security, PonyUp cannot attach that login to a manually entered email address.";
+
+                return RedirectToPage(
+                    "./Login");
             }
 
-            var email = Input.Email.Trim();
+            string email =
+                providerEmail.Trim();
 
             var user =
                 await _userManager.FindByEmailAsync(email);

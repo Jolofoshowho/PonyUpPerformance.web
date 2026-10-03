@@ -259,38 +259,61 @@
                         }
 
                         <div class="garage-viewer-wrap">
-                            <div id="garage3dViewer"
-                                 class="garage-3d-viewer"
-                                 data-vehicle-id="@vehicle.Id"
-                                 data-appearance="@vehicle.AppearanceJson"
-                                 data-vin="@vehicle.Vin"
-                                 data-year="@vehicle.Year"
-                                 data-make="@vehicle.Make"
-                                 data-model="@vehicle.Model"
-                                 data-trim="@vehicle.Trim"
-                                 data-paint="@vehicle.SelectedPaintHex"
-                                 data-car-images-key="@carImagesApiKey"
-                                 aria-label="@VehicleName(vehicle) interactive 3D model">
-                            </div>
+                            @if (Model.Has3DGarage)
+                            {
+                                <div id="garage3dViewer"
+                                     class="garage-3d-viewer"
+                                     data-vehicle-id="@vehicle.Id"
+                                     data-appearance="@vehicle.AppearanceJson"
+                                     data-vin="@vehicle.Vin"
+                                     data-year="@vehicle.Year"
+                                     data-make="@vehicle.Make"
+                                     data-model="@vehicle.Model"
+                                     data-trim="@vehicle.Trim"
+                                     data-paint="@vehicle.SelectedPaintHex"
+                                     data-car-images-key="@carImagesApiKey"
+                                     aria-label="@VehicleName(vehicle) interactive 3D model">
+                                </div>
 
-                            <div id="garageModelQuality"
-                                 class="garage-model-quality"
-                                 aria-live="polite">
-                                FINDING VEHICLE
-                            </div>
+                                <div id="garageModelQuality"
+                                     class="garage-model-quality"
+                                     aria-live="polite">
+                                    FINDING VEHICLE
+                                </div>
 
-                            <div class="garage-viewer-hint">
-                                Drag to rotate · Scroll to zoom · Auto-spin resumes when released
-                            </div>
+                                <div class="garage-viewer-hint">
+                                    Drag to rotate · Scroll to zoom · Auto-spin resumes when released
+                                </div>
 
-                            <form id="garageAppearancePersistence"
-                                  method="post"
-                                  asp-page-handler="SaveAppearance"
-                                  hidden>
-                                <input type="hidden"
-                                       name="vehicleId"
-                                       value="@vehicle.Id" />
-                            </form>
+                                @if (Model.CanCustomizeInterior ||
+                                     Model.CanCustomizeWheels)
+                                {
+                                    <form id="garageAppearancePersistence"
+                                          method="post"
+                                          asp-page-handler="SaveAppearance"
+                                          hidden>
+                                        <input type="hidden"
+                                               name="vehicleId"
+                                               value="@vehicle.Id" />
+                                    </form>
+                                }
+                            }
+                            else
+                            {
+                                <div class="garage-basic-vehicle"
+                                     aria-label="@VehicleName(vehicle) basic Garage view">
+                                    @Html.Raw(Model.SelectedVehicleSvg)
+
+                                    <strong>BASIC GARAGE</strong>
+                                    <span>
+                                        Realistic 3D unlocks with Quick Pack or higher.
+                                    </span>
+
+                                    <a asp-page="/Pricing">
+                                        VIEW GARAGE UPGRADES
+                                    </a>
+                                </div>
+                            }
                         </div>
 
                         @if (Model.NextVehicleId.HasValue)
@@ -308,8 +331,35 @@
                     <aside class="garage-paint-panel garage-customizer-panel">
                         <div class="garage-paint-heading">
                             <h3>CUSTOMIZE</h3>
-                            <p>Exterior · Interior · Wheels</p>
+                            <p>
+                                @(Model.CanCustomizeInterior || Model.CanCustomizeWheels
+                                    ? "Exterior · Interior · Wheels"
+                                    : Model.CanCustomizeExterior
+                                        ? "Exterior"
+                                        : "Garage upgrades")
+                            </p>
                         </div>
+
+                        @if (!Model.CanCustomizeExterior)
+                        {
+                            <section class="garage-customizer-card garage-customizer-locked">
+                                <div class="garage-customizer-card-head">
+                                    <span>3D</span>
+                                    <h4>CUSTOMIZATION LOCKED</h4>
+                                </div>
+
+                                <p class="garage-customizer-note">
+                                    Free includes the basic Garage. Quick Pack or higher unlocks realistic 3D and exterior paint.
+                                </p>
+
+                                <a class="garage-secondary-button"
+                                   asp-page="/Pricing">
+                                    VIEW GARAGE TIERS
+                                </a>
+                            </section>
+                        }
+                        else
+                        {
 
                         <section class="garage-customizer-card">
                             <div class="garage-customizer-card-head">
@@ -358,38 +408,65 @@
                             </div>
                         </section>
 
-                        <section class="garage-customizer-card">
-                            <div class="garage-customizer-card-head">
-                                <span>02</span>
-                                <h4>INTERIOR</h4>
-                            </div>
+                        @if (Model.CanCustomizeInterior)
+                        {
+                            <section class="garage-customizer-card">
+                                <div class="garage-customizer-card-head">
+                                    <span>02</span>
+                                    <h4>INTERIOR</h4>
+                                </div>
 
-                            <div class="garage-option-grid"
-                                 data-customizer-options="interior"></div>
+                                <div class="garage-option-grid"
+                                     data-customizer-options="interior"></div>
 
-                            <p class="garage-customizer-status"
-                               data-customizer-status="interior">
-                                Checking this model's interior materials…
-                            </p>
-                        </section>
+                                <p class="garage-customizer-status"
+                                   data-customizer-status="interior">
+                                    Checking this model's interior materials…
+                                </p>
+                            </section>
+                        }
 
-                        <section class="garage-customizer-card">
-                            <div class="garage-customizer-card-head">
-                                <span>03</span>
-                                <h4>WHEELS</h4>
-                            </div>
+                        @if (Model.CanCustomizeWheels)
+                        {
+                            <section class="garage-customizer-card">
+                                <div class="garage-customizer-card-head">
+                                    <span>03</span>
+                                    <h4>WHEELS</h4>
+                                </div>
 
-                            <div class="garage-wheel-style-options"
-                                 data-customizer-options="wheel-style"></div>
+                                <div class="garage-wheel-style-options"
+                                     data-customizer-options="wheel-style"></div>
 
-                            <div class="garage-option-grid"
-                                 data-customizer-options="wheel-finish"></div>
+                                <div class="garage-option-grid"
+                                     data-customizer-options="wheel-finish"></div>
 
-                            <p class="garage-customizer-status"
-                               data-customizer-status="wheels">
-                                Checking this model's wheel options…
-                            </p>
-                        </section>
+                                <p class="garage-customizer-status"
+                                   data-customizer-status="wheels">
+                                    Checking this model's wheel options…
+                                </p>
+                            </section>
+                        }
+
+                        @if (!Model.CanCustomizeInterior &&
+                             !Model.CanCustomizeWheels)
+                        {
+                            <section class="garage-customizer-card garage-customizer-locked">
+                                <div class="garage-customizer-card-head">
+                                    <span>+</span>
+                                    <h4>FULL GARAGE</h4>
+                                </div>
+
+                                <p class="garage-customizer-note">
+                                    Full Throttle and above unlock interior colors/materials, wheel styles, wheel finishes, and special appearance variants.
+                                </p>
+
+                                <a class="garage-secondary-button"
+                                   asp-page="/Pricing">
+                                    UNLOCK FULL GARAGE
+                                </a>
+                            </section>
+                        }
+                        }
                     </aside>
                 </section>
 

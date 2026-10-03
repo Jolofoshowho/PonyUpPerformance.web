@@ -1,8 +1,19 @@
 @page
 @model LoginModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
 @{
     ViewData["Title"] = "Log in";
+
+    bool passwordResetEmailReady =
+        !string.IsNullOrWhiteSpace(
+            Configuration["Email:SmtpHost"]) &&
+        !string.IsNullOrWhiteSpace(
+            Configuration["Email:Username"]) &&
+        !string.IsNullOrWhiteSpace(
+            Configuration["Email:Password"]) &&
+        !string.IsNullOrWhiteSpace(
+            Configuration["Email:FromAddress"]);
 }
 
 <style>
@@ -199,17 +210,23 @@
 
                 <div class="login-links">
 
-                    <a asp-page="./ForgotPassword">
-                        Forgot your password?
-                    </a>
+                    @if (passwordResetEmailReady)
+                    {
+                        <a asp-page="./ForgotPassword">
+                            Forgot your password?
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-page="/Contact"
+                           asp-area="">
+                            Need account help?
+                        </a>
+                    }
 
                     <a asp-page="./Register"
                        asp-route-returnUrl="@Model.ReturnUrl">
                         Register as a new user
-                    </a>
-
-                    <a asp-page="./ResendEmailConfirmation">
-                        Resend email confirmation
                     </a>
 
                 </div>

@@ -55,6 +55,11 @@ namespace PonyUpPerformance.Web.Pages
         public int RemainingCredits { get; set; }
         public string AnalysisAccessLabel { get; set; } = "0";
         public bool IsOwnerAccess { get; set; }
+        public bool Has3DGarage { get; set; }
+        public bool CanCustomizeExterior { get; set; }
+        public bool CanCustomizeInterior { get; set; }
+        public bool CanCustomizeWheels { get; set; }
+        public bool CanUseSpecialTrims { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int? vehicleId)
         {
@@ -204,6 +209,19 @@ namespace PonyUpPerformance.Web.Pages
                 return RedirectToPage("/MyGarage");
             }
 
+            UsageCreditStatus access =
+                await _usageCreditService.GetStatusAsync(User);
+
+            if (!access.CanCustomizeExterior)
+            {
+                TempData["GarageMessage"] =
+                    "Exterior paint customization unlocks with Quick Pack or higher.";
+
+                return RedirectToPage(
+                    "/MyGarage",
+                    new { vehicleId = vehicle.Id });
+            }
+
             vehicle.SelectedPaintName =
                 (paintName ?? "").Trim();
 
@@ -247,6 +265,15 @@ namespace PonyUpPerformance.Web.Pages
             if (vehicle == null)
             {
                 return new NotFoundResult();
+            }
+
+            UsageCreditStatus access =
+                await _usageCreditService.GetStatusAsync(User);
+
+            if (!access.CanCustomizeInterior &&
+                !access.CanCustomizeWheels)
+            {
+                return new ForbidResult();
             }
 
             string normalized =
@@ -366,18 +393,29 @@ namespace PonyUpPerformance.Web.Pages
                 : access.CurrentPlan;
 
             RemainingCredits = access.RemainingCredits;
-            IsOwnerAccess = string.Equals(
-                CurrentPlan,
-                "Owner",
-                StringComparison.OrdinalIgnoreCase);
+            IsOwnerAccess =
+                access.PlanKey ==
+                PonyUpPlanCatalog.OwnerKey;
+
+            Has3DGarage =
+                access.Has3DGarage;
+
+            CanCustomizeExterior =
+                access.CanCustomizeExterior;
+
+            CanCustomizeInterior =
+                access.CanCustomizeInterior;
+
+            CanCustomizeWheels =
+                access.CanCustomizeWheels;
+
+            CanUseSpecialTrims =
+                access.CanUseSpecialTrims;
 
             AnalysisAccessLabel =
                 IsOwnerAccess
                     ? "👑 ☁️ ∞"
-                    : string.Equals(
-                        CurrentPlan,
-                        "Unlimited",
-                        StringComparison.OrdinalIgnoreCase)
+                    : access.UnlimitedStandardAnalyses
                         ? "∞"
                         : RemainingCredits.ToString();
 

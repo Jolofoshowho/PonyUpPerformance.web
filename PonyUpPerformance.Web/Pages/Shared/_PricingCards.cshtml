@@ -1,18 +1,29 @@
-<div class="pricing-grid pricing-grid-detailed">
-    <article class="price-card pricing-plan-card">
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    bool proAnnualReady =
+        !string.IsNullOrWhiteSpace(
+            Configuration["Stripe:ProAnnualPriceId"]);
+
+    bool fullThrottleAnnualReady =
+        !string.IsNullOrWhiteSpace(
+            Configuration["Stripe:FullThrottleAnnualPriceId"]);
+}
+
+<div class="pricing-starter-grid">
+    <article class="price-card pricing-plan-card pricing-starter-card">
         <div class="pricing-plan-head">
-            <span class="pricing-plan-kicker">TRY PONYUP</span>
+            <span class="pricing-plan-kicker">START HERE</span>
             <h3>FREE</h3>
             <strong>$0</strong>
             <p>1 Full Analysis</p>
         </div>
 
         <ul class="pricing-feature-list">
-            <li>Repair, Buy, Sell, Trade &amp; Upgrade analyzers</li>
-            <li>My Garage vehicle profile</li>
-            <li>VIN history &amp; saved vehicle details</li>
-            <li>Realistic 3D Garage viewer on supported models</li>
-            <li>Paint, interior &amp; wheel customization on PonyUp 3D models</li>
+            <li>1 Repair, Buy, Sell, Trade or Upgrade analysis</li>
+            <li>Basic My Garage</li>
+            <li>Save and manage vehicle information</li>
+            <li>VIN details and saved analysis history</li>
+            <li class="pricing-feature-off">No 3D Garage rendering</li>
         </ul>
 
         <a class="btn-dark pricing-plan-cta"
@@ -21,20 +32,20 @@
         </a>
     </article>
 
-    <article class="price-card pricing-plan-card featured">
+    <article class="price-card pricing-plan-card pricing-starter-card featured">
         <div class="pricing-plan-head">
-            <span class="pricing-plan-kicker">ONE-TIME PACK</span>
+            <span class="pricing-plan-kicker">PAY ONCE</span>
             <h3>QUICK PACK</h3>
             <strong>$5.99</strong>
             <p>5 Full Analyses</p>
         </div>
 
         <ul class="pricing-feature-list">
-            <li>Everything included with Free</li>
+            <li>Everything in Free</li>
             <li>5 analysis credits</li>
-            <li>Full Garage &amp; analysis history</li>
-            <li>Realistic 3D vehicle viewer on supported models</li>
-            <li>Paint, interior &amp; wheel customization on PonyUp 3D models</li>
+            <li>Realistic 3D Garage on supported vehicles</li>
+            <li>Exterior paint customization</li>
+            <li class="pricing-feature-off">Interior, wheels and special trims remain locked</li>
         </ul>
 
         <a class="btn-red pricing-plan-cta"
@@ -42,48 +53,161 @@
             BUY QUICK PACK
         </a>
     </article>
+</div>
 
-    <article class="price-card pricing-plan-card">
+<div class="pricing-main-grid">
+    <article class="price-card pricing-plan-card pricing-pro-card">
         <div class="pricing-plan-head">
-            <span class="pricing-plan-kicker">MONTHLY</span>
+            <span class="pricing-plan-kicker">REGULAR DRIVER</span>
             <h3>PRO</h3>
             <strong>$9.99<span>/mo</span></strong>
-            <p>10 Analyses / Billing Cycle</p>
+            <p>
+                @(proAnnualReady
+                    ? "or $79.99/year"
+                    : "Annual billing coming soon")
+            </p>
         </div>
 
         <ul class="pricing-feature-list">
-            <li>Everything included with Quick Pack</li>
-            <li>10 analyses each paid billing cycle</li>
-            <li>Full Garage &amp; analysis history</li>
-            <li>Realistic 3D vehicle viewer on supported models</li>
-            <li>Paint, interior &amp; wheel customization on PonyUp 3D models</li>
+            <li>Everything in Quick Pack</li>
+            <li>10 standard analyses every month</li>
+            <li>Realistic 3D Garage on supported vehicles</li>
+            <li>Exterior paint customization</li>
+            <li>Saved vehicle and analysis history</li>
+            <li class="pricing-feature-off">Interior, wheels and special trims remain locked</li>
         </ul>
 
-        <a class="btn-dark pricing-plan-cta"
-           href="/Checkout?plan=pro">
-            SUBSCRIBE
-        </a>
+        <div class="pricing-plan-actions">
+            <a class="btn-dark pricing-plan-cta"
+               href="/Checkout?plan=pro&amp;billing=monthly">
+                MONTHLY
+            </a>
+
+            @if (proAnnualReady)
+            {
+                <a class="btn-dark pricing-plan-cta"
+                   href="/Checkout?plan=pro&amp;billing=annual">
+                    ANNUAL
+                </a>
+            }
+            else
+            {
+                <span class="pricing-plan-cta pricing-plan-disabled">
+                    ANNUAL SOON
+                </span>
+            }
+        </div>
     </article>
 
-    <article class="price-card pricing-plan-card">
+    <article class="price-card pricing-plan-card pricing-full-throttle featured">
         <div class="pricing-plan-head">
-            <span class="pricing-plan-kicker">MONTHLY</span>
-            <h3>UNLIMITED</h3>
+            <div class="pricing-tier-emblem pricing-tier-emblem-throttle"
+                 aria-hidden="true">
+                <svg viewBox="0 0 120 64" role="img">
+                    <path class="tier-gauge-track"
+                          d="M18 51 A44 44 0 0 1 102 51" />
+                    <path class="tier-gauge-red"
+                          d="M79 18 A44 44 0 0 1 102 51" />
+                    <path class="tier-gauge-tick"
+                          d="M27 43 L20 39 M39 28 L34 20 M60 22 L60 12 M81 28 L86 20 M93 43 L100 39" />
+                    <path class="tier-gauge-needle"
+                          d="M60 49 L89 24" />
+                    <circle class="tier-gauge-hub"
+                            cx="60" cy="49" r="5" />
+                </svg>
+            </div>
+            <span class="pricing-plan-kicker">OPEN IT UP</span>
+            <h3>FULL THROTTLE</h3>
             <strong>$19.99<span>/mo</span></strong>
-            <p>Unlimited Analyses</p>
+            <p>
+                @(fullThrottleAnnualReady
+                    ? "or $159.99/year"
+                    : "Annual billing coming soon")
+            </p>
         </div>
 
         <ul class="pricing-feature-list">
-            <li>Unlimited full analyses while active</li>
-            <li>Full Garage &amp; analysis history</li>
-            <li>Realistic 3D vehicle viewer on supported models</li>
-            <li>Paint, interior &amp; wheel customization on PonyUp 3D models</li>
-            <li>All currently available PonyUp decision tools</li>
+            <li>Everything in Pro</li>
+            <li><strong>Unlimited standard analyses</strong></li>
+            <li><strong>Full 3D Garage customization</strong></li>
+            <li>Exterior paint + interior colors/materials</li>
+            <li>Wheel styles + wheel finishes</li>
+            <li>Special trim/appearance variants when available</li>
+            <li>Saved custom vehicle configurations</li>
         </ul>
 
-        <a class="btn-dark pricing-plan-cta"
-           href="/Checkout?plan=unlimited">
-            GO UNLIMITED
-        </a>
+        <div class="pricing-plan-actions">
+            <a class="btn-red pricing-plan-cta"
+               href="/Checkout?plan=fullthrottle&amp;billing=monthly">
+                MONTHLY
+            </a>
+
+            @if (fullThrottleAnnualReady)
+            {
+                <a class="btn-red pricing-plan-cta"
+                   href="/Checkout?plan=fullthrottle&amp;billing=annual">
+                    ANNUAL
+                </a>
+            }
+            else
+            {
+                <span class="pricing-plan-cta pricing-plan-disabled">
+                    ANNUAL SOON
+                </span>
+            }
+        </div>
+    </article>
+
+    <article class="price-card pricing-plan-card pricing-redline">
+        <div class="pricing-plan-head">
+            <div class="pricing-tier-emblem pricing-tier-emblem-redline"
+                 aria-hidden="true">
+                <svg viewBox="0 0 120 64" role="img">
+                    <path class="tier-gauge-track"
+                          d="M18 51 A44 44 0 0 1 102 51" />
+                    <path class="tier-gauge-red tier-gauge-red-strong"
+                          d="M72 15 A44 44 0 0 1 102 51" />
+                    <path class="tier-gauge-tick"
+                          d="M27 43 L20 39 M39 28 L34 20 M60 22 L60 12 M81 28 L86 20 M93 43 L100 39" />
+                    <path class="tier-gauge-needle tier-gauge-needle-red"
+                          d="M60 49 L96 20" />
+                    <circle class="tier-gauge-hub"
+                            cx="60" cy="49" r="5" />
+                    <path class="tier-redline-slash"
+                          d="M74 8 L82 4 M84 12 L92 8 M94 18 L102 14" />
+                </svg>
+            </div>
+            <span class="pricing-plan-kicker">PREMIUM VEHICLE INTELLIGENCE</span>
+            <h3>REDLINE</h3>
+            <strong>TBD</strong>
+            <p>COMING SOON</p>
+        </div>
+
+        <ul class="pricing-feature-list">
+            <li>Everything in Full Throttle</li>
+            <li>Premium Redline RevUp vehicle reports</li>
+            <li>Working target: 5 RevUp Reports per month</li>
+            <li>Market-value intelligence</li>
+            <li>Title / brand / salvage intelligence</li>
+            <li>Accident, odometer, theft and recall intelligence</li>
+            <li>PonyUp decision, risk and confidence analysis</li>
+        </ul>
+
+        <span class="pricing-plan-locked">
+            PRICING AWAITING REPORT-PROVIDER TERMS
+        </span>
     </article>
 </div>
+
+<article class="pricing-redline-plus">
+    <div>
+        <span class="pricing-plan-kicker">MAXIMUM ACCESS</span>
+        <h3>REDLINE+</h3>
+        <p>
+            Everything in Redline plus the planned highest RevUp Report allowance.
+            Unlimited RevUp Reports remains the target pending final provider pricing and terms.
+        </p>
+    </div>
+
+    <strong>COMING SOON</strong>
+</article>
