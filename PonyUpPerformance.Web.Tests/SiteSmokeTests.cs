@@ -27,6 +27,8 @@ public sealed class SiteSmokeTests :
     [InlineData("/Pricing")]
     [InlineData("/Identity/Account/Login")]
     [InlineData("/Identity/Account/Register")]
+    [InlineData("/Identity/Account/ForgotPassword")]
+    [InlineData("/Identity/Account/ResendEmailConfirmation")]
     [InlineData("/RepairAnalyzer")]
     [InlineData("/BuyAnalyzer")]
     [InlineData("/SellAnalyzer")]
