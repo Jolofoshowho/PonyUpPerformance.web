@@ -12,10 +12,14 @@ public sealed class SiteSmokeTests :
     IClassFixture<PonyUpFactory>
 {
     private readonly HttpClient _client;
+    private readonly PonyUpFactory _factory;
 
     public SiteSmokeTests(
         PonyUpFactory factory)
     {
+        _factory =
+            factory;
+
         _client =
             factory.CreateClient(
                 new WebApplicationFactoryClientOptions
@@ -72,11 +76,10 @@ public sealed class SiteSmokeTests :
     }
 
     [Fact]
-    public void IdentityEmailSender_IsRegistered(
-        PonyUpFactory factory)
+    public void IdentityEmailSender_IsRegistered()
     {
         using IServiceScope scope =
-            factory.Services.CreateScope();
+            _factory.Services.CreateScope();
 
         var sender =
             scope.ServiceProvider
