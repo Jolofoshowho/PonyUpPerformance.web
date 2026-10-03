@@ -14,35 +14,73 @@ var builder = WebApplication.CreateBuilder(args);
 
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
-var databaseUrl = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("DefaultConnection is missing.");
+bool validationMode =
+    builder.Environment.IsEnvironment("Validation");
 
-string connectionString;
-
-if (databaseUrl.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase) ||
-    databaseUrl.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+if (validationMode)
 {
-    var databaseUri = new Uri(databaseUrl);
-
-    var userInfo = databaseUri.UserInfo.Split(':', 2);
-
-    connectionString = new NpgsqlConnectionStringBuilder
-    {
-        Host = databaseUri.Host,
-        Port = databaseUri.IsDefaultPort ? 5432 : databaseUri.Port,
-        Database = databaseUri.AbsolutePath.TrimStart('/'),
-        Username = Uri.UnescapeDataString(userInfo[0]),
-        Password = Uri.UnescapeDataString(userInfo[1]),
-        SslMode = SslMode.Require
-    }.ConnectionString;
+    builder.Services.AddDbContext<ApplicationDbContext>(
+        options =>
+            options.UseInMemoryDatabase(
+                "PonyUpRuntimeValidation"));
 }
 else
 {
-    connectionString = databaseUrl;
-}
+    var databaseUrl =
+        builder.Configuration
+            .GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException(
+            "DefaultConnection is missing.");
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    string connectionString;
+
+    if (databaseUrl.StartsWith(
+            "postgresql://",
+            StringComparison.OrdinalIgnoreCase) ||
+        databaseUrl.StartsWith(
+            "postgres://",
+            StringComparison.OrdinalIgnoreCase))
+    {
+        var databaseUri =
+            new Uri(databaseUrl);
+
+        var userInfo =
+            databaseUri.UserInfo.Split(
+                ':',
+                2);
+
+        connectionString =
+            new NpgsqlConnectionStringBuilder
+            {
+                Host =
+                    databaseUri.Host,
+                Port =
+                    databaseUri.IsDefaultPort
+                        ? 5432
+                        : databaseUri.Port,
+                Database =
+                    databaseUri.AbsolutePath.TrimStart('/'),
+                Username =
+                    Uri.UnescapeDataString(
+                        userInfo[0]),
+                Password =
+                    Uri.UnescapeDataString(
+                        userInfo[1]),
+                SslMode =
+                    SslMode.Require
+            }.ConnectionString;
+    }
+    else
+    {
+        connectionString =
+            databaseUrl;
+    }
+
+    builder.Services.AddDbContext<ApplicationDbContext>(
+        options =>
+            options.UseNpgsql(
+                connectionString));
+}
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -94,6 +132,8 @@ builder.Services.AddScoped<IUpgradeScoringService, UpgradeScoringService>();
 
 var app = builder.Build();
 
+if (!validationMode)
+{
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -175,6 +215,7 @@ using (var scope = app.Services.CreateScope())
         CREATE INDEX IF NOT EXISTS "IX_RevUpReports_UserId_Vin_Status"
         ON "RevUpReports" ("UserId", "Vin", "Status");
         """);
+}
 }
 
 if (app.Environment.IsDevelopment())
