@@ -157,6 +157,37 @@ public sealed class SiteSmokeTests :
     }
 
     [Fact]
+    public async Task OwnerLogin_IsRateLimited()
+    {
+        await using var factory =
+            new PonyUpFactory();
+
+        using HttpClient client =
+            factory.CreateClient(
+                new WebApplicationFactoryClientOptions
+                {
+                    AllowAutoRedirect = false
+                });
+
+        HttpStatusCode lastStatus =
+            HttpStatusCode.OK;
+
+        for (int i = 0; i < 11; i++)
+        {
+            using HttpResponseMessage response =
+                await client.GetAsync(
+                    "/OwnerLogin");
+
+            lastStatus =
+                response.StatusCode;
+        }
+
+        Assert.Equal(
+            HttpStatusCode.TooManyRequests,
+            lastStatus);
+    }
+
+    [Fact]
     public async Task UnknownRoute_DoesNotReturnServerError()
     {
         using HttpResponseMessage response =
