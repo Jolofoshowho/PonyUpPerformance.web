@@ -1,7 +1,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY . .
-RUN dotnet restore PonyUpPerformance.Web/PonyUpPerformance.Web.csproj
+RUN dotnet restore PonyUpPerformance.Web.Tests/PonyUpPerformance.Web.Tests.csproj
+RUN dotnet test PonyUpPerformance.Web.Tests/PonyUpPerformance.Web.Tests.csproj -c Release --no-restore
 RUN dotnet publish PonyUpPerformance.Web/PonyUpPerformance.Web.csproj -c Release -o /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
