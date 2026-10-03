@@ -9,6 +9,8 @@ using PonyUpPerformance.Web.Services.Scoring;
 using Stripe;
 using Npgsql;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -137,6 +139,22 @@ builder.Services.AddDataProtection()
 
 
 builder.Services.AddRazorPages();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter(
+        "owner-login",
+        limiter =>
+        {
+            limiter.PermitLimit = 10;
+            limiter.Window =
+                TimeSpan.FromMinutes(1);
+            limiter.QueueLimit = 0;
+            limiter.QueueProcessingOrder =
+                QueueProcessingOrder.OldestFirst;
+            limiter.AutoReplenishment = true;
+        });
+});
 
 builder.Services.AddScoped<IRepairScoringService, RepairScoringService>();
 builder.Services.AddScoped<AnalysisHistoryService>();
@@ -272,6 +290,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
