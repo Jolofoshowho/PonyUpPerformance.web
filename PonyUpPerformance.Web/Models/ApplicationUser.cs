@@ -24,6 +24,8 @@ namespace PonyUpPerformance.Web.Models
 
         public string ActiveStripeSubscriptionId { get; set; } = string.Empty;
 
+        public string SubscriptionBillingInterval { get; set; } = string.Empty;
+
         public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
     }
 }
