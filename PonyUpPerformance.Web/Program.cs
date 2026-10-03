@@ -200,6 +200,13 @@ using (var scope = app.Services.CreateScope())
     await db.Database.ExecuteSqlRawAsync(
         """
         ALTER TABLE "AspNetUsers"
+        ADD COLUMN IF NOT EXISTS "SubscriptionBillingInterval"
+        text NOT NULL DEFAULT '';
+        """);
+
+    await db.Database.ExecuteSqlRawAsync(
+        """
+        ALTER TABLE "AspNetUsers"
         ADD COLUMN IF NOT EXISTS "NextSubscriptionCreditRefreshOn"
         timestamp with time zone NULL;
         """);
