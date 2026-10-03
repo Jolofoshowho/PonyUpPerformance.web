@@ -1,4 +1,6 @@
 @page
+@using Microsoft.AspNetCore.RateLimiting
+@attribute [EnableRateLimiting("owner-login")]
 @model PonyUpPerformance.Web.Pages.OwnerLoginModel
 @{
     ViewData["Title"] = "Owner Login";
