@@ -198,7 +198,7 @@ using (var scope = app.Services.CreateScope())
         """
         ALTER TABLE "GarageVehicles"
         ADD COLUMN IF NOT EXISTS "AppearanceJson"
-        text NOT NULL DEFAULT '{}';
+        text NOT NULL DEFAULT '{{}}';
         """);
 
     await db.Database.ExecuteSqlRawAsync(
