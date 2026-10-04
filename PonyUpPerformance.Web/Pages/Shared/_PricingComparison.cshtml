@@ -1,0 +1,189 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    bool proAnnualReady =
+        !string.IsNullOrWhiteSpace(
+            Configuration["Stripe:ProAnnualPriceId"]);
+
+    bool fullThrottleAnnualReady =
+        !string.IsNullOrWhiteSpace(
+            Configuration["Stripe:FullThrottleAnnualPriceId"]);
+}
+
+<section class="pricing-comparison-section">
+    <div class="pricing-comparison-heading">
+        <span class="pricing-plan-kicker">WHAT CHANGES AS YOU STEP UP</span>
+        <h2>FULL TIER BREAKDOWN</h2>
+        <p>
+            Every higher tier keeps the access below it and adds the features shown here.
+        </p>
+    </div>
+
+    <div class="pricing-comparison-scroll">
+        <table class="pricing-comparison-table">
+            <thead>
+                <tr>
+                    <th>FEATURE</th>
+                    <th>FREE</th>
+                    <th>QUICK PACK</th>
+                    <th>PRO</th>
+                    <th>FULL THROTTLE</th>
+                    <th>REDLINE</th>
+                    <th>REDLINE+</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>Price</th>
+                    <td>$0</td>
+                    <td>$5.99 once</td>
+                    <td>
+                        $9.99/mo
+                        <br />
+                        @(proAnnualReady
+                            ? "$79.99/yr"
+                            : "Annual soon")
+                    </td>
+                    <td>
+                        $19.99/mo
+                        <br />
+                        @(fullThrottleAnnualReady
+                            ? "$159.99/yr"
+                            : "Annual soon")
+                    </td>
+                    <td>Coming soon</td>
+                    <td>Coming soon</td>
+                </tr>
+                <tr>
+                    <th>Standard analyses</th>
+                    <td>1</td>
+                    <td>5</td>
+                    <td>10 / month</td>
+                    <td class="pricing-yes">Unlimited</td>
+                    <td class="pricing-yes">Unlimited</td>
+                    <td class="pricing-yes">Unlimited</td>
+                </tr>
+                <tr>
+                    <th>Repair / Buy / Sell / Trade / Upgrade</th>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                </tr>
+                <tr>
+                    <th>Basic My Garage</th>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                </tr>
+                <tr>
+                    <th>Saved vehicles / VIN details</th>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                </tr>
+                <tr>
+                    <th>Analysis history</th>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                </tr>
+                <tr>
+                    <th>Realistic 3D Garage</th>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                </tr>
+                <tr>
+                    <th>Exterior paint customization</th>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                </tr>
+                <tr>
+                    <th>Interior colors / materials</th>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                </tr>
+                <tr>
+                    <th>Wheel styles / finishes</th>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                </tr>
+                <tr>
+                    <th>Special trim / appearance variants</th>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-yes">When available</td>
+                    <td class="pricing-yes">When available</td>
+                    <td class="pricing-yes">When available</td>
+                </tr>
+                <tr>
+                    <th>Saved custom configurations</th>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                    <td class="pricing-yes">✓</td>
+                </tr>
+                <tr class="pricing-comparison-premium">
+                    <th>Redline RevUp Reports</th>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-no">—</td>
+                    <td>Target: 5/month*</td>
+                    <td>Target: Unlimited*</td>
+                </tr>
+                <tr class="pricing-comparison-premium">
+                    <th>Premium title / accident / odometer / theft / recall intelligence</th>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-yes">Planned</td>
+                    <td class="pricing-yes">Planned</td>
+                </tr>
+                <tr class="pricing-comparison-premium">
+                    <th>Premium vehicle-value intelligence</th>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-no">—</td>
+                    <td class="pricing-yes">Planned</td>
+                    <td class="pricing-yes">Planned</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p class="pricing-comparison-footnote">
+        * Redline report allowances and prices remain provisional until the commercial vehicle-data provider terms are finalized. They are not currently purchasable.
+    </p>
+</section>

@@ -4591,3 +4591,536 @@ body.garage-modal-open {
     }
 }
 
+/* =========================================================
+   PRICING LADDER — FULL THROTTLE / REDLINE
+   ========================================================= */
+
+.pricing-starter-grid,
+.pricing-main-grid {
+    display: grid;
+    gap: 16px;
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.pricing-starter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 18px;
+}
+
+.pricing-main-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.pricing-starter-card {
+    min-height: 410px;
+}
+
+.pricing-pro-card,
+.pricing-full-throttle,
+.pricing-redline {
+    min-height: 560px;
+}
+
+.pricing-full-throttle {
+    position: relative;
+    overflow: hidden;
+    border-color: rgba(255,49,49,.72);
+    box-shadow:
+        0 0 28px rgba(255,49,49,.12),
+        inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+.pricing-full-throttle::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            #ff3131 28%,
+            #ffffff 50%,
+            #ff3131 72%,
+            transparent);
+    box-shadow:
+        0 0 16px rgba(255,49,49,.9);
+}
+
+.pricing-redline {
+    position: relative;
+    overflow: hidden;
+    border-color: rgba(255,49,49,.92);
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(255,49,49,.16),
+            transparent 34%),
+        linear-gradient(
+            180deg,
+            rgba(20,8,9,.98),
+            rgba(6,7,8,.98));
+}
+
+.pricing-redline::before {
+    content: "REDLINE";
+    position: absolute;
+    right: -18px;
+    top: 88px;
+    transform: rotate(90deg);
+    color: rgba(255,49,49,.12);
+    font-size: 2rem;
+    font-weight: 1000;
+    letter-spacing: .2em;
+    pointer-events: none;
+}
+
+.pricing-plan-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: auto;
+}
+
+.pricing-plan-actions .pricing-plan-cta {
+    margin-top: 0;
+}
+
+.pricing-feature-off {
+    color: #747b80 !important;
+}
+
+.pricing-feature-off::before {
+    content: "—" !important;
+    color: #747b80 !important;
+}
+
+.pricing-plan-locked {
+    display: block;
+    margin-top: auto;
+    padding: 12px 10px;
+    border: 1px solid rgba(255,49,49,.38);
+    border-radius: 5px;
+    color: #ff5757;
+    background: rgba(255,49,49,.04);
+    text-align: center;
+    font-size: .62rem;
+    font-weight: 950;
+    letter-spacing: .06em;
+}
+
+.pricing-redline-plus {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    max-width: 1280px;
+    margin: 18px auto 0;
+    padding: 18px 22px;
+    border: 1px solid rgba(255,49,49,.5);
+    border-left: 5px solid #ff3131;
+    border-radius: 7px;
+    background:
+        linear-gradient(
+            90deg,
+            rgba(255,49,49,.09),
+            rgba(7,9,11,.97) 24%,
+            rgba(7,9,11,.97));
+    box-shadow:
+        0 0 24px rgba(255,49,49,.08);
+}
+
+.pricing-redline-plus h3 {
+    margin: 2px 0 4px;
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 1000;
+    letter-spacing: .05em;
+}
+
+.pricing-redline-plus p {
+    margin: 0;
+    max-width: 860px;
+    color: #9ca4aa;
+    font-size: .76rem;
+    line-height: 1.5;
+}
+
+.pricing-redline-plus > strong {
+    flex: 0 0 auto;
+    color: #ff4646;
+    font-size: .72rem;
+    font-weight: 1000;
+    letter-spacing: .08em;
+}
+
+@media (max-width: 1050px) {
+    .pricing-main-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pricing-pro-card,
+    .pricing-full-throttle,
+    .pricing-redline {
+        min-height: 0;
+    }
+}
+
+@media (max-width: 720px) {
+    .pricing-starter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pricing-starter-card {
+        min-height: 0;
+    }
+
+    .pricing-plan-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .pricing-redline-plus {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+/* =========================================================
+   GARAGE TIER GATING
+   ========================================================= */
+
+.garage-basic-vehicle {
+    min-height: 430px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 28px;
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 8px;
+    background:
+        radial-gradient(
+            circle at 50% 32%,
+            rgba(255,255,255,.05),
+            transparent 38%),
+        linear-gradient(
+            180deg,
+            rgba(17,20,23,.96),
+            rgba(5,7,8,.99));
+    text-align: center;
+}
+
+.garage-basic-vehicle svg {
+    display: block;
+    width: min(520px, 92%);
+    max-height: 250px;
+    margin-bottom: 10px;
+}
+
+.garage-basic-vehicle strong {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 1000;
+    letter-spacing: .08em;
+}
+
+.garage-basic-vehicle span {
+    color: #8f989f;
+    font-size: .72rem;
+}
+
+.garage-basic-vehicle a {
+    margin-top: 8px;
+    padding: 9px 13px;
+    border: 1px solid rgba(255,49,49,.55);
+    border-radius: 4px;
+    color: #ff4b4b;
+    background: rgba(255,49,49,.05);
+    text-decoration: none;
+    font-size: .65rem;
+    font-weight: 950;
+    letter-spacing: .05em;
+}
+
+.garage-customizer-locked {
+    border-color: rgba(255,49,49,.25);
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,49,49,.035),
+            rgba(0,0,0,.16));
+}
+
+.garage-customizer-locked .garage-secondary-button {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    text-align: center;
+    text-decoration: none;
+}
+
+/* =========================================================
+   ACCOUNT DASHBOARD
+   ========================================================= */
+
+.ponyup-account-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    max-width: 980px;
+    margin: 0 auto;
+}
+
+.ponyup-account-card {
+    min-height: 0;
+    padding: 24px;
+    text-align: left;
+}
+
+.ponyup-account-card h2 {
+    margin: 3px 0 18px;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 1000;
+    word-break: break-word;
+}
+
+.ponyup-account-actions {
+    display: grid;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.ponyup-account-actions a,
+.ponyup-account-save {
+    display: block;
+    width: 100%;
+    padding: 11px 14px;
+    text-align: center;
+    text-decoration: none;
+    font-size: .7rem;
+    font-weight: 950;
+    letter-spacing: .04em;
+}
+
+@media (max-width: 760px) {
+    .ponyup-account-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================================
+   PRICING COMPARISON
+   ========================================================= */
+
+.pricing-comparison-section {
+    max-width: 1280px;
+    margin: 28px auto 0;
+    padding: 22px;
+    border: 1px solid rgba(255,255,255,.11);
+    border-radius: 8px;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(15,17,19,.97),
+            rgba(5,7,8,.99));
+}
+
+.pricing-comparison-heading {
+    margin-bottom: 16px;
+}
+
+.pricing-comparison-heading h2 {
+    margin: 2px 0 5px;
+    color: #fff;
+    font-size: 1.05rem;
+    font-weight: 1000;
+    letter-spacing: .055em;
+}
+
+.pricing-comparison-heading p,
+.pricing-comparison-footnote {
+    margin: 0;
+    color: #858e94;
+    font-size: .69rem;
+    line-height: 1.5;
+}
+
+.pricing-comparison-scroll {
+    overflow-x: auto;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 6px;
+}
+
+.pricing-comparison-table {
+    width: 100%;
+    min-width: 950px;
+    border-collapse: collapse;
+    background: rgba(0,0,0,.18);
+}
+
+.pricing-comparison-table th,
+.pricing-comparison-table td {
+    padding: 11px 10px;
+    border-bottom: 1px solid rgba(255,255,255,.07);
+    border-right: 1px solid rgba(255,255,255,.05);
+    color: #cbd0d4;
+    font-size: .67rem;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.pricing-comparison-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    color: #fff;
+    background: #0b0d0f;
+    font-size: .63rem;
+    font-weight: 1000;
+    letter-spacing: .04em;
+}
+
+.pricing-comparison-table th:first-child {
+    width: 26%;
+    color: #fff;
+    text-align: left;
+    font-weight: 900;
+}
+
+.pricing-comparison-table thead th:nth-child(5),
+.pricing-comparison-table td:nth-child(5) {
+    background: rgba(255,49,49,.035);
+}
+
+.pricing-comparison-table thead th:nth-child(6),
+.pricing-comparison-table thead th:nth-child(7) {
+    color: #ff5151;
+}
+
+.pricing-comparison-premium {
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,49,49,.045));
+}
+
+.pricing-yes {
+    color: #fff !important;
+    font-weight: 850;
+}
+
+.pricing-no {
+    color: #596066 !important;
+}
+
+.pricing-comparison-footnote {
+    margin-top: 12px;
+}
+
+.pricing-plan-disabled {
+    display: grid;
+    place-items: center;
+    min-height: 40px;
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 4px;
+    color: #666d72;
+    background: rgba(255,255,255,.025);
+    cursor: not-allowed;
+    user-select: none;
+}
+
+/* =========================================================
+   FULL THROTTLE / REDLINE PERFORMANCE EMBLEMS
+   ========================================================= */
+
+.pricing-tier-emblem {
+    width: 86px;
+    height: 46px;
+    margin: 0 auto 8px;
+    filter: drop-shadow(0 0 10px rgba(255,49,49,.16));
+}
+
+.pricing-tier-emblem svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.tier-gauge-track,
+.tier-gauge-red,
+.tier-gauge-tick,
+.tier-gauge-needle,
+.tier-redline-slash {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.tier-gauge-track {
+    stroke: rgba(226,232,236,.38);
+    stroke-width: 4;
+}
+
+.tier-gauge-red {
+    stroke: #ff3131;
+    stroke-width: 5;
+}
+
+.tier-gauge-red-strong {
+    stroke-width: 7;
+    filter: drop-shadow(0 0 5px rgba(255,49,49,.8));
+}
+
+.tier-gauge-tick {
+    stroke: rgba(255,255,255,.76);
+    stroke-width: 2;
+}
+
+.tier-gauge-needle {
+    stroke: #f0f3f5;
+    stroke-width: 3;
+}
+
+.tier-gauge-needle-red {
+    stroke: #ff3131;
+    stroke-width: 4;
+    filter: drop-shadow(0 0 5px rgba(255,49,49,.9));
+}
+
+.tier-gauge-hub {
+    fill: #090b0d;
+    stroke: #e9edf0;
+    stroke-width: 2;
+}
+
+.tier-redline-slash {
+    stroke: #ff3131;
+    stroke-width: 3;
+}
+
+.pricing-tier-emblem-throttle::after,
+.pricing-tier-emblem-redline::after {
+    display: block;
+    margin-top: -6px;
+    color: #686f74;
+    font-size: .45rem;
+    font-weight: 1000;
+    letter-spacing: .18em;
+    text-align: center;
+}
+
+.pricing-tier-emblem-throttle::after {
+    content: "WIDE OPEN";
+}
+
+.pricing-tier-emblem-redline::after {
+    content: "LIMITER";
+    color: #ff4545;
+}
+

@@ -1,18 +1,27 @@
-using Microsoft.AspNetCore.Authentication;
+using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Security.Claims;
+using PonyUpPerformance.Web.Models;
 
 namespace PonyUpPerformance.Web.Pages
 {
     public class OwnerLoginModel : PageModel
     {
         private readonly IConfiguration _config;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
-        public OwnerLoginModel(IConfiguration config)
+        public OwnerLoginModel(
+            IConfiguration config,
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager)
         {
             _config = config;
+            _userManager = userManager;
+            _signInManager = signInManager;
         }
 
         [BindProperty]
@@ -26,48 +35,82 @@ namespace PonyUpPerformance.Web.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            string ownerEmail = _config["OwnerLogin:Email"] ?? "";
-            string ownerToken = _config["OwnerLogin:Token"] ?? "";
+            string ownerEmail =
+                _config["OwnerLogin:Email"]
+                ?? string.Empty;
 
-            if (string.IsNullOrWhiteSpace(ownerEmail) || string.IsNullOrWhiteSpace(ownerToken))
+            string ownerToken =
+                _config["OwnerLogin:Token"]
+                ?? string.Empty;
+
+            if (!ModelState.IsValid ||
+                string.IsNullOrWhiteSpace(
+                    ownerEmail) ||
+                string.IsNullOrWhiteSpace(
+                    ownerToken) ||
+                !string.Equals(
+                    Input.Email?.Trim(),
+                    ownerEmail,
+                    StringComparison.OrdinalIgnoreCase) ||
+                !TokenMatches(
+                    Input.OwnerToken,
+                    ownerToken))
             {
-                ErrorMessage = "Owner login is not configured.";
+                ErrorMessage =
+                    "Owner login failed.";
+
                 return Page();
             }
 
-            if (!string.Equals(Input.Email, ownerEmail, StringComparison.OrdinalIgnoreCase))
+            ApplicationUser? user =
+                await _userManager.FindByEmailAsync(
+                    ownerEmail);
+
+            if (user == null)
             {
-                ErrorMessage = "Invalid owner email.";
+                ErrorMessage =
+                    "Owner login failed.";
+
                 return Page();
             }
 
-            if (!string.Equals(Input.OwnerToken, ownerToken, StringComparison.Ordinal))
-            {
-                ErrorMessage = "Invalid owner token.";
-                return Page();
-            }
+            await _signInManager.SignInAsync(
+                user,
+                isPersistent: false);
 
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, "Owner"),
-                new Claim(ClaimTypes.Email, ownerEmail),
-                new Claim(ClaimTypes.NameIdentifier, ownerEmail)
-            };
+            return LocalRedirect(
+                Url.Content("~/"));
+        }
 
-            var identity = new ClaimsIdentity(
-                claims,
-                IdentityConstants.ApplicationScheme);
+        private static bool TokenMatches(
+            string? providedToken,
+            string expectedToken)
+        {
+            byte[] providedHash =
+                SHA256.HashData(
+                    Encoding.UTF8.GetBytes(
+                        providedToken
+                        ?? string.Empty));
 
-            await HttpContext.SignInAsync(
-                IdentityConstants.ApplicationScheme,
-                new ClaimsPrincipal(identity));
+            byte[] expectedHash =
+                SHA256.HashData(
+                    Encoding.UTF8.GetBytes(
+                        expectedToken));
 
-            return Redirect("/");
+            return CryptographicOperations
+                .FixedTimeEquals(
+                    providedHash,
+                    expectedHash);
         }
 
         public class OwnerLoginInput
         {
+            [Required]
+            [EmailAddress]
             public string Email { get; set; } = "";
+
+            [Required]
+            [DataType(DataType.Password)]
             public string OwnerToken { get; set; } = "";
         }
     }

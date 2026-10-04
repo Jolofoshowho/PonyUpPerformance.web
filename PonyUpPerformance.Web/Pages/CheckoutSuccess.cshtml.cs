@@ -1,7 +1,4 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using PonyUpPerformance.Web.Data;
 using PonyUpPerformance.Web.Models;
 using PonyUpPerformance.Web.Services;
 
@@ -9,91 +6,112 @@ namespace PonyUpPerformance.Web.Pages
 {
     public class CheckoutSuccessModel : PageModel
     {
-        private readonly ApplicationDbContext _dbContext;
-        private readonly UserManager<ApplicationUser> _userManager;
         private readonly StripeCheckoutService _stripeCheckoutService;
+        private readonly StripeFulfillmentService _stripeFulfillmentService;
 
         public string Message { get; set; } = "";
 
         public CheckoutSuccessModel(
-            ApplicationDbContext dbContext,
-            UserManager<ApplicationUser> userManager,
-            StripeCheckoutService stripeCheckoutService)
+            StripeCheckoutService stripeCheckoutService,
+            StripeFulfillmentService stripeFulfillmentService)
         {
-            _dbContext = dbContext;
-            _userManager = userManager;
             _stripeCheckoutService = stripeCheckoutService;
+            _stripeFulfillmentService = stripeFulfillmentService;
         }
 
-        public async Task OnGetAsync(string session_id)
+        public async Task OnGetAsync(
+            string session_id)
         {
-            if (string.IsNullOrWhiteSpace(session_id))
+            if (string.IsNullOrWhiteSpace(
+                    session_id))
             {
-                Message = "Missing checkout session.";
+                Message =
+                    "Missing checkout session.";
+
                 return;
             }
 
-            bool alreadyProcessed = await _dbContext.StripePurchases
-                .AnyAsync(x => x.StripeSessionId == session_id);
+            Stripe.Checkout.Session session =
+                await _stripeCheckoutService
+                    .GetSessionAsync(
+                        session_id);
 
-            if (alreadyProcessed)
+            if (!string.Equals(
+                    session.PaymentStatus,
+                    "paid",
+                    StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(
+                    session.PaymentStatus,
+                    "no_payment_required",
+                    StringComparison.OrdinalIgnoreCase))
             {
-                Message = "Purchase already processed.";
+                Message =
+                    "Payment has not completed.";
+
                 return;
             }
 
-            var session = await _stripeCheckoutService.GetSessionAsync(session_id);
-
-            if (session.PaymentStatus != "paid")
+            if (!session.Metadata.TryGetValue(
+                    "UserId",
+                    out string? userId) ||
+                string.IsNullOrWhiteSpace(
+                    userId) ||
+                !session.Metadata.TryGetValue(
+                    "PlanKey",
+                    out string? rawPlanKey) ||
+                string.IsNullOrWhiteSpace(
+                    rawPlanKey))
             {
-                Message = "Payment has not completed.";
+                Message =
+                    "Checkout metadata is incomplete.";
+
                 return;
             }
 
-            string userId = session.Metadata["UserId"];
-            string planKey = session.Metadata["PlanKey"];
+            string planKey =
+                PonyUpPlanCatalog.NormalizeKey(
+                    rawPlanKey);
 
-            ApplicationUser? user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            session.Metadata.TryGetValue(
+                "BillingInterval",
+                out string? billingInterval);
 
-            if (user == null)
+            CheckoutFulfillmentResult result =
+                await _stripeFulfillmentService
+                    .FulfillCheckoutAsync(
+                        session_id,
+                        userId,
+                        planKey,
+                        session.CustomerId,
+                        session.SubscriptionId,
+                        billingInterval);
+
+            if (result ==
+                CheckoutFulfillmentResult.UserNotFound)
             {
-                Message = "User not found.";
+                Message =
+                    "Payment completed, but the PonyUp account could not be matched.";
+
                 return;
             }
 
-            ApplyPlan(user, planKey);
-
-            _dbContext.StripePurchases.Add(new StripePurchase
+            if (result ==
+                CheckoutFulfillmentResult.InvalidRequest)
             {
-                UserId = user.Id,
-                StripeSessionId = session_id,
-                PlanKey = planKey,
-                CreatedOn = DateTime.UtcNow
-            });
+                Message =
+                    "Payment completed, but the checkout details were incomplete.";
 
-            await _dbContext.SaveChangesAsync();
-
-            Message = "Payment complete. Your PonyUp credits are active.";
-        }
-
-        private static void ApplyPlan(ApplicationUser user, string planKey)
-        {
-            switch (planKey.ToLowerInvariant())
-            {
-                case "quickpack":
-                    user.CurrentPlan = "Quick Pack";
-                    user.RemainingCredits += 5;
-                    break;
-
-                case "pro":
-                    user.CurrentPlan = "Pro";
-                    user.RemainingCredits += 10;
-                    break;
-
-                case "unlimited":
-                    user.CurrentPlan = "Unlimited";
-                    break;
+                return;
             }
+
+            PonyUpPlanAccess access =
+                PonyUpPlanCatalog.Resolve(
+                    planKey);
+
+            Message =
+                access.UnlimitedStandardAnalyses
+                    ? $"Payment complete. {access.DisplayName} is active."
+                    : "Payment complete. Your PonyUp access is active.";
         }
     }
 }

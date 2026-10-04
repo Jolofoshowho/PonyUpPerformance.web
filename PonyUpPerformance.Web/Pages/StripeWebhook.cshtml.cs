@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using PonyUpPerformance.Web.Data;
 using PonyUpPerformance.Web.Models;
+using PonyUpPerformance.Web.Services;
 using Stripe;
 
 namespace PonyUpPerformance.Web.Pages
@@ -13,13 +14,22 @@ namespace PonyUpPerformance.Web.Pages
     {
         private readonly IConfiguration _configuration;
         private readonly ApplicationDbContext _dbContext;
+        private readonly PlanEntitlementService _planEntitlementService;
+        private readonly StripeCheckoutService _stripeCheckoutService;
+        private readonly StripeFulfillmentService _stripeFulfillmentService;
 
         public StripeWebhookModel(
             IConfiguration configuration,
-            ApplicationDbContext dbContext)
+            ApplicationDbContext dbContext,
+            PlanEntitlementService planEntitlementService,
+            StripeCheckoutService stripeCheckoutService,
+            StripeFulfillmentService stripeFulfillmentService)
         {
             _configuration = configuration;
             _dbContext = dbContext;
+            _planEntitlementService = planEntitlementService;
+            _stripeCheckoutService = stripeCheckoutService;
+            _stripeFulfillmentService = stripeFulfillmentService;
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -28,7 +38,8 @@ namespace PonyUpPerformance.Web.Pages
                 _configuration["Stripe:WebhookSecret"]
                 ?? string.Empty;
 
-            if (string.IsNullOrWhiteSpace(webhookSecret))
+            if (string.IsNullOrWhiteSpace(
+                    webhookSecret))
             {
                 return new StatusCodeResult(
                     StatusCodes.Status503ServiceUnavailable);
@@ -75,19 +86,103 @@ namespace PonyUpPerformance.Web.Pages
             }
 
             using JsonDocument document =
-                JsonDocument.Parse(payload);
+                JsonDocument.Parse(
+                    payload);
 
             JsonElement dataObject =
                 document.RootElement
                     .GetProperty("data")
                     .GetProperty("object");
 
-            string userId = string.Empty;
-            string planKey = string.Empty;
-            bool shouldRecord = false;
+            string userId =
+                string.Empty;
+
+            string planKey =
+                string.Empty;
+
+            string recordKey =
+                stripeEvent.Id;
+
+            string recordPlanKey =
+                string.Empty;
+
+            bool shouldRecord =
+                false;
 
             switch (stripeEvent.Type)
             {
+                case "checkout.session.completed":
+                case "checkout.session.async_payment_succeeded":
+                {
+                    string paymentStatus =
+                        GetString(
+                            dataObject,
+                            "payment_status");
+
+                    if (!string.Equals(
+                            paymentStatus,
+                            "paid",
+                            StringComparison.OrdinalIgnoreCase) &&
+                        !string.Equals(
+                            paymentStatus,
+                            "no_payment_required",
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        break;
+                    }
+
+                    string sessionId =
+                        GetString(
+                            dataObject,
+                            "id");
+
+                    userId =
+                        GetMetadataValue(
+                            dataObject,
+                            "UserId");
+
+                    planKey =
+                        PonyUpPlanCatalog.NormalizeKey(
+                            GetMetadataValue(
+                                dataObject,
+                                "PlanKey"));
+
+                    if (string.IsNullOrWhiteSpace(
+                            sessionId) ||
+                        string.IsNullOrWhiteSpace(
+                            userId) ||
+                        planKey ==
+                            PonyUpPlanCatalog.FreeKey)
+                    {
+                        break;
+                    }
+
+                    CheckoutFulfillmentResult result =
+                        await _stripeFulfillmentService
+                            .FulfillCheckoutAsync(
+                                sessionId,
+                                userId,
+                                planKey,
+                                GetString(
+                                    dataObject,
+                                    "customer"),
+                                GetString(
+                                    dataObject,
+                                    "subscription"),
+                                GetMetadataValue(
+                                    dataObject,
+                                    "BillingInterval"));
+
+                    if (result is
+                        CheckoutFulfillmentResult.Applied or
+                        CheckoutFulfillmentResult.AlreadyProcessed)
+                    {
+                        return new OkResult();
+                    }
+
+                    break;
+                }
+
                 case "invoice.paid":
                 {
                     string billingReason =
@@ -95,25 +190,162 @@ namespace PonyUpPerformance.Web.Pages
                             dataObject,
                             "billing_reason");
 
-                    if (string.Equals(
+                    if (!string.Equals(
                             billingReason,
                             "subscription_cycle",
                             StringComparison.OrdinalIgnoreCase))
                     {
-                        (userId, planKey) =
-                            GetSubscriptionMetadataFromInvoice(
-                                dataObject);
-
-                        if (!string.IsNullOrWhiteSpace(userId) &&
-                            !string.IsNullOrWhiteSpace(planKey))
-                        {
-                            await ApplyRecurringPlanAsync(
-                                userId,
-                                planKey);
-
-                            shouldRecord = true;
-                        }
+                        break;
                     }
+
+                    userId =
+                        GetSubscriptionUserIdFromInvoice(
+                            dataObject);
+
+                    if (string.IsNullOrWhiteSpace(
+                            userId))
+                    {
+                        break;
+                    }
+
+                    ApplicationUser? user =
+                        await _dbContext.Users
+                            .FirstOrDefaultAsync(
+                                x => x.Id == userId);
+
+                    if (user == null)
+                    {
+                        break;
+                    }
+
+                    /*
+                     * CurrentPlan is kept in sync by
+                     * customer.subscription.updated.
+                     * Use it here instead of stale
+                     * subscription metadata so a portal
+                     * upgrade/downgrade renews the plan
+                     * the customer actually has now.
+                     */
+                    planKey =
+                        PonyUpPlanCatalog.NormalizeKey(
+                            user.CurrentPlan);
+
+                    _planEntitlementService
+                        .ApplyRenewal(
+                            user,
+                            planKey);
+
+                    recordPlanKey =
+                        $"webhook:{stripeEvent.Type}:{planKey}";
+
+                    shouldRecord =
+                        true;
+
+                    break;
+                }
+
+                case "customer.subscription.updated":
+                {
+                    userId =
+                        GetMetadataValue(
+                            dataObject,
+                            "UserId");
+
+                    string subscriptionId =
+                        GetString(
+                            dataObject,
+                            "id");
+
+                    string customerId =
+                        GetString(
+                            dataObject,
+                            "customer");
+
+                    string priceId =
+                        GetSubscriptionPriceId(
+                            dataObject);
+
+                    planKey =
+                        _stripeCheckoutService
+                            .ResolvePlanKeyFromPriceId(
+                                priceId);
+
+                    string billingInterval =
+                        _stripeCheckoutService
+                            .ResolveBillingIntervalFromPriceId(
+                                priceId);
+
+                    if (string.IsNullOrWhiteSpace(
+                            userId) ||
+                        planKey ==
+                            PonyUpPlanCatalog.FreeKey)
+                    {
+                        break;
+                    }
+
+                    ApplicationUser? user =
+                        await _dbContext.Users
+                            .FirstOrDefaultAsync(
+                                x => x.Id == userId);
+
+                    if (user == null)
+                    {
+                        break;
+                    }
+
+                    string currentPlanKey =
+                        PonyUpPlanCatalog.NormalizeKey(
+                            user.CurrentPlan);
+
+                    bool planChanged =
+                        !string.Equals(
+                            currentPlanKey,
+                            planKey,
+                            StringComparison.Ordinal);
+
+                    bool cadenceChanged =
+                        !string.IsNullOrWhiteSpace(
+                            billingInterval) &&
+                        !string.Equals(
+                            user.SubscriptionBillingInterval,
+                            billingInterval,
+                            StringComparison.OrdinalIgnoreCase);
+
+                    if (!string.IsNullOrWhiteSpace(
+                            billingInterval))
+                    {
+                        user.SubscriptionBillingInterval =
+                            billingInterval;
+                    }
+
+                    if (planChanged ||
+                        cadenceChanged)
+                    {
+                        _planEntitlementService
+                            .ApplyRenewal(
+                                user,
+                                planKey);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(
+                            subscriptionId))
+                    {
+                        user.ActiveStripeSubscriptionId =
+                            subscriptionId;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(
+                            customerId))
+                    {
+                        user.StripeCustomerId =
+                            customerId;
+                    }
+
+                    recordPlanKey =
+                        $"webhook:{stripeEvent.Type}:{planKey}";
+
+                    shouldRecord =
+                        true;
 
                     break;
                 }
@@ -126,22 +358,42 @@ namespace PonyUpPerformance.Web.Pages
                             "UserId");
 
                     planKey =
-                        GetMetadataValue(
+                        PonyUpPlanCatalog.NormalizeKey(
+                            GetMetadataValue(
+                                dataObject,
+                                "PlanKey"));
+
+                    string subscriptionId =
+                        GetString(
                             dataObject,
-                            "PlanKey");
+                            "id");
 
-                    if (!string.IsNullOrWhiteSpace(userId))
+                    if (string.IsNullOrWhiteSpace(
+                            userId))
                     {
-                        ApplicationUser? user =
-                            await _dbContext.Users
-                                .FirstOrDefaultAsync(
-                                    x => x.Id == userId);
+                        break;
+                    }
 
-                        if (user != null)
-                        {
-                            user.CurrentPlan = "Free";
-                            shouldRecord = true;
-                        }
+                    ApplicationUser? user =
+                        await _dbContext.Users
+                            .FirstOrDefaultAsync(
+                                x => x.Id == userId);
+
+                    if (user == null)
+                    {
+                        break;
+                    }
+
+                    shouldRecord =
+                        await _planEntitlementService
+                            .ApplyCancellationAsync(
+                                user,
+                                subscriptionId);
+
+                    if (shouldRecord)
+                    {
+                        recordPlanKey =
+                            $"webhook:{stripeEvent.Type}:{planKey}";
                     }
 
                     break;
@@ -157,10 +409,13 @@ namespace PonyUpPerformance.Web.Pages
                             userId,
 
                         StripeSessionId =
-                            stripeEvent.Id,
+                            recordKey,
 
                         PlanKey =
-                            $"webhook:{stripeEvent.Type}:{planKey}",
+                            string.IsNullOrWhiteSpace(
+                                recordPlanKey)
+                                ? planKey
+                                : recordPlanKey,
 
                         CreatedOn =
                             DateTime.UtcNow
@@ -172,64 +427,89 @@ namespace PonyUpPerformance.Web.Pages
             return new OkResult();
         }
 
-        private async Task ApplyRecurringPlanAsync(
-            string userId,
-            string planKey)
-        {
-            ApplicationUser? user =
-                await _dbContext.Users
-                    .FirstOrDefaultAsync(
-                        x => x.Id == userId);
-
-            if (user == null)
-            {
-                return;
-            }
-
-            switch (
-                planKey.Trim().ToLowerInvariant())
-            {
-                case "pro":
-                    user.CurrentPlan = "Pro";
-                    user.RemainingCredits += 10;
-                    break;
-
-                case "unlimited":
-                    user.CurrentPlan = "Unlimited";
-                    break;
-            }
-        }
-
-        private static (
-            string UserId,
-            string PlanKey)
-            GetSubscriptionMetadataFromInvoice(
+        private static string
+            GetSubscriptionUserIdFromInvoice(
                 JsonElement invoice)
         {
-            if (!invoice.TryGetProperty(
-                    "parent",
-                    out JsonElement parent) ||
-                parent.ValueKind !=
-                    JsonValueKind.Object ||
-                !parent.TryGetProperty(
+            /*
+             * Current Stripe invoices expose
+             * subscription_details.metadata directly.
+             * Keep the parent.subscription_details
+             * fallback for compatibility with event
+             * shapes used by earlier API versions.
+             */
+            if (invoice.TryGetProperty(
                     "subscription_details",
-                    out JsonElement subscriptionDetails) ||
-                subscriptionDetails.ValueKind !=
+                    out JsonElement directDetails) &&
+                directDetails.ValueKind ==
                     JsonValueKind.Object)
             {
-                return (
-                    string.Empty,
-                    string.Empty);
+                string directUserId =
+                    GetMetadataValue(
+                        directDetails,
+                        "UserId");
+
+                if (!string.IsNullOrWhiteSpace(
+                        directUserId))
+                {
+                    return directUserId;
+                }
             }
 
-            return (
-                GetMetadataValue(
-                    subscriptionDetails,
-                    "UserId"),
+            if (invoice.TryGetProperty(
+                    "parent",
+                    out JsonElement parent) &&
+                parent.ValueKind ==
+                    JsonValueKind.Object &&
+                parent.TryGetProperty(
+                    "subscription_details",
+                    out JsonElement parentDetails) &&
+                parentDetails.ValueKind ==
+                    JsonValueKind.Object)
+            {
+                return GetMetadataValue(
+                    parentDetails,
+                    "UserId");
+            }
 
-                GetMetadataValue(
-                    subscriptionDetails,
-                    "PlanKey"));
+            return string.Empty;
+        }
+
+        private static string GetSubscriptionPriceId(
+            JsonElement subscription)
+        {
+            if (!subscription.TryGetProperty(
+                    "items",
+                    out JsonElement items) ||
+                items.ValueKind !=
+                    JsonValueKind.Object ||
+                !items.TryGetProperty(
+                    "data",
+                    out JsonElement data) ||
+                data.ValueKind !=
+                    JsonValueKind.Array)
+            {
+                return string.Empty;
+            }
+
+            JsonElement firstItem =
+                data.EnumerateArray()
+                    .FirstOrDefault();
+
+            if (firstItem.ValueKind !=
+                    JsonValueKind.Object ||
+                !firstItem.TryGetProperty(
+                    "price",
+                    out JsonElement price) ||
+                price.ValueKind !=
+                    JsonValueKind.Object)
+            {
+                return string.Empty;
+            }
+
+            return GetString(
+                price,
+                "id");
         }
 
         private static string GetMetadataValue(
