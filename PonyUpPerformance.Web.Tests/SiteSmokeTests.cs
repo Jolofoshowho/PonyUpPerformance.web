@@ -91,6 +91,29 @@ public sealed class SiteSmokeTests :
     }
 
     [Fact]
+    public async Task AnalyzerDraftRestoreScript_IsDelivered()
+    {
+        string script =
+            await _client.GetStringAsync(
+                "/js/site.js");
+
+        Assert.Contains(
+            "RESTORE VALUES",
+            script,
+            StringComparison.Ordinal);
+
+        Assert.Contains(
+            "START FRESH",
+            script,
+            StringComparison.Ordinal);
+
+        Assert.Contains(
+            "ponyup.analyzerDraft.v1",
+            script,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Pricing_RendersNewTierNames()
     {
         string html =
