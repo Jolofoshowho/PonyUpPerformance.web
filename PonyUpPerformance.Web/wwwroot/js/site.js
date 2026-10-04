@@ -2,6 +2,24 @@
 
 (function () {
 
+    const ANALYZER_PATHS =
+        new Set([
+            "/repairanalyzer",
+            "/buyanalyzer",
+            "/sellanalyzer",
+            "/tradeanalyzer",
+            "/upgradeanalyzer"
+        ]);
+
+    const ANALYZER_DRAFT_PREFIX =
+        "ponyup.analyzerDraft.v1.";
+
+    const ANALYZER_SUBMIT_PREFIX =
+        "ponyup.analyzerSubmit.v1.";
+
+    const ANALYZER_DRAFT_MAX_AGE_MS =
+        7 * 24 * 60 * 60 * 1000;
+
     const VIN_HISTORY_KEY =
         "ponyup.vinHistory.v1";
 
@@ -638,12 +656,439 @@
                     index));
     }
 
+
+    function analyzerDraftKey() {
+        return ANALYZER_DRAFT_PREFIX +
+            window.location.pathname.toLowerCase();
+    }
+
+    function analyzerSubmitKey() {
+        return ANALYZER_SUBMIT_PREFIX +
+            window.location.pathname.toLowerCase();
+    }
+
+    function isAnalyzerPage() {
+        return ANALYZER_PATHS.has(
+            window.location.pathname.toLowerCase());
+    }
+
+    function analyzerHasResult() {
+        const panel =
+            document.querySelector(
+                ".ponyup-stoplight-panel");
+
+        return panel &&
+            !panel.classList.contains(
+                "off");
+    }
+
+    function analyzerControls() {
+        return Array.from(
+            document.querySelectorAll(
+                "form input[name], form select[name], form textarea[name]"))
+            .filter(control => {
+                const type =
+                    (control.type || "")
+                        .toLowerCase();
+
+                if ([
+                    "hidden",
+                    "submit",
+                    "button",
+                    "reset",
+                    "file",
+                    "image"
+                ].includes(type)) {
+                    return false;
+                }
+
+                const name =
+                    control.name || "";
+
+                return name.startsWith("Input.") ||
+                    name.startsWith("EstimateInput.");
+            });
+    }
+
+    function captureAnalyzerDraft() {
+        const values =
+            analyzerControls()
+                .map(control => ({
+                    name:
+                        control.name,
+                    type:
+                        (control.type || control.tagName)
+                            .toLowerCase(),
+                    value:
+                        control.value,
+                    checked:
+                        "checked" in control
+                            ? control.checked
+                            : undefined
+                }));
+
+        return {
+            savedAt:
+                Date.now(),
+            values:
+                values
+        };
+    }
+
+    function saveAnalyzerDraft() {
+        if (!isAnalyzerPage()) {
+            return;
+        }
+
+        try {
+            localStorage.setItem(
+                analyzerDraftKey(),
+                JSON.stringify(
+                    captureAnalyzerDraft()));
+        }
+        catch {
+            // Draft restore is optional and must never block an analyzer.
+        }
+    }
+
+    function readAnalyzerDraft() {
+        try {
+            const raw =
+                localStorage.getItem(
+                    analyzerDraftKey());
+
+            if (!raw) {
+                return null;
+            }
+
+            const draft =
+                JSON.parse(raw);
+
+            if (!draft ||
+                !Array.isArray(draft.values) ||
+                !draft.savedAt ||
+                Date.now() - draft.savedAt >
+                    ANALYZER_DRAFT_MAX_AGE_MS) {
+
+                localStorage.removeItem(
+                    analyzerDraftKey());
+
+                return null;
+            }
+
+            return draft;
+        }
+        catch {
+            return null;
+        }
+    }
+
+    function restoreAnalyzerDraft(draft) {
+        if (!draft ||
+            !Array.isArray(draft.values)) {
+            return;
+        }
+
+        const controls =
+            analyzerControls();
+
+        draft.values.forEach(saved => {
+            controls
+                .filter(control =>
+                    control.name ===
+                    saved.name)
+                .forEach(control => {
+                    const type =
+                        (control.type || "")
+                            .toLowerCase();
+
+                    if (type === "radio") {
+                        control.checked =
+                            control.value ===
+                            saved.value &&
+                            saved.checked === true;
+                    }
+                    else if (type === "checkbox") {
+                        control.checked =
+                            saved.checked === true;
+                    }
+                    else {
+                        control.value =
+                            saved.value ?? "";
+                    }
+
+                    control.dispatchEvent(
+                        new Event(
+                            "change",
+                            {
+                                bubbles: true
+                            }));
+                });
+        });
+    }
+
+    function clearAnalyzerDraftAndForm() {
+        try {
+            localStorage.removeItem(
+                analyzerDraftKey());
+        }
+        catch {
+        }
+
+        document.querySelectorAll(
+            "form")
+            .forEach(form =>
+                form.reset());
+    }
+
+    function showAnalyzerRestorePrompt(
+        draft) {
+
+        const overlay =
+            document.createElement(
+                "div");
+
+        overlay.setAttribute(
+            "role",
+            "dialog");
+
+        overlay.setAttribute(
+            "aria-modal",
+            "true");
+
+        overlay.setAttribute(
+            "aria-label",
+            "Restore saved PonyUp analyzer values");
+
+        overlay.style.cssText =
+            "position:fixed;inset:0;z-index:10000;" +
+            "display:flex;align-items:center;justify-content:center;" +
+            "padding:20px;background:rgba(0,0,0,.82);";
+
+        const card =
+            document.createElement(
+                "div");
+
+        card.style.cssText =
+            "width:min(520px,100%);padding:28px;text-align:center;" +
+            "background:#0b0b0b;border:1px solid rgba(255,255,255,.22);" +
+            "border-top:3px solid #ff3131;border-radius:12px;" +
+            "box-shadow:0 20px 60px rgba(0,0,0,.8);color:#fff;";
+
+        const logo =
+            document.createElement(
+                "img");
+
+        logo.src =
+            "/images/ponyup-logo.jpg";
+
+        logo.alt =
+            "PonyUp Performance";
+
+        logo.style.cssText =
+            "width:120px;max-width:40%;height:auto;margin-bottom:16px;border-radius:8px;";
+
+        const title =
+            document.createElement(
+                "h2");
+
+        title.textContent =
+            "RESTORE SAVED VALUES?";
+
+        title.style.cssText =
+            "margin:0 0 10px;font-size:1.45rem;";
+
+        const copy =
+            document.createElement(
+                "p");
+
+        copy.textContent =
+            "PonyUp found unfinished values from your last visit to this analyzer.";
+
+        copy.style.cssText =
+            "margin:0 0 22px;color:#ccc;line-height:1.5;";
+
+        const actions =
+            document.createElement(
+                "div");
+
+        actions.style.cssText =
+            "display:flex;gap:12px;justify-content:center;flex-wrap:wrap;";
+
+        const restore =
+            document.createElement(
+                "button");
+
+        restore.type =
+            "button";
+
+        restore.textContent =
+            "RESTORE VALUES";
+
+        restore.style.cssText =
+            "min-width:170px;padding:12px 18px;border:0;border-radius:6px;" +
+            "background:#d71920;color:#fff;font-weight:900;cursor:pointer;";
+
+        const fresh =
+            document.createElement(
+                "button");
+
+        fresh.type =
+            "button";
+
+        fresh.textContent =
+            "START FRESH";
+
+        fresh.style.cssText =
+            "min-width:170px;padding:12px 18px;border:1px solid #777;border-radius:6px;" +
+            "background:#1b1b1b;color:#fff;font-weight:900;cursor:pointer;";
+
+        restore.addEventListener(
+            "click",
+            function () {
+                restoreAnalyzerDraft(
+                    draft);
+
+                overlay.remove();
+            });
+
+        fresh.addEventListener(
+            "click",
+            function () {
+                clearAnalyzerDraftAndForm();
+                overlay.remove();
+            });
+
+        actions.appendChild(
+            restore);
+
+        actions.appendChild(
+            fresh);
+
+        card.appendChild(
+            logo);
+
+        card.appendChild(
+            title);
+
+        card.appendChild(
+            copy);
+
+        card.appendChild(
+            actions);
+
+        overlay.appendChild(
+            card);
+
+        document.body.appendChild(
+            overlay);
+
+        restore.focus();
+    }
+
+    function initializeAnalyzerDraftRestore() {
+        if (!isAnalyzerPage()) {
+            return;
+        }
+
+        if (analyzerHasResult()) {
+            try {
+                localStorage.removeItem(
+                    analyzerDraftKey());
+
+                sessionStorage.removeItem(
+                    analyzerSubmitKey());
+            }
+            catch {
+            }
+
+            return;
+        }
+
+        const controls =
+            analyzerControls();
+
+        if (controls.length === 0) {
+            return;
+        }
+
+        let saveTimer;
+
+        const queueSave =
+            function () {
+                window.clearTimeout(
+                    saveTimer);
+
+                saveTimer =
+                    window.setTimeout(
+                        saveAnalyzerDraft,
+                        250);
+            };
+
+        controls.forEach(control => {
+            control.addEventListener(
+                "input",
+                queueSave);
+
+            control.addEventListener(
+                "change",
+                queueSave);
+        });
+
+        document.querySelectorAll(
+            "form")
+            .forEach(form =>
+                form.addEventListener(
+                    "submit",
+                    function () {
+                        saveAnalyzerDraft();
+
+                        try {
+                            sessionStorage.setItem(
+                                analyzerSubmitKey(),
+                                "1");
+                        }
+                        catch {
+                        }
+                    }));
+
+        let submitted =
+            false;
+
+        try {
+            submitted =
+                sessionStorage.getItem(
+                    analyzerSubmitKey()) ===
+                "1";
+
+            if (submitted) {
+                sessionStorage.removeItem(
+                    analyzerSubmitKey());
+            }
+        }
+        catch {
+        }
+
+        if (submitted) {
+            return;
+        }
+
+        const draft =
+            readAnalyzerDraft();
+
+        if (draft) {
+            showAnalyzerRestorePrompt(
+                draft);
+        }
+    }
+
     document.addEventListener(
         "DOMContentLoaded",
         function () {
 
             initializeVinHistory();
             initializeGarageUi();
+            initializeAnalyzerDraftRestore();
         });
 
     /*
