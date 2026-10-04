@@ -264,7 +264,7 @@ using (var scope = app.Services.CreateScope())
             "ProviderName" text NOT NULL DEFAULT '',
             "ProviderReportId" text NOT NULL DEFAULT '',
             "ExternalCostCents" integer NULL,
-            "ReportJson" text NOT NULL DEFAULT '{}',
+            "ReportJson" text NOT NULL DEFAULT (CHR(123) || CHR(125)),
             "ErrorMessage" text NOT NULL DEFAULT '',
             "CreatedOn" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
             "CompletedOn" timestamp with time zone NULL
