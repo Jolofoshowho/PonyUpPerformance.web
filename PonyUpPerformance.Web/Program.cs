@@ -93,6 +93,15 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 })
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.ExpireTimeSpan =
+        TimeSpan.FromDays(90);
+
+    options.SlidingExpiration =
+        true;
+});
+
 var authenticationBuilder =
     builder.Services.AddAuthentication();
 
