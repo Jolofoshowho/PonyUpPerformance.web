@@ -144,6 +144,7 @@ if (!string.IsNullOrWhiteSpace(facebookAppId) &&
 }
 
 builder.Services.AddDataProtection()
+    .SetApplicationName("PonyUpPerformance.Web")
     .PersistKeysToDbContext<ApplicationDbContext>();
 
 
