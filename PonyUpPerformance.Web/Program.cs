@@ -96,7 +96,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.ExpireTimeSpan =
-        TimeSpan.FromDays(90);
+        TimeSpan.FromDays(365);
 
     options.SlidingExpiration =
         true;
