@@ -14,15 +14,18 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<ExternalLoginModel> _logger;
+        private readonly IConfiguration _configuration;
 
         public ExternalLoginModel(
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
-            ILogger<ExternalLoginModel> logger)
+            ILogger<ExternalLoginModel> logger,
+            IConfiguration configuration)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _logger = logger;
+            _configuration = configuration;
         }
 
         [BindProperty]
@@ -82,11 +85,19 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account
                 return RedirectToPage("./Login");
             }
 
+            string? providerEmailForPersistence =
+                info.Principal.FindFirstValue(
+                    ClaimTypes.Email);
+
+            bool persistentOwnerLogin =
+                IsOwnerEmail(
+                    providerEmailForPersistence);
+
             var result =
                 await _signInManager.ExternalLoginSignInAsync(
                     info.LoginProvider,
                     info.ProviderKey,
-                    isPersistent: false,
+                    isPersistent: persistentOwnerLogin,
                     bypassTwoFactor: false);
 
             if (result.Succeeded)
@@ -147,7 +158,8 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account
 
                     await _signInManager.SignInAsync(
                         existingUser,
-                        isPersistent: false,
+                        isPersistent:
+                            IsOwnerEmail(email),
                         authenticationMethod:
                             info.LoginProvider);
 
@@ -186,7 +198,8 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account
                     {
                         await _signInManager.SignInAsync(
                             newUser,
-                            isPersistent: false,
+                            isPersistent:
+                                IsOwnerEmail(email),
                             authenticationMethod:
                                 info.LoginProvider);
 
@@ -318,7 +331,8 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account
 
             await _signInManager.SignInAsync(
                 user,
-                isPersistent: false,
+                isPersistent:
+                    IsOwnerEmail(email),
                 authenticationMethod:
                     info.LoginProvider);
 
@@ -327,6 +341,23 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account
                 info.LoginProvider);
 
             return LocalRedirect(returnUrl);
+        }
+
+        private bool IsOwnerEmail(
+            string? email)
+        {
+            string ownerEmail =
+                _configuration["OwnerLogin:Email"]
+                ?? string.Empty;
+
+            return !string.IsNullOrWhiteSpace(
+                    email) &&
+                !string.IsNullOrWhiteSpace(
+                    ownerEmail) &&
+                string.Equals(
+                    email.Trim(),
+                    ownerEmail.Trim(),
+                    StringComparison.OrdinalIgnoreCase);
         }
     }
 }
