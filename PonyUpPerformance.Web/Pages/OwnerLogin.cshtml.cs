@@ -76,7 +76,7 @@ namespace PonyUpPerformance.Web.Pages
 
             await _signInManager.SignInAsync(
                 user,
-                isPersistent: false);
+                isPersistent: true);
 
             return LocalRedirect(
                 Url.Content("~/"));
