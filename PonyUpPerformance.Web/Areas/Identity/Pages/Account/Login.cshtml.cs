@@ -98,7 +98,7 @@ namespace PonyUpPerformance.Web.Areas.Identity.Pages.Account
                 {
                     await _signInManager.SignInAsync(
                         user,
-                        isPersistent: Input.RememberMe);
+                        isPersistent: true);
 
                     _logger.LogInformation("Owner logged in.");
 
