@@ -28,6 +28,10 @@ namespace PonyUpPerformance.Web.Data
 
         public DbSet<RevUpReport> RevUpReports { get; set; }
 
+        public DbSet<BetaAccessCode> BetaAccessCodes { get; set; }
+
+        public DbSet<BetaAccessRedemption> BetaAccessRedemptions { get; set; }
+
         public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
     }
 }
