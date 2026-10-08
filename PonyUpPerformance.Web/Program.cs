@@ -187,6 +187,8 @@ builder.Services.AddScoped<StripeFulfillmentService>();
 builder.Services.AddScoped<PonyUpIdentityEmailSender>();
 builder.Services.AddScoped<IEmailSender<ApplicationUser>, PonyUpIdentityEmailSender>();
 builder.Services.AddScoped<UsageCreditService>();
+builder.Services.AddScoped<BetaAccessCodeService>();
+builder.Services.AddHostedService<BetaAccessBootstrapService>();
 builder.Services.AddScoped<IRevUpReportProvider, UnavailableRevUpReportProvider>();
 builder.Services.AddScoped<RevUpReportService>();
 builder.Services.AddScoped<IBuyScoringService, BuyScoringService>();
