@@ -288,6 +288,37 @@ using (var scope = app.Services.CreateScope())
         CREATE INDEX IF NOT EXISTS "IX_RevUpReports_UserId_Vin_Status"
         ON "RevUpReports" ("UserId", "Vin", "Status");
         """);
+
+
+    int totalAccounts =
+        await db.Users.CountAsync();
+
+    int freeAccounts =
+        await db.Users.CountAsync(
+            x =>
+                string.IsNullOrEmpty(x.CurrentPlan) ||
+                x.CurrentPlan == "Free" ||
+                x.CurrentPlan == "free");
+
+    int activeSubscriptions =
+        await db.Users.CountAsync(
+            x => x.ActiveStripeSubscriptionId != "");
+
+    int quickPackBuyers =
+        await db.StripePurchases
+            .Where(x =>
+                x.PlanKey ==
+                PonyUpPlanCatalog.QuickPackKey)
+            .Select(x => x.UserId)
+            .Distinct()
+            .CountAsync();
+
+    app.Logger.LogInformation(
+        "PONYUP_MEMBER_STATS TotalAccounts={TotalAccounts} FreeAccounts={FreeAccounts} ActiveSubscriptions={ActiveSubscriptions} QuickPackBuyers={QuickPackBuyers}",
+        totalAccounts,
+        freeAccounts,
+        activeSubscriptions,
+        quickPackBuyers);
 }
 }
 
