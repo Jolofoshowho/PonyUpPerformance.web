@@ -1,0 +1,87 @@
+@page
+@model PonyUpPerformance.Web.Pages.BetaAccessModel
+
+@{
+    ViewData["Title"] = "Beta Access";
+}
+
+<section class="page-section">
+    <div class="container" style="max-width:760px;">
+
+        <div class="account-card">
+
+            <img src="/images/ponyup-logo.jpg"
+                 alt="PonyUp Performance"
+                 style="max-width:160px;height:auto;margin-bottom:18px;" />
+
+            <p class="pricing-eyebrow">PONYUP PERFORMANCE</p>
+
+            <h1>BETA ACCESS</h1>
+
+            <p class="account-subtitle">
+                Beta access codes add full-analysis credits to your existing PonyUp account.
+            </p>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Message))
+            {
+                <div class="alert @(Model.Success ? "alert-success" : "alert-warning")"
+                     role="status">
+                    @Model.Message
+                </div>
+            }
+
+            <form method="post">
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger"
+                     role="alert">
+                </div>
+
+                <div class="form-floating mb-3">
+                    <input asp-for="Input.Code"
+                           class="form-control"
+                           autocomplete="off"
+                           autocapitalize="characters"
+                           placeholder="PONYUP-BETA5" />
+
+                    <label asp-for="Input.Code">
+                        Beta Access Code
+                    </label>
+
+                    <span asp-validation-for="Input.Code"
+                          class="text-danger">
+                    </span>
+                </div>
+
+                <button type="submit"
+                        class="btn btn-danger btn-lg w-100">
+                    REDEEM BETA ACCESS
+                </button>
+
+            </form>
+
+            <div style="margin-top:24px;">
+                <strong>Current analysis access:</strong>
+
+                @if (Model.RemainingCredits == int.MaxValue)
+                {
+                    <span> Unlimited</span>
+                }
+                else
+                {
+                    <span> @Model.RemainingCredits credit(s)</span>
+                }
+            </div>
+
+            <p style="margin-top:18px;color:#aaa;">
+                Each beta code can be redeemed only once per PonyUp account.
+            </p>
+
+        </div>
+
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
