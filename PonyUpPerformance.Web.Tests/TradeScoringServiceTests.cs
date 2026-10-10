@@ -64,4 +64,94 @@ public sealed class TradeScoringServiceTests
         Assert.NotNull(
             result.NetTradePosition);
     }
+
+    [Fact]
+    public void Analyze_NearEvenMoneyWithBetterConditionAndMileage_IsPonyUp()
+    {
+        var service =
+            new TradeScoringService();
+
+        var input =
+            new TradeDecisionInput
+            {
+                YourYear = 2012,
+                YourMake = "Chevrolet",
+                YourModel = "Suburban",
+                YourValue = 3700m,
+                YourMileage = 345765,
+                YourCondition = MechanicalCondition.Fair,
+
+                TheirYear = 2006,
+                TheirMake = "Pontiac",
+                TheirModel = "Grand Prix",
+                TheirValue = 3500m,
+                TheirMileage = 234829,
+                TheirCondition = MechanicalCondition.Excellent
+            };
+
+        TradeDecisionResult result =
+            service.Analyze(input);
+
+        Assert.Equal(
+            "PONY UP",
+            result.Recommendation);
+
+        Assert.Equal(
+            "LOW",
+            result.RiskLevel);
+
+        Assert.True(
+            result.Score >= 55,
+            $"Expected a green-light score, but received {result.Score}.");
+    }
+
+    [Fact]
+    public void Analyze_EvenTradeWithoutQualityAdvantage_IsNegotiate()
+    {
+        var service =
+            new TradeScoringService();
+
+        var input =
+            new TradeDecisionInput
+            {
+                YourValue = 5000m,
+                TheirValue = 5000m,
+                YourCondition = MechanicalCondition.Good,
+                TheirCondition = MechanicalCondition.Good
+            };
+
+        TradeDecisionResult result =
+            service.Analyze(input);
+
+        Assert.Equal(
+            "NEGOTIATE",
+            result.Recommendation);
+    }
+
+    [Fact]
+    public void Analyze_HighRiskTrade_CannotReturnPonyUp()
+    {
+        var service =
+            new TradeScoringService();
+
+        var input =
+            new TradeDecisionInput
+            {
+                YourValue = 4000m,
+                TheirValue = 8000m,
+                YourCondition = MechanicalCondition.Poor,
+                TheirCondition = MechanicalCondition.Excellent,
+                TheirTitleStatus = TitleStatus.Flood,
+                TheirAccidentHistory = AccidentHistory.Major,
+                TheirRuns = false,
+                TheirDrives = false
+            };
+
+        TradeDecisionResult result =
+            service.Analyze(input);
+
+        Assert.NotEqual(
+            "PONY UP",
+            result.Recommendation);
+    }
 }
