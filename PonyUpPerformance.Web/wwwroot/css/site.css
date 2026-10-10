@@ -5180,3 +5180,141 @@ body.garage-modal-open {
     color: #aaa;
     font-size: .9rem;
 }
+
+
+/* Result-first analyzer layout */
+.ponyup-stoplight-panel[data-analysis-result="true"] {
+    margin-top: 8px;
+    padding: 18px;
+    gap: 16px;
+    grid-template-columns:
+        minmax(180px, 230px)
+        minmax(0, 1fr)
+        minmax(260px, 320px);
+    scroll-margin-top: 12px;
+}
+
+.ponyup-stoplight-panel[data-analysis-result="true"]:focus {
+    outline: none;
+}
+
+.ponyup-stoplight-panel[data-analysis-result="true"] .ponyup-stoplight-art {
+    max-width: 220px;
+}
+
+.ponyup-stoplight-panel[data-analysis-result="true"] .ponyup-stoplight-center {
+    padding: 18px;
+}
+
+.ponyup-stoplight-panel[data-analysis-result="true"] .ponyup-stoplight-center h2 {
+    margin: 6px 0 12px;
+    font-size: clamp(2.3rem, 4.8vw, 4.8rem);
+}
+
+.ponyup-stoplight-panel[data-analysis-result="true"] .ponyup-score {
+    font-size: clamp(2.8rem, 5vw, 5.2rem);
+    line-height: .95;
+}
+
+.ponyup-stoplight-panel[data-analysis-result="true"] .ponyup-result-reasoning {
+    font-size: 1rem;
+    line-height: 1.38;
+}
+
+.ponyup-stoplight-panel[data-analysis-result="true"] .ponyup-stoplight-legend {
+    padding: 14px;
+}
+
+.ponyup-stoplight-panel[data-analysis-result="true"] .ponyup-stoplight-legend h3 {
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.ponyup-stoplight-panel[data-analysis-result="true"] .ponyup-legend-card {
+    padding: 10px 12px;
+    margin-bottom: 8px;
+}
+
+.ponyup-stoplight-panel[data-analysis-result="true"] .ponyup-legend-card p {
+    margin-bottom: 0;
+    font-size: .82rem;
+    line-height: 1.3;
+}
+
+.ponyup-result-vehicle-card {
+    min-width: 0;
+    padding: 13px 16px;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(18, 18, 18, .97),
+            rgba(4, 4, 4, .98));
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .45);
+}
+
+.ponyup-result-vehicle-card.single {
+    margin-top: 10px;
+}
+
+.ponyup-result-vehicle-card > span {
+    display: block;
+    margin-bottom: 4px;
+    color: #d71920;
+    font-size: .68rem;
+    font-weight: 1000;
+    letter-spacing: .09rem;
+}
+
+.ponyup-result-vehicle-card > strong {
+    display: block;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 1000;
+    line-height: 1.2;
+}
+
+.ponyup-result-vehicle-card > p {
+    margin: 5px 0 0;
+    color: #bdbdbd;
+    font-size: .82rem;
+    font-weight: 750;
+    line-height: 1.35;
+}
+
+.ponyup-result-vehicle-pair {
+    width: min(920px, calc(100% - 24px));
+    margin: 12px auto 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.trade-result-summary {
+    width: min(920px, calc(100% - 24px));
+    margin-top: 10px;
+}
+
+@media (max-width: 900px) {
+    .ponyup-stoplight-panel[data-analysis-result="true"] {
+        grid-template-columns: 1fr;
+        padding: 14px;
+        text-align: center;
+    }
+
+    .ponyup-stoplight-panel[data-analysis-result="true"] .ponyup-stoplight-art {
+        max-width: 170px;
+    }
+
+    .ponyup-result-vehicle-pair {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .ponyup-result-vehicle-pair {
+        grid-template-columns: 1fr;
+    }
+}
