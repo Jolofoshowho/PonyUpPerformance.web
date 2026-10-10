@@ -9,6 +9,38 @@
             ? "max-width:900px;margin:0 auto;display:none;"
             : "max-width:900px;margin:0 auto;";
 
+    string vehicleTitle =
+        string.Join(
+            " ",
+            new[]
+            {
+                Model.Input.Year?.ToString(),
+                Model.Input.Make,
+                Model.Input.Model
+            }
+            .Where(x =>
+                !string.IsNullOrWhiteSpace(x)));
+
+    var vehicleDetailsParts =
+        new List<string>();
+
+    if (Model.Input.CurrentValue.HasValue)
+    {
+        vehicleDetailsParts.Add(
+            $"Value {Model.Input.CurrentValue.Value:C0}");
+    }
+
+    if (Model.Input.UpgradeCost.HasValue)
+    {
+        vehicleDetailsParts.Add(
+            $"Upgrade {Model.Input.UpgradeCost.Value:C0}");
+    }
+
+    string vehicleDetails =
+        string.Join(
+            " • ",
+            vehicleDetailsParts);
+
     string Money(decimal? value)
     {
         return value.HasValue
@@ -49,7 +81,13 @@
 
             Reasoning =
                 Model.Result?.Reasoning
-                ?? "Enter whatever upgrade information you know and run the analysis."
+                ?? "Enter whatever upgrade information you know and run the analysis.",
+
+            PrimaryVehicleTitle =
+                vehicleTitle,
+
+            PrimaryVehicleDetails =
+                vehicleDetails
         };
 }
 
