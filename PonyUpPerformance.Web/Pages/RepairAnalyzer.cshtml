@@ -12,6 +12,38 @@
         Model.Result?.Reasoning
         ?? "Enter whatever repair and vehicle information you know, then run the analysis.";
 
+    string vehicleTitle =
+        string.Join(
+            " ",
+            new[]
+            {
+                Model.Input.VehicleYear?.ToString(),
+                Model.Input.VehicleMake,
+                Model.Input.VehicleModel
+            }
+            .Where(x =>
+                !string.IsNullOrWhiteSpace(x)));
+
+    var vehicleDetailsParts =
+        new List<string>();
+
+    if (Model.Input.VehicleValue.HasValue)
+    {
+        vehicleDetailsParts.Add(
+            $"Value {Model.Input.VehicleValue.Value:C0}");
+    }
+
+    if (Model.Input.Mileage.HasValue)
+    {
+        vehicleDetailsParts.Add(
+            $"{Model.Input.Mileage.Value:N0} mi");
+    }
+
+    string vehicleDetails =
+        string.Join(
+            " • ",
+            vehicleDetailsParts);
+
     string Money(decimal value)
     {
         return value.ToString(
@@ -49,7 +81,13 @@
                 ?? string.Empty,
 
             Reasoning =
-                reasoning
+                reasoning,
+
+            PrimaryVehicleTitle =
+                vehicleTitle,
+
+            PrimaryVehicleDetails =
+                vehicleDetails
         };
 }
 
