@@ -153,7 +153,6 @@
             input.id;
 
         if (!inputId) {
-
             inputId =
                 `ponyup-vin-input-${index}`;
 
@@ -161,90 +160,497 @@
                 inputId;
         }
 
-        const listId =
-            `${inputId}-history`;
-
-        let dataList =
-            document.getElementById(
-                listId);
-
-        if (!dataList) {
-
-            dataList =
-                document.createElement(
-                    "datalist");
-
-            dataList.id =
-                listId;
-
-            document.body.appendChild(
-                dataList);
-        }
-
-        input.setAttribute(
-            "list",
-            listId);
+        input.removeAttribute(
+            "list");
 
         input.setAttribute(
             "autocomplete",
             "off");
 
-        function refreshSuggestions() {
+        const menu =
+            document.createElement(
+                "div");
 
-            const history =
-                readVinHistory();
+        menu.className =
+            "ponyup-vin-menu";
 
-            dataList.innerHTML =
-                "";
+        menu.hidden =
+            true;
 
-            history.forEach(vehicle => {
+        menu.setAttribute(
+            "role",
+            "listbox");
 
-                const option =
-                    document.createElement(
-                        "option");
+        document.body.appendChild(
+            menu);
 
-                option.value =
-                    vehicle.vin;
+        let accountHistory =
+            [];
 
-                const description =
-                    [
-                        vehicle.year,
-                        vehicle.make,
-                        vehicle.model
-                    ]
-                        .filter(Boolean)
-                        .join(" ");
+        function combinedHistory() {
 
-                if (description) {
+            const merged =
+                new Map();
 
-                    option.label =
-                        description;
+            [
+                ...accountHistory,
+                ...readVinHistory()
+            ]
+                .forEach(vehicle => {
+
+                    const vin =
+                        normalizeVin(
+                            vehicle.vin);
+
+                    if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) {
+                        return;
+                    }
+
+                    const current =
+                        merged.get(vin)
+                        ?? {};
+
+                    merged.set(
+                        vin,
+                        {
+                            vin:
+                                vin,
+
+                            year:
+                                vehicle.year ||
+                                current.year ||
+                                "",
+
+                            make:
+                                vehicle.make ||
+                                current.make ||
+                                "",
+
+                            model:
+                                vehicle.model ||
+                                current.model ||
+                                "",
+
+                            lastUsed:
+                                vehicle.lastUsed ||
+                                current.lastUsed ||
+                                0
+                        });
+                });
+
+            return Array.from(
+                merged.values())
+                .sort(
+                    (a, b) =>
+                        (b.lastUsed || 0) -
+                        (a.lastUsed || 0))
+                .slice(
+                    0,
+                    MAX_VIN_HISTORY);
+        }
+
+        function positionMenu() {
+
+            const rect =
+                input.getBoundingClientRect();
+
+            menu.style.left =
+                `${rect.left + window.scrollX}px`;
+
+            menu.style.top =
+                `${rect.bottom + window.scrollY + 4}px`;
+
+            menu.style.width =
+                `${Math.max(rect.width, 280)}px`;
+        }
+
+        function relatedValue(
+            names) {
+
+            const form =
+                input.form;
+
+            if (!form) {
+                return "";
+            }
+
+            for (const name of names) {
+
+                const field =
+                    form.querySelector(
+                        `[name="${name}"]`);
+
+                if (field &&
+                    field.value) {
+
+                    return field.value;
+                }
+            }
+
+            return "";
+        }
+
+        function currentVehicleRecord() {
+
+            const name =
+                input.name || "";
+
+            let stem =
+                "Input.";
+
+            if (name.endsWith(
+                    "YourVin")) {
+
+                stem =
+                    "Input.Your";
+            }
+            else if (name.endsWith(
+                    "TheirVin")) {
+
+                stem =
+                    "Input.Their";
+            }
+
+            return {
+                vin:
+                    normalizeVin(
+                        input.value),
+
+                year:
+                    relatedValue(
+                        stem === "Input."
+                            ? [
+                                "Input.Year",
+                                "Input.VehicleYear"
+                            ]
+                            : [
+                                `${stem}Year`
+                            ]),
+
+                make:
+                    relatedValue(
+                        stem === "Input."
+                            ? [
+                                "Input.Make",
+                                "Input.VehicleMake"
+                            ]
+                            : [
+                                `${stem}Make`
+                            ]),
+
+                model:
+                    relatedValue(
+                        stem === "Input."
+                            ? [
+                                "Input.Model",
+                                "Input.VehicleModel"
+                            ]
+                            : [
+                                `${stem}Model`
+                            ])
+            };
+        }
+
+        async function loadAccountHistory() {
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/VinHistory",
+                        {
+                            credentials:
+                                "same-origin",
+
+                            headers:
+                                {
+                                    "Accept":
+                                        "application/json"
+                                }
+                        });
+
+                const contentType =
+                    response.headers.get(
+                        "content-type")
+                    || "";
+
+                if (!response.ok ||
+                    !contentType.includes(
+                        "application/json")) {
+
+                    return;
                 }
 
-                dataList.appendChild(
-                    option);
-            });
+                const records =
+                    await response.json();
+
+                if (!Array.isArray(
+                        records)) {
+
+                    return;
+                }
+
+                accountHistory =
+                    records.map(
+                        vehicle => ({
+                            vin:
+                                vehicle.vin,
+
+                            year:
+                                vehicle.year
+                                ?? "",
+
+                            make:
+                                vehicle.make
+                                ?? "",
+
+                            model:
+                                vehicle.model
+                                ?? "",
+
+                            lastUsed:
+                                vehicle.lastUsedOn
+                                    ? Date.parse(
+                                        vehicle.lastUsedOn)
+                                    : 0
+                        }));
+            }
+            catch {
+                // VIN history must never block the analyzer.
+            }
+        }
+
+        async function saveAccountVin(
+            vehicle) {
+
+            const vin =
+                normalizeVin(
+                    vehicle.vin);
+
+            if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) {
+                return;
+            }
+
+            try {
+
+                const form =
+                    input.form;
+
+                const antiForgery =
+                    form?.querySelector(
+                        'input[name="__RequestVerificationToken"]');
+
+                if (!antiForgery) {
+                    return;
+                }
+
+                const body =
+                    new FormData();
+
+                body.append(
+                    "__RequestVerificationToken",
+                    antiForgery.value);
+
+                body.append(
+                    "vin",
+                    vin);
+
+                if (vehicle.year) {
+                    body.append(
+                        "year",
+                        vehicle.year);
+                }
+
+                if (vehicle.make) {
+                    body.append(
+                        "make",
+                        vehicle.make);
+                }
+
+                if (vehicle.model) {
+                    body.append(
+                        "model",
+                        vehicle.model);
+                }
+
+                await fetch(
+                    "/VinHistory?handler=Save",
+                    {
+                        method:
+                            "POST",
+
+                        body:
+                            body,
+
+                        credentials:
+                            "same-origin",
+
+                        headers:
+                            {
+                                "Accept":
+                                    "application/json"
+                            }
+                    });
+            }
+            catch {
+                // Account VIN history is convenience-only.
+            }
+        }
+
+        function renderMenu() {
+
+            const history =
+                combinedHistory();
+
+            menu.innerHTML =
+                "";
+
+            if (history.length === 0) {
+
+                const empty =
+                    document.createElement(
+                        "div");
+
+                empty.className =
+                    "ponyup-vin-menu-empty";
+
+                empty.textContent =
+                    "No saved VINs yet.";
+
+                menu.appendChild(
+                    empty);
+            }
+            else {
+
+                history.forEach(
+                    vehicle => {
+
+                        const button =
+                            document.createElement(
+                                "button");
+
+                        button.type =
+                            "button";
+
+                        button.className =
+                            "ponyup-vin-menu-item";
+
+                        button.setAttribute(
+                            "role",
+                            "option");
+
+                        const vin =
+                            document.createElement(
+                                "strong");
+
+                        vin.textContent =
+                            vehicle.vin;
+
+                        const details =
+                            [
+                                vehicle.year,
+                                vehicle.make,
+                                vehicle.model
+                            ]
+                                .filter(Boolean)
+                                .join(" ");
+
+                        button.appendChild(
+                            vin);
+
+                        if (details) {
+
+                            const description =
+                                document.createElement(
+                                    "span");
+
+                            description.textContent =
+                                details;
+
+                            button.appendChild(
+                                description);
+                        }
+
+                        button.addEventListener(
+                            "mousedown",
+                            event =>
+                                event.preventDefault());
+
+                        button.addEventListener(
+                            "click",
+                            function () {
+
+                                input.value =
+                                    vehicle.vin;
+
+                                recordVin(
+                                    vehicle);
+
+                                menu.hidden =
+                                    true;
+
+                                input.dispatchEvent(
+                                    new Event(
+                                        "input",
+                                        {
+                                            bubbles:
+                                                true
+                                        }));
+
+                                input.dispatchEvent(
+                                    new Event(
+                                        "change",
+                                        {
+                                            bubbles:
+                                                true
+                                        }));
+
+                                input.focus();
+                            });
+
+                        menu.appendChild(
+                            button);
+                    });
+            }
+
+            positionMenu();
+
+            menu.hidden =
+                false;
+        }
+
+        async function openMenu() {
+
+            await loadAccountHistory();
+            renderMenu();
         }
 
         input.addEventListener(
             "focus",
-            refreshSuggestions);
+            openMenu);
+
+        input.addEventListener(
+            "click",
+            openMenu);
 
         input.addEventListener(
             "change",
-            function () {
+            async function () {
 
-                const vin =
-                    normalizeVin(
-                        input.value);
+                const vehicle =
+                    currentVehicleRecord();
 
-                if (/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) {
+                if (/^[A-HJ-NPR-Z0-9]{17}$/.test(
+                        vehicle.vin)) {
 
-                    recordVin({
-                        vin: vin
-                    });
+                    recordVin(
+                        vehicle);
 
-                    refreshSuggestions();
+                    await saveAccountVin(
+                        vehicle);
+
+                    await loadAccountHistory();
+
                     renderGarageVinHistory();
                 }
             });
@@ -253,10 +659,10 @@
             "input",
             function () {
 
-                const start =
+                const selectionStart =
                     input.selectionStart;
 
-                const end =
+                const selectionEnd =
                     input.selectionEnd;
 
                 const upper =
@@ -271,20 +677,48 @@
                     try {
 
                         input.setSelectionRange(
-                            start,
-                            end);
-
+                            selectionStart,
+                            selectionEnd);
                     }
                     catch {
                         // Selection restoration is optional.
                     }
                 }
-
-                refreshSuggestions();
             });
 
-        refreshSuggestions();
+        document.addEventListener(
+            "mousedown",
+            function (event) {
+
+                if (event.target !== input &&
+                    !menu.contains(
+                        event.target)) {
+
+                    menu.hidden =
+                        true;
+                }
+            });
+
+        window.addEventListener(
+            "resize",
+            function () {
+
+                if (!menu.hidden) {
+                    positionMenu();
+                }
+            });
+
+        window.addEventListener(
+            "scroll",
+            function () {
+
+                if (!menu.hidden) {
+                    positionMenu();
+                }
+            },
+            true);
     }
+
 
     function populateGarageVehicleFromHistory(vin) {
 
