@@ -12,6 +12,38 @@
         Model.Result?.Reasoning
         ?? "Enter the vehicle and selling details, then run the analysis.";
 
+    string vehicleTitle =
+        string.Join(
+            " ",
+            new[]
+            {
+                Model.Input.Year?.ToString(),
+                Model.Input.Make,
+                Model.Input.Model
+            }
+            .Where(x =>
+                !string.IsNullOrWhiteSpace(x)));
+
+    var vehicleDetailsParts =
+        new List<string>();
+
+    if (Model.Input.ExpectedSalePrice.HasValue)
+    {
+        vehicleDetailsParts.Add(
+            $"Sale {Model.Input.ExpectedSalePrice.Value:C0}");
+    }
+
+    if (Model.Input.Mileage.HasValue)
+    {
+        vehicleDetailsParts.Add(
+            $"{Model.Input.Mileage.Value:N0} mi");
+    }
+
+    string vehicleDetails =
+        string.Join(
+            " • ",
+            vehicleDetailsParts);
+
     string inputPanelStyle =
         Model.Result != null
             ? "max-width:900px;margin:0 auto;display:none;"
@@ -53,7 +85,9 @@
             Recommendation = recommendation,
             ConfidenceScore = Model.Result?.ConfidenceScore ?? 0,
             RiskLevel = Model.Result?.RiskLevel ?? string.Empty,
-            Reasoning = reasoning
+            Reasoning = reasoning,
+            PrimaryVehicleTitle = vehicleTitle,
+            PrimaryVehicleDetails = vehicleDetails
         };
 }
 
