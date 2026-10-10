@@ -154,4 +154,44 @@ public sealed class TradeScoringServiceTests
             "PONY UP",
             result.Recommendation);
     }
+    [Fact]
+    public void NearEvenTrade_WithBetterConditionAndMileage_IsPonyUp()
+    {
+        var service =
+            new TradeScoringService();
+
+        var input =
+            new TradeDecisionInput
+            {
+                YourYear = 2012,
+                YourMake = "Chevrolet",
+                YourModel = "Suburban",
+                YourValue = 3700m,
+                YourMileage = 345765,
+                YourCondition = MechanicalCondition.Fair,
+
+                TheirYear = 2006,
+                TheirMake = "Pontiac",
+                TheirModel = "Grand Prix",
+                TheirValue = 3500m,
+                TheirMileage = 234829,
+                TheirCondition = MechanicalCondition.Excellent
+            };
+
+        TradeDecisionResult result =
+            service.Analyze(input);
+
+        Assert.Equal(
+            "PONY UP",
+            result.Recommendation);
+
+        Assert.Equal(
+            "LOW",
+            result.RiskLevel);
+
+        Assert.True(
+            result.Score >= 55,
+            $"Expected a green trade score, got {result.Score}.");
+    }
+
 }
