@@ -114,6 +114,49 @@ public sealed class SiteSmokeTests :
     }
 
     [Fact]
+    public async Task Login_RendersPonyUpRememberMeControl()
+    {
+        string html =
+            await _client.GetStringAsync(
+                "/Identity/Account/Login");
+
+        Assert.Contains(
+            "ponyup-remember-checkbox",
+            html,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task SiteScript_RendersSavedVinMenu()
+    {
+        string script =
+            await _client.GetStringAsync(
+                "/js/site.js");
+
+        Assert.Contains(
+            "ponyup-vin-menu",
+            script,
+            StringComparison.Ordinal);
+
+        Assert.Contains(
+            "/VinHistory",
+            script,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task VinHistory_RequiresAuthentication()
+    {
+        using HttpResponseMessage response =
+            await _client.GetAsync(
+                "/VinHistory");
+
+        Assert.Equal(
+            HttpStatusCode.Redirect,
+            response.StatusCode);
+    }
+
+    [Fact]
     public async Task Pricing_RendersNewTierNames()
     {
         string html =
