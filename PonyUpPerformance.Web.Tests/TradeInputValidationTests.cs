@@ -7,10 +7,34 @@ namespace PonyUpPerformance.Web.Tests;
 public sealed class TradeInputValidationTests
 {
     [Fact]
-    public void EmptyTradeInput_IsValid()
+    public void MissingMarketValues_IsRejected()
     {
         var input =
             new TradeDecisionInput();
+
+        List<ValidationResult> results =
+            Validate(input);
+
+        Assert.Contains(
+            results,
+            x => x.MemberNames.Contains(
+                nameof(TradeDecisionInput.YourValue)));
+
+        Assert.Contains(
+            results,
+            x => x.MemberNames.Contains(
+                nameof(TradeDecisionInput.TheirValue)));
+    }
+
+    [Fact]
+    public void OnlyBothMarketValues_IsValid()
+    {
+        var input =
+            new TradeDecisionInput
+            {
+                YourValue = 5000m,
+                TheirValue = 7500m
+            };
 
         List<ValidationResult> results =
             Validate(input);
@@ -19,18 +43,18 @@ public sealed class TradeInputValidationTests
     }
 
     [Fact]
-    public void NegativeTradeEvidence_IsRejected()
+    public void NegativeOptionalTradeEvidence_IsRejectedWhenSupplied()
     {
         var input =
             new TradeDecisionInput
             {
+                YourValue = 5000m,
+                TheirValue = 7500m,
                 YourYear = -1,
-                YourValue = -100m,
                 YourMileage = -1,
                 YourEstimatedRepairCost = -1m,
                 CashYouAdd = -1m,
                 TheirYear = -1,
-                TheirValue = -100m,
                 TheirMileage = -1,
                 TheirEstimatedRepairCost = -1m,
                 CashTheyAdd = -1m
@@ -41,7 +65,7 @@ public sealed class TradeInputValidationTests
 
         Assert.NotEmpty(results);
         Assert.True(
-            results.Count >= 10,
+            results.Count >= 8,
             $"Expected invalid supplied values to be rejected, but only {results.Count} validation errors were returned.");
     }
 
