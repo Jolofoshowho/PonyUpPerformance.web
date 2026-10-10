@@ -17,4 +17,16 @@ public class PonyUpStoplightResultViewModel
 
     public string AnalysisType { get; set; }
         = "ANALYSIS STATUS";
+
+    public string PrimaryVehicleTitle { get; set; }
+        = string.Empty;
+
+    public string PrimaryVehicleDetails { get; set; }
+        = string.Empty;
+
+    public string SecondaryVehicleTitle { get; set; }
+        = string.Empty;
+
+    public string SecondaryVehicleDetails { get; set; }
+        = string.Empty;
 }
