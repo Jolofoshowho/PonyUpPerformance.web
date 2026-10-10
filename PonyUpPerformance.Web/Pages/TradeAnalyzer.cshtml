@@ -1056,6 +1056,9 @@
 
         @if (Model.Result != null)
         {
+            <partial name="_PonyUpStoplightResult"
+                     model="stoplight" />
+
             <div class="trade-result-summary">
 
                 <div>
@@ -1098,9 +1101,6 @@
                 </div>
 
             </div>
-
-            <partial name="_PonyUpStoplightResult"
-                     model="stoplight" />
         }
 
     </div>
