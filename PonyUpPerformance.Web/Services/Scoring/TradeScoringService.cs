@@ -15,20 +15,20 @@ public class TradeScoringService : ITradeScoringService
      * TRADE SCORING AUTHORITY
      *
      * Net Trade Value ............... +/-20
-     * Condition Differential ....... +/-8
+     * Condition Differential ....... +/-12
      * Title Differential ........... +/-7
      * Accident Differential ........ +/-6
-     * Mileage vs Age Differential .. +/-5
+     * Mileage vs Age Differential .. +/-8
      * Runs / Drives Differential ... +/-4
      *
      * TOTAL ......................... +/-50
      */
 
     private const int ValueMaximum = 20;
-    private const int ConditionMaximum = 8;
+    private const int ConditionMaximum = 12;
     private const int TitleMaximum = 7;
     private const int AccidentMaximum = 6;
-    private const int MileageMaximum = 5;
+    private const int MileageMaximum = 8;
     private const int ReadinessMaximum = 4;
 
     public TradeDecisionResult Analyze(
