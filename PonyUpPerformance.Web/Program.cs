@@ -334,6 +334,45 @@ else
     app.UseHsts();
 }
 
+if (!validationMode)
+{
+    app.Use(
+        async (context, next) =>
+        {
+            string host =
+                context.Request.Host.Host;
+
+            bool shouldRedirect =
+                host.Equals(
+                    "ponyupperformance.com",
+                    StringComparison.OrdinalIgnoreCase) ||
+                host.Equals(
+                    "pony-up-performance.com",
+                    StringComparison.OrdinalIgnoreCase) ||
+                host.Equals(
+                    "www.pony-up-performance.com",
+                    StringComparison.OrdinalIgnoreCase);
+
+            if (shouldRedirect)
+            {
+                string destination =
+                    "https://www.ponyupperformance.com" +
+                    context.Request.PathBase +
+                    context.Request.Path +
+                    context.Request.QueryString;
+
+                context.Response.Redirect(
+                    destination,
+                    permanent: true,
+                    preserveMethod: true);
+
+                return;
+            }
+
+            await next();
+        });
+}
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
