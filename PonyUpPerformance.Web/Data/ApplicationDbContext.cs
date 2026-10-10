@@ -32,6 +32,8 @@ namespace PonyUpPerformance.Web.Data
 
         public DbSet<BetaAccessRedemption> BetaAccessRedemptions { get; set; }
 
+        public DbSet<UserVinHistory> UserVinHistories { get; set; }
+
         public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
     }
 }
