@@ -4,6 +4,84 @@
 @{
     ViewData["Title"] = "Trade Analyzer";
 
+    string yourVehicleTitle =
+        string.Join(
+            " ",
+            new[]
+            {
+                Model.Input.YourYear?.ToString(),
+                Model.Input.YourMake,
+                Model.Input.YourModel
+            }
+            .Where(x =>
+                !string.IsNullOrWhiteSpace(x)));
+
+    string theirVehicleTitle =
+        string.Join(
+            " ",
+            new[]
+            {
+                Model.Input.TheirYear?.ToString(),
+                Model.Input.TheirMake,
+                Model.Input.TheirModel
+            }
+            .Where(x =>
+                !string.IsNullOrWhiteSpace(x)));
+
+    var yourDetailsParts =
+        new List<string>();
+
+    if (Model.Input.YourValue.HasValue)
+    {
+        yourDetailsParts.Add(
+            $"{Model.Input.YourValue.Value:C0}");
+    }
+
+    if (Model.Input.YourMileage.HasValue)
+    {
+        yourDetailsParts.Add(
+            $"{Model.Input.YourMileage.Value:N0} mi");
+    }
+
+    if (Model.Input.YourCondition !=
+        PonyUpPerformance.Web.Models.MechanicalCondition.NotProvided)
+    {
+        yourDetailsParts.Add(
+            Model.Input.YourCondition.ToString());
+    }
+
+    var theirDetailsParts =
+        new List<string>();
+
+    if (Model.Input.TheirValue.HasValue)
+    {
+        theirDetailsParts.Add(
+            $"{Model.Input.TheirValue.Value:C0}");
+    }
+
+    if (Model.Input.TheirMileage.HasValue)
+    {
+        theirDetailsParts.Add(
+            $"{Model.Input.TheirMileage.Value:N0} mi");
+    }
+
+    if (Model.Input.TheirCondition !=
+        PonyUpPerformance.Web.Models.MechanicalCondition.NotProvided)
+    {
+        theirDetailsParts.Add(
+            Model.Input.TheirCondition.ToString());
+    }
+
+    string yourVehicleDetails =
+        string.Join(
+            " • ",
+            yourDetailsParts);
+
+    string theirVehicleDetails =
+        string.Join(
+            " • ",
+            theirDetailsParts);
+
     var stoplight =
         new PonyUpPerformance.Web.Models.PonyUpStoplightResultViewModel
         {
@@ -30,7 +108,19 @@
 
             Reasoning =
                 Model.Result?.Reasoning
-                ?? "Compare both vehicles and run the trade analysis."
+                ?? "Compare both vehicles and run the trade analysis.",
+
+            PrimaryVehicleTitle =
+                yourVehicleTitle,
+
+            PrimaryVehicleDetails =
+                yourVehicleDetails,
+
+            SecondaryVehicleTitle =
+                theirVehicleTitle,
+
+            SecondaryVehicleDetails =
+                theirVehicleDetails
         };
 
     string Money(decimal? value)
