@@ -28,6 +28,8 @@ public class TradeDecisionInput
     [StringLength(80)]
     public string? YourTrim { get; set; } = string.Empty;
 
+    [Required(
+        ErrorMessage = "Enter your vehicle's market value.")]
     [Range(
         typeof(decimal),
         "0.01",
@@ -131,6 +133,8 @@ public class TradeDecisionInput
     [StringLength(80)]
     public string? TheirTrim { get; set; } = string.Empty;
 
+    [Required(
+        ErrorMessage = "Enter their vehicle's market value.")]
     [Range(
         typeof(decimal),
         "0.01",
