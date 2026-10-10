@@ -1540,6 +1540,43 @@
         }
     }
 
+    function focusRenderedAnalysisResult() {
+
+        const result =
+            document.querySelector(
+                '[data-analysis-result="true"]');
+
+        if (!result) {
+            return;
+        }
+
+        window.requestAnimationFrame(
+            function () {
+
+                result.scrollIntoView(
+                    {
+                        behavior:
+                            "auto",
+
+                        block:
+                            "start"
+                    });
+
+                try {
+
+                    result.focus(
+                        {
+                            preventScroll:
+                                true
+                        });
+                }
+                catch {
+                    result.focus();
+                }
+            });
+    }
+
+
     document.addEventListener(
         "DOMContentLoaded",
         function () {
@@ -1547,6 +1584,7 @@
             initializeVinHistory();
             initializeGarageUi();
             initializeAnalyzerDraftRestore();
+            focusRenderedAnalysisResult();
         });
 
     /*
