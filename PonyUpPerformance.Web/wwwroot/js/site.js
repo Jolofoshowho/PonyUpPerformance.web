@@ -187,6 +187,9 @@
         let accountHistory =
             [];
 
+        let localHistorySynced =
+            false;
+
         function combinedHistory() {
 
             const merged =
@@ -622,6 +625,27 @@
         async function openMenu() {
 
             await loadAccountHistory();
+
+            if (!localHistorySynced) {
+
+                localHistorySynced =
+                    true;
+
+                const localHistory =
+                    readVinHistory();
+
+                for (const vehicle of localHistory) {
+
+                    await saveAccountVin(
+                        vehicle);
+                }
+
+                if (localHistory.length > 0) {
+
+                    await loadAccountHistory();
+                }
+            }
+
             renderMenu();
         }
 
