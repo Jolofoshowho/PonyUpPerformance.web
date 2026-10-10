@@ -14,6 +14,7 @@ public class TradeAnalyzerModel : PageModel
     private readonly IMarketValueService _marketValueService;
     private readonly AnalysisHistoryService _analysisHistoryService;
     private readonly UsageCreditService _usageCreditService;
+    private readonly UserVinHistoryService _vinHistoryService;
 
     public TradeAnalyzerModel(
         ITradeScoringService tradeScoringService,
@@ -21,7 +22,8 @@ public class TradeAnalyzerModel : PageModel
         IVehicleSpecEnrichmentService vehicleSpecEnrichmentService,
         IMarketValueService marketValueService,
         AnalysisHistoryService analysisHistoryService,
-        UsageCreditService usageCreditService)
+        UsageCreditService usageCreditService,
+        UserVinHistoryService vinHistoryService)
     {
         _tradeScoringService =
             tradeScoringService;
@@ -40,6 +42,9 @@ public class TradeAnalyzerModel : PageModel
 
         _usageCreditService =
             usageCreditService;
+
+        _vinHistoryService =
+            vinHistoryService;
     }
 
     [BindProperty]
@@ -59,8 +64,12 @@ public class TradeAnalyzerModel : PageModel
     public string TheirValueMessage { get; private set; }
         = string.Empty;
 
-    public void OnGet()
+    public List<UserVinHistory> PreviousVins { get; private set; } =
+        new();
+
+    public async Task OnGetAsync()
     {
+        await LoadPreviousVinsAsync();
     }
 
     public Task<IActionResult> OnPostDecodeYourVinAsync(
@@ -81,6 +90,9 @@ public class TradeAnalyzerModel : PageModel
 
     public async Task<IActionResult> OnPostAnalyzeAsync()
     {
+        await SaveCurrentVinsAsync();
+        await LoadPreviousVinsAsync();
+
         if (!ModelState.IsValid)
         {
             return Page();
@@ -140,6 +152,8 @@ public class TradeAnalyzerModel : PageModel
                     ? string.Empty
                     : Input.YourCondition.ToString());
 
+        await LoadPreviousVinsAsync();
+
         return Page();
     }
 
@@ -147,6 +161,8 @@ public class TradeAnalyzerModel : PageModel
         bool isYourVehicle,
         CancellationToken cancellationToken)
     {
+        await LoadPreviousVinsAsync();
+
         string vin =
             isYourVehicle
                 ? Input.YourVin ?? string.Empty
@@ -275,9 +291,36 @@ public class TradeAnalyzerModel : PageModel
                     : displayName;
         }
 
+        await SaveCurrentVinsAsync();
+        await LoadPreviousVinsAsync();
+
         ModelState.Clear();
 
         return Page();
+    }
+
+    private async Task SaveCurrentVinsAsync()
+    {
+        await _vinHistoryService.SaveAsync(
+            User,
+            Input.YourVin,
+            Input.YourYear,
+            Input.YourMake,
+            Input.YourModel);
+
+        await _vinHistoryService.SaveAsync(
+            User,
+            Input.TheirVin,
+            Input.TheirYear,
+            Input.TheirMake,
+            Input.TheirModel);
+    }
+
+    private async Task LoadPreviousVinsAsync()
+    {
+        PreviousVins =
+            await _vinHistoryService.GetAsync(
+                User);
     }
 
     private void ApplyManualHints(
