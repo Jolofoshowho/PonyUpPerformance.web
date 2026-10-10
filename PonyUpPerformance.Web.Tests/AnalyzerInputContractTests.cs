@@ -7,14 +7,13 @@ namespace PonyUpPerformance.Web.Tests;
 public sealed class AnalyzerInputContractTests
 {
     [Fact]
-    public void BlankAnalyzerInputs_AreValid()
+    public void BlankOptionalAnalyzerInputs_AreValid()
     {
         object[] inputs =
         {
             new RepairDecisionInput(),
             new BuyDecisionInput(),
             new SellDecisionInput(),
-            new TradeDecisionInput(),
             new UpgradeDecisionInput()
         };
 
@@ -37,5 +36,32 @@ public sealed class AnalyzerInputContractTests
                     " | ",
                     results.Select(x => x.ErrorMessage)));
         }
+    }
+
+    [Fact]
+    public void Trade_WithOnlyBothMarketValues_IsValid()
+    {
+        var input =
+            new TradeDecisionInput
+            {
+                YourValue = 5000m,
+                TheirValue = 7500m
+            };
+
+        var results =
+            new List<ValidationResult>();
+
+        bool valid =
+            Validator.TryValidateObject(
+                input,
+                new ValidationContext(input),
+                results,
+                validateAllProperties: true);
+
+        Assert.True(
+            valid,
+            string.Join(
+                " | ",
+                results.Select(x => x.ErrorMessage)));
     }
 }
