@@ -4,14 +4,27 @@
     int overallScore =
         Model.Score ?? Model.ConfidenceScore;
 
+    string recommendation =
+        (Model.Recommendation ?? string.Empty)
+            .Trim()
+            .ToUpperInvariant();
+
     string state =
-    !Model.HasResult
-        ? "off"
-        : overallScore >= 75
-            ? "green"
-            : overallScore >= 50
-                ? "yellow"
-                : "red";
+        !Model.HasResult
+            ? "off"
+            : recommendation.Contains("PONY UP")
+                ? "green"
+                : recommendation.Contains("NEGOTIATE") ||
+                  recommendation.Contains("CAUTION")
+                    ? "yellow"
+                    : recommendation.Contains("WALK AWAY") ||
+                      recommendation.Contains("STOP")
+                        ? "red"
+                        : overallScore >= 75
+                            ? "green"
+                            : overallScore >= 50
+                                ? "yellow"
+                                : "red";
 
     string stoplightImage =
         state == "green"
@@ -46,22 +59,19 @@
                     : state == "yellow"
                         ? "MODERATE"
                         : "HIGH";
+
+    bool hasPrimaryVehicle =
+        !string.IsNullOrWhiteSpace(Model.PrimaryVehicleTitle) ||
+        !string.IsNullOrWhiteSpace(Model.PrimaryVehicleDetails);
+
+    bool hasSecondaryVehicle =
+        !string.IsNullOrWhiteSpace(Model.SecondaryVehicleTitle) ||
+        !string.IsNullOrWhiteSpace(Model.SecondaryVehicleDetails);
 }
 
-@if (Model.HasResult)
-{
-    <img src="~/images/ponyup-stoplight-banner.png"
-         alt="PonyUp Stoplight"
-         style="
-            display:block;
-            width:100%;
-            max-width:1200px;
-            height:auto;
-            margin:0 auto 18px auto;
-            border-radius:12px;" />
-}
-
-<div class="ponyup-stoplight-panel @state">
+<div class="ponyup-stoplight-panel @state"
+     data-analysis-result="@(Model.HasResult ? "true" : "false")"
+     tabindex="@(Model.HasResult ? "-1" : null)">
 
     <div class="ponyup-stoplight-left">
 
@@ -118,27 +128,66 @@
         <div class="ponyup-legend-card red">
             <strong>STOP / WALK AWAY</strong>
             <span>High Risk</span>
-            <p>
-                The decision factors show significant concerns.
-            </p>
+            <p>The decision factors show significant concerns.</p>
         </div>
 
         <div class="ponyup-legend-card yellow">
             <strong>PROCEED WITH CAUTION</strong>
             <span>Moderate Risk</span>
-            <p>
-                Negotiate, verify, or investigate before committing.
-            </p>
+            <p>Negotiate, verify, or investigate before committing.</p>
         </div>
 
         <div class="ponyup-legend-card green">
             <strong>PONY UP</strong>
             <span>Strong Position</span>
-            <p>
-                The available evidence supports the decision.
-            </p>
+            <p>The available evidence supports the decision.</p>
         </div>
+
+        @if (hasPrimaryVehicle &&
+             !hasSecondaryVehicle)
+        {
+            <div class="ponyup-result-vehicle-card single">
+                <span>VEHICLE</span>
+                <strong>@Model.PrimaryVehicleTitle</strong>
+
+                @if (!string.IsNullOrWhiteSpace(
+                    Model.PrimaryVehicleDetails))
+                {
+                    <p>@Model.PrimaryVehicleDetails</p>
+                }
+            </div>
+        }
 
     </div>
 
 </div>
+
+@if (hasPrimaryVehicle &&
+     hasSecondaryVehicle)
+{
+    <div class="ponyup-result-vehicle-pair">
+
+        <div class="ponyup-result-vehicle-card">
+            <span>YOUR VEHICLE</span>
+            <strong>@Model.PrimaryVehicleTitle</strong>
+
+            @if (!string.IsNullOrWhiteSpace(
+                Model.PrimaryVehicleDetails))
+            {
+                <p>@Model.PrimaryVehicleDetails</p>
+            }
+        </div>
+
+        <div class="ponyup-result-vehicle-card">
+            <span>THEIR VEHICLE</span>
+            <strong>@Model.SecondaryVehicleTitle</strong>
+
+            @if (!string.IsNullOrWhiteSpace(
+                Model.SecondaryVehicleDetails))
+            {
+                <p>@Model.SecondaryVehicleDetails</p>
+            }
+        </div>
+
+    </div>
+}
