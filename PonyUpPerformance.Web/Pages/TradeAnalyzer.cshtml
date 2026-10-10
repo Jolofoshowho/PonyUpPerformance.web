@@ -74,6 +74,17 @@
 
     <div class="trade-compare-shell">
 
+        @foreach (var vehicle in Model.PreviousVins)
+        {
+            <span hidden
+                  data-vin-history-record
+                  data-vin="@vehicle.Vin"
+                  data-year="@(vehicle.Year?.ToString() ?? "")"
+                  data-make="@vehicle.Make"
+                  data-model="@vehicle.Model">
+            </span>
+        }
+
         <form method="post">
 
             <div asp-validation-summary="All"
