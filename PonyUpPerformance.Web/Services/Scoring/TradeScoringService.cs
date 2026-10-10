@@ -6,8 +6,10 @@ public class TradeScoringService : ITradeScoringService
 {
     private const int BaseScore = 50;
 
-    private const int PonyUpThreshold = 75;
-    private const int CautionThreshold = 50;
+    private const int PonyUpThreshold = 55;
+    private const int CautionThreshold = 45;
+
+    private const decimal ValueParityRatio = 0.075m;
 
     /*
      * TRADE SCORING AUTHORITY
@@ -97,11 +99,9 @@ public class TradeScoringService : ITradeScoringService
                 confidenceScore);
 
         string recommendation =
-            score >= PonyUpThreshold
-                ? "PONY UP"
-                : score >= CautionThreshold
-                    ? "NEGOTIATE"
-                    : "WALK AWAY";
+            DetermineRecommendation(
+                score,
+                riskScore);
 
         return new TradeDecisionResult
         {
@@ -187,10 +187,8 @@ public class TradeScoringService : ITradeScoringService
                 >= 0.25m => 20,
                 >= 0.15m => 16,
                 >= 0.10m => 12,
-                >= 0.05m => 8,
-                >= 0.02m => 4,
-                >= -0.02m => 0,
-                >= -0.05m => -4,
+                >= ValueParityRatio => 8,
+                > -ValueParityRatio => 0,
                 >= -0.10m => -8,
                 >= -0.15m => -12,
                 >= -0.25m => -16,
@@ -198,17 +196,19 @@ public class TradeScoringService : ITradeScoringService
             };
 
         string explanation =
-            netTradePosition.Value switch
-            {
-                > 0 =>
-                    $"After repair exposure and cash, the trade position is approximately {netTradePosition.Value:C0} in your favor.",
+            Math.Abs(ratio) < ValueParityRatio
+                ? $"After repair exposure and cash, the trade is essentially even on money ({Math.Abs(netTradePosition.Value):C0} difference)."
+                : netTradePosition.Value switch
+                {
+                    > 0 =>
+                        $"After repair exposure and cash, the trade position is approximately {netTradePosition.Value:C0} in your favor.",
 
-                < 0 =>
-                    $"After repair exposure and cash, the trade position is approximately {Math.Abs(netTradePosition.Value):C0} against you.",
+                    < 0 =>
+                        $"After repair exposure and cash, the trade position is approximately {Math.Abs(netTradePosition.Value):C0} against you.",
 
-                _ =>
-                    "After repair exposure and cash, the trade is approximately even."
-            };
+                    _ =>
+                        "After repair exposure and cash, the trade is approximately even."
+                };
 
         return CreateFactor(
             "Net Trade Value",
@@ -611,9 +611,22 @@ public class TradeScoringService : ITradeScoringService
         }
 
         if (netTradePosition.HasValue &&
-            netTradePosition.Value < 0)
+            input.YourValue.HasValue &&
+            input.YourValue.Value > 0)
         {
-            risk += 10;
+            decimal tradeRatio =
+                netTradePosition.Value /
+                input.YourValue.Value;
+
+            risk +=
+                tradeRatio switch
+                {
+                    < -0.25m => 20,
+                    < -0.15m => 14,
+                    < -0.10m => 8,
+                    < -ValueParityRatio => 4,
+                    _ => 0
+                };
         }
 
         if (confidenceScore < 40)
@@ -633,6 +646,29 @@ public class TradeScoringService : ITradeScoringService
             risk,
             0,
             100);
+    }
+
+    private static string DetermineRecommendation(
+        int score,
+        int riskScore)
+    {
+        if (riskScore > 50)
+        {
+            return "WALK AWAY";
+        }
+
+        if (riskScore > 25)
+        {
+            return score >= CautionThreshold
+                ? "NEGOTIATE"
+                : "WALK AWAY";
+        }
+
+        return score >= PonyUpThreshold
+            ? "PONY UP"
+            : score >= CautionThreshold
+                ? "NEGOTIATE"
+                : "WALK AWAY";
     }
 
     private static string DetermineRiskLevel(
@@ -660,18 +696,31 @@ public class TradeScoringService : ITradeScoringService
                 "Enter both market values to calculate the net trade position.";
         }
 
+        decimal baseline =
+            Math.Max(
+                1000m,
+                yourAdjustedValue.Value +
+                PositiveOrZero(
+                    input.CashYouAdd));
+
+        decimal ratio =
+            netTradePosition.Value /
+            baseline;
+
         string position =
-            netTradePosition.Value switch
-            {
-                > 0 =>
-                    $"{netTradePosition.Value:C0} in your favor",
+            Math.Abs(ratio) < ValueParityRatio
+                ? $"essentially even ({Math.Abs(netTradePosition.Value):C0} difference)"
+                : netTradePosition.Value switch
+                {
+                    > 0 =>
+                        $"{netTradePosition.Value:C0} in your favor",
 
-                < 0 =>
-                    $"{Math.Abs(netTradePosition.Value):C0} against you",
+                    < 0 =>
+                        $"{Math.Abs(netTradePosition.Value):C0} against you",
 
-                _ =>
-                    "approximately even"
-            };
+                    _ =>
+                        "approximately even"
+                };
 
         return
             $"Your adjusted vehicle value is {yourAdjustedValue.Value:C0}. " +
