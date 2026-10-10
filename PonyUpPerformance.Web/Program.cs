@@ -189,6 +189,8 @@ builder.Services.AddScoped<IEmailSender<ApplicationUser>, PonyUpIdentityEmailSen
 builder.Services.AddScoped<UsageCreditService>();
 builder.Services.AddScoped<BetaAccessCodeService>();
 builder.Services.AddHostedService<BetaAccessBootstrapService>();
+builder.Services.AddScoped<UserVinHistoryService>();
+builder.Services.AddHostedService<VinHistoryBootstrapService>();
 builder.Services.AddScoped<IRevUpReportProvider, UnavailableRevUpReportProvider>();
 builder.Services.AddScoped<RevUpReportService>();
 builder.Services.AddScoped<IBuyScoringService, BuyScoringService>();
