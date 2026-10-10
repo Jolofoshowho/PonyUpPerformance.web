@@ -5124,3 +5124,59 @@ body.garage-modal-open {
     color: #ff4545;
 }
 
+
+
+/* PonyUp saved VIN picker */
+.ponyup-vin-menu {
+    position: absolute;
+    z-index: 12000;
+    max-height: 320px;
+    overflow-y: auto;
+    background: #090909;
+    border: 1px solid rgba(255, 255, 255, .22);
+    border-top: 3px solid #d71920;
+    border-radius: 8px;
+    box-shadow: 0 16px 38px rgba(0, 0, 0, .72);
+    padding: 6px;
+}
+
+.ponyup-vin-menu[hidden] {
+    display: none !important;
+}
+
+.ponyup-vin-menu-item {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: #fff;
+    text-align: left;
+    cursor: pointer;
+}
+
+.ponyup-vin-menu-item:hover,
+.ponyup-vin-menu-item:focus-visible {
+    background: rgba(215, 25, 32, .18);
+    outline: 1px solid rgba(215, 25, 32, .65);
+}
+
+.ponyup-vin-menu-item strong {
+    font-size: .95rem;
+    letter-spacing: .035em;
+}
+
+.ponyup-vin-menu-item span {
+    color: #bcbcbc;
+    font-size: .82rem;
+}
+
+.ponyup-vin-menu-empty {
+    padding: 12px;
+    color: #aaa;
+    font-size: .9rem;
+}
